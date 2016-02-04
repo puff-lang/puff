@@ -1,4 +1,4 @@
-package lexer
+package parse
 
 import (
     "fmt"
@@ -67,6 +67,7 @@ const (
     Keywords  // Delimiter for keywords
     FN
     LET
+    IN
     TYPE
     DATA
 )
@@ -119,8 +120,9 @@ var tokens = [...]string{
     SEMICOLON: ";",
     COLON:     ":",
 
-    FN: "fn",
+    FN:   "fn",
     LET:  "let",
+    IN:   "in",
     TYPE: "type",
     DATA: "data",
 
@@ -130,6 +132,7 @@ var tokens = [...]string{
 var keywords = map[string]tokenType {
     "fn": FN,
     "let": LET,
+    "in": IN,
     "type": TYPE,
     "data": DATA,
 }
@@ -204,6 +207,13 @@ func (l *lexer) acceptRun(valid string) {
     l.backup()
 }
 
+// lineNumber reports which line we're on, based on the position of
+// the previous item returned by nextItem. Doing it this way
+// means we don't have to worry about peek double counting.
+func (l *lexer) lineNumber() int {
+    return 1 + strings.Count(l.input[:l.lastPos], "\n")
+}
+
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) LexFn {
@@ -218,6 +228,15 @@ func (l *lexer) nextToken() token {
     l.lastPos = token.pos
     return token
 }
+
+// drain drains the output so the lexing goroutine will exit.
+// Called by the parser, not in the lexing goroutine.
+/*
+func (l *lexer) drain() {
+    for range l.tokens {
+    }
+}
+*/
 
 // lex creates a new scanner for the input string.
 func lex(name, input, left, right string) *lexer {
