@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"token"
 	"flag"
 	"fmt"
 	"testing"
@@ -30,9 +31,9 @@ func collectTokens(src, left, right string) (tokenList []string) {
 	l := lex("testing", src, left, right)
 
 	for {
-		token := l.nextToken()
-		tokenList = append(tokenList, tokens[token.typ])
-		if token.typ == EOF || token.typ == ILLEGAL {
+		tok := l.nextToken()
+		tokenList = append(tokenList, token.Tokens[tok.Type()])
+		if tok.Type() == token.EOF || tok.Type() == token.ILLEGAL {
 			break
 		}
 	}

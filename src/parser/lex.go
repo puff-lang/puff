@@ -1,141 +1,12 @@
 package parse
 
 import (
+	"token"
     "fmt"
     "strings"
     "unicode"
     "unicode/utf8"
 )
-
-type token struct {
-    typ tokenType
-    pos int
-    val string
-}
-
-type tokenType int
-
-// List of tokens
-const (
-	ILLEGAL tokenType = iota
-	EOF
-	COMMENT
-    WHITESPACE
-
-	IDENT  // main
-    INT    // 12345
-    BOOLEAN // True
-    FLOAT  // 123.45
-    CHAR   // 'a'
-    STRING // "abc" 
-
-    ASSIGN // =
-
-    ADD // +
-    SUB // -
-    MUL // *
-    QUO // /
-    REM // %
-
-    AND     // &
-    OR      // |
-    XOR     // ^
-    SHL     // <<
-    SHR     // >>
-
-    LAND  // &&
-    LOR   // ||
-
-    EQL    // ==
-    LSS    // <
-    GTR    // >
-    NOT    // !
-
-    LPAREN // (
-    LBRACK // [
-    LBRACE // {
-    COMMA  // ,
-    PERIOD // .
-
-    RPAREN    // )
-    RBRACK    // ]
-    RBRACE    // }
-    SEMICOLON // ;
-    COLON     // :
-    ARROW     // ->
-
-    Keywords  // Delimiter for keywords
-    FN
-    LET
-    IN
-    TYPE
-    DATA
-)
-
-
-var tokens = [...]string{
-    ILLEGAL: "ILLEGAL",
-
-    EOF:     "EOF",
-    COMMENT: "COMMENT",
-
-    IDENT:  "IDENT",
-    INT:    "INT",
-    BOOLEAN:"BOOL",
-    FLOAT:  "FLOAT",
-    CHAR:   "CHAR",
-    STRING: "STRING",
-
-    ASSIGN: "=",
-
-    ADD: "+",
-    SUB: "-",
-    MUL: "*",
-    QUO: "/",
-    REM: "%",
-
-    AND:     "&",
-    OR:      "|",
-    XOR:     "^",
-    SHL:     "<<",
-    SHR:     ">>",
-
-    LAND:  "&&",
-    LOR:   "||",
-
-    EQL:    "==",
-    LSS:    "<",
-    GTR:    ">",
-    NOT:    "!",
-
-    LPAREN: "(",
-    LBRACK: "[",
-    LBRACE: "{",
-    COMMA:  ",",
-    PERIOD: ".",
-
-    RPAREN:    ")",
-    RBRACK:    "]",
-    RBRACE:    "}",
-    SEMICOLON: ";",
-    COLON:     ":",
-
-    FN:   "fn",
-    LET:  "let",
-    IN:   "in",
-    TYPE: "type",
-    DATA: "data",
-
-    WHITESPACE: " \t\r\n",
-}
-
-var keywords = map[string]tokenType {
-    "fn": FN,
-    "let": LET,
-    "in": IN,
-    "type": TYPE,
-    "data": DATA,
-}
 
 const eof = -1
 
@@ -144,7 +15,7 @@ type LexFn func(*lexer) LexFn
 type lexer struct {
     name       string
     input      string
-    tokens     chan token
+    tokens     chan token.Token
     state      LexFn
 
     start      int
@@ -181,8 +52,8 @@ func (l *lexer) backup() {
 }
 
 // emit passes an item back to the client.
-func (l *lexer) emit(t tokenType) {
-    l.tokens <- token{t, l.start, l.input[l.start:l.pos]}
+func (l *lexer) emit(t token.TokenType) {
+    l.tokens <- token.NewToken(t, l.start, l.input[l.start:l.pos])
     l.start = l.pos
 }
 
@@ -217,15 +88,15 @@ func (l *lexer) lineNumber() int {
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) LexFn {
-    l.tokens <- token{ILLEGAL, l.start, fmt.Sprintf(format, args...)}
+    l.tokens <- token.NewToken(token.ILLEGAL, l.start, fmt.Sprintf(format, args...))
     return nil
 }
 
 // nextToken returns the next item from the input.
 // Called by the parser, not in the lexing goroutine.
-func (l *lexer) nextToken() token {
+func (l *lexer) nextToken() token.Token {
     token := <-l.tokens
-    l.lastPos = token.pos
+    l.lastPos = token.Pos()
     return token
 }
 
@@ -244,7 +115,7 @@ func lex(name, input, left, right string) *lexer {
         name:   name,
         input:  input,
         state:  lexStatement,
-        tokens: make(chan token),
+        tokens: make(chan token.Token),
     }
     go l.run()
     return l
@@ -271,7 +142,7 @@ func lexStatement(l *lexer) LexFn {
     case ch == '=':
         return lexEqual
     case ch == eof:
-        l.emit(EOF)
+        l.emit(token.EOF)
         return nil
     default:
         l.backup()
@@ -292,12 +163,12 @@ Loop:
                 return l.errorf("bad character %#U", r)
             }
             switch {
-            case keywords[word] > Keywords:
-                l.emit(keywords[word])
+            case token.Keywords[word] > token.Keyword:
+                l.emit(token.Keywords[word])
             case word == "True", word == "False":
-                l.emit(BOOLEAN)
+                l.emit(token.BOOLEAN)
             default:
-                l.emit(IDENT)
+                l.emit(token.IDENT)
             }
             break Loop
         }
@@ -312,30 +183,30 @@ func lexExpr(l *lexer) LexFn {
         l.backup()
         return lexNumber
     case r == '(':
-        l.emit(LPAREN)
+        l.emit(token.LPAREN)
         l.parenDepth++
     case r == ')':
-        l.emit(RPAREN)
+        l.emit(token.RPAREN)
         l.parenDepth--
         if l.parenDepth < 0 {
             return l.errorf("unexpected right paren %#U", r)
         }
     case r == '{':
-        l.emit(LBRACE)
+        l.emit(token.LBRACE)
         return lexStatement
     case r == '}':
-        l.emit(RBRACE)
+        l.emit(token.RBRACE)
         return lexStatement
     case r == '+':
-        l.emit(ADD)
+        l.emit(token.ADD)
         return lexStatement
     case r == '-':
         n := l.next()
         if n == '>' {
-            l.emit(ARROW)
+            l.emit(token.ARROW)
         } else {
             l.backup()
-            l.emit(SUB)
+            l.emit(token.SUB)
         }
         return lexStatement
     case r == '"':
@@ -364,7 +235,7 @@ Loop:
             break Loop
         }
     }
-    l.emit(CHAR)
+    l.emit(token.CHAR)
     return lexStatement
 }
 
@@ -384,7 +255,7 @@ Loop:
             break Loop
         }
     }
-    l.emit(STRING)
+    l.emit(token.STRING)
     return lexStatement
 }
 
@@ -412,9 +283,9 @@ func lexNumber(l *lexer) LexFn {
         return l.errorf("bad number syntax: %q", l.input[l.start:l.pos])
     } else {
         if (seenDecimalPoint) {
-            l.emit(FLOAT)
+            l.emit(token.FLOAT)
         } else {
-            l.emit(INT)
+            l.emit(token.INT)
         }
     }
     
@@ -439,10 +310,10 @@ func lexEqual(l *lexer) LexFn {
     ch := l.next()
 
     if ch == '=' {
-        l.emit(EQL)
+        l.emit(token.EQL)
     } else {
         l.backup()
-        l.emit(ASSIGN)
+        l.emit(token.ASSIGN)
     }
 
     return lexStatement

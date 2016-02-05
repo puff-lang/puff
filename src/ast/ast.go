@@ -1,6 +1,7 @@
-package parse
+package ast
 
 import (
+	"token"
 	"bytes"
 	"strconv"
 	"strings"
@@ -20,7 +21,7 @@ type Node interface {
 	Position() int // byte position of start of node in full original input string
 	// tree returns the containing *Tree.
 	// It is unexported so all implementations of Node are in this package.
-	tree() *Tree
+	// tree() *Tree
 }
 
 // NodeType identifies the type of a parse tree node.
@@ -60,21 +61,21 @@ const (
 type ListNode struct {
 	NodeType
 	Pos   int
-	tr    *Tree
+	// tr    *Tree
 	Nodes []Node // The element nodes in lexical order.
 }
 
-func (t *Tree) newList(pos int) *ListNode {
-	return &ListNode{tr: t, NodeType: NodeList, Pos: pos}
+func NewList(pos int) *ListNode {
+	return &ListNode{NodeType: NodeList, Pos: pos}
 }
 
-func (l *ListNode) append(n Node) {
+func (l *ListNode) Append(n Node) {
 	l.Nodes = append(l.Nodes, n)
 }
 
-func (l *ListNode) tree() *Tree {
-	return l.tr
-}
+// func (l *ListNode) tree() *Tree {
+// 	return l.tr
+// }
 
 func (l *ListNode) Position() int {
 	return l.Pos;
@@ -92,9 +93,9 @@ func (l *ListNode) CopyList() *ListNode {
 	if l == nil {
 		return l
 	}
-	n := l.tr.newList(l.Pos)
+	n := NewList(l.Pos)
 	for _, elem := range l.Nodes {
-		n.append(elem.Copy())
+		n.Append(elem.Copy())
 	}
 	return n
 }
@@ -107,41 +108,41 @@ func (l *ListNode) Copy() Node {
 type StringNode struct {
 	NodeType
 	Pos    int
-	tr     *Tree
+	// tr     *Tree
 	Quoted string // The original text of the string, with quotes.
 	Text   string // The string, after quote processing.
 }
 
-func (t *Tree) newString(pos int, orig, text string) *StringNode {
-	return &StringNode{tr: t, NodeType: NodeString, Pos: pos, Quoted: orig, Text: text}
+func NewString(pos int, orig, text string) *StringNode {
+	return &StringNode{NodeType: NodeString, Pos: pos, Quoted: orig, Text: text}
 }
 
 func (s *StringNode) String() string {
 	return s.Quoted
 }
 
-func (s *StringNode) tree() *Tree {
-	return s.tr
-}
+// func (s *StringNode) tree() *Tree {
+// 	return s.tr
+// }
 
 func (l *StringNode) Position() int {
 	return l.Pos;
 }
 
 func (s *StringNode) Copy() Node {
-	return s.tr.newString(s.Pos, s.Quoted, s.Text)
+	return NewString(s.Pos, s.Quoted, s.Text)
 }
 
 // BoolNode holds a boolean constant.
 type BoolNode struct {
 	NodeType
 	Pos  int
-	tr   *Tree
+	// tr   *Tree
 	True bool // The value of the boolean constant.
 }
 
-func (t *Tree) newBool(pos int, true bool) *BoolNode {
-	return &BoolNode{tr: t, NodeType: NodeBool, Pos: pos, True: true}
+func NewBool(pos int, true bool) *BoolNode {
+	return &BoolNode{NodeType: NodeBool, Pos: pos, True: true}
 }
 
 func (b *BoolNode) String() string {
@@ -151,16 +152,16 @@ func (b *BoolNode) String() string {
 	return "False"
 }
 
-func (b *BoolNode) tree() *Tree {
-	return b.tr
-}
+// func (b *BoolNode) tree() *Tree {
+// 	return b.tr
+// }
 
 func (l *BoolNode) Position() int {
 	return l.Pos;
 }
 
 func (b *BoolNode) Copy() Node {
-	return b.tr.newBool(b.Pos, b.True)
+	return NewBool(b.Pos, b.True)
 }
 
 
@@ -170,7 +171,7 @@ func (b *BoolNode) Copy() Node {
 type NumberNode struct {
 	NodeType
 	Pos        int
-	tr         *Tree
+	// tr         *Tree
 	IsInt      bool       // Number has an integral value.
 	IsUint     bool       // Number has an unsigned integral value.
 	IsFloat    bool       // Number has a floating-point value.
@@ -180,10 +181,10 @@ type NumberNode struct {
 	Text       string     // The original textual representation from the input.
 }
 
-func (t *Tree) newNumber(pos int, text string, typ tokenType) (*NumberNode, error) {
-	n := &NumberNode{tr: t, NodeType: NodeNumber, Pos: pos, Text: text}
+func NewNumber(pos int, text string, typ token.TokenType) (*NumberNode, error) {
+	n := &NumberNode{NodeType: NodeNumber, Pos: pos, Text: text}
 	switch typ {
-	case CHAR:
+	case token.CHAR:
 		rune, _, tail, err := strconv.UnquoteChar(text[1:], text[0])
 		if err != nil {
 			return nil, err
@@ -252,9 +253,9 @@ func (n *NumberNode) String() string {
 	return n.Text
 }
 
-func (n *NumberNode) tree() *Tree {
-	return n.tr
-}
+// func (n *NumberNode) tree() *Tree {
+// 	return n.tr
+// }
 
 func (l *NumberNode) Position() int {
 	return l.Pos;
@@ -271,28 +272,28 @@ func (n *NumberNode) Copy() Node {
 type VariableNode struct {
 	NodeType
 	Pos   int
-	tr    *Tree
+	// tr    *Tree
 	Ident string // Variable name.
 }
 
-func (t *Tree) newVariable(pos int, ident string) *VariableNode {
-	return &VariableNode{tr: t, NodeType: NodeVariable, Pos: pos, Ident: ident}
+func NewVariable(pos int, ident string) *VariableNode {
+	return &VariableNode{NodeType: NodeVariable, Pos: pos, Ident: ident}
 }
 
 func (v *VariableNode) String() string {
 	return v.Ident
 }
 
-func (v *VariableNode) tree() *Tree {
-	return v.tr
-}
+// func (v *VariableNode) tree() *Tree {
+// 	return v.tr
+// }
 
 func (l *VariableNode) Position() int {
 	return l.Pos;
 }
 
 func (v *VariableNode) Copy() Node {
-	return &VariableNode{tr: v.tr, NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
+	return &VariableNode{NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
 }
 
 
@@ -300,13 +301,13 @@ func (v *VariableNode) Copy() Node {
 type LetNode struct {
 	NodeType
 	Pos   int
-	tr    *Tree
+	// tr    *Tree
 	Defns []*DefnNode
 	Expr  *ExprNode
 }
 
-func (t *Tree) newLetExpr(pos int, defns []*DefnNode, exprNode *ExprNode) *LetNode {
-	return &LetNode{tr: t, NodeType: NodeLet, Pos: pos, Defns: defns, Expr: exprNode}
+func NewLetExpr(pos int, defns []*DefnNode, exprNode *ExprNode) *LetNode {
+	return &LetNode{NodeType: NodeLet, Pos: pos, Defns: defns, Expr: exprNode}
 }
 
 func (v *LetNode) String() string {
@@ -321,85 +322,85 @@ func (v *LetNode) String() string {
 	return s
 }
 
-func (v *LetNode) tree() *Tree {
-	return v.tr
-}
+// func (v *LetNode) tree() *Tree {
+// 	return v.tr
+// }
 
 func (l *LetNode) Position() int {
 	return l.Pos;
 }
 
 func (v *LetNode) Copy() Node {
-	return &LetNode{tr: v.tr, NodeType: NodeLet, Pos: v.Pos, Defns: v.Defns, Expr: v.Expr}
+	return &LetNode{NodeType: NodeLet, Pos: v.Pos, Defns: v.Defns, Expr: v.Expr}
 }
 
 // DefnNode represents a variable definition
 type DefnNode struct {
 	NodeType
 	Pos   int
-	tr    *Tree
+	// tr    *Tree
 	Var   string
 	Expr  *ExprNode
 }
 
-func (t *Tree) newDefinition(pos int, variable string, exprNode *ExprNode) *DefnNode {
-	return &DefnNode{tr: t, NodeType: NodeDefn, Pos: pos, Var: variable, Expr: exprNode}
+func NewDefinition(pos int, variable string, exprNode *ExprNode) *DefnNode {
+	return &DefnNode{NodeType: NodeDefn, Pos: pos, Var: variable, Expr: exprNode}
 }
 
 func (v *DefnNode) String() string {
 	return v.Var + " = " + v.Expr.String()
 }
 
-func (v *DefnNode) tree() *Tree {
-	return v.tr
-}
+// func (v *DefnNode) tree() *Tree {
+// 	return v.tr
+// }
 
 func (l *DefnNode) Position() int {
 	return l.Pos;
 }
 
 func (v *DefnNode) Copy() Node {
-	return &DefnNode{tr: v.tr, NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
+	return &DefnNode{NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
 }
 
 // Abstract node to represent an expression
 type ExprNode struct {
 	NodeType
 	Pos   int
-	tr    *Tree
+	// tr    *Tree
 	node  Node
 }
 
-func (t *Tree) newExpression(node Node) *ExprNode {
-	return &ExprNode{tr: t, NodeType: NodeExpr, Pos: node.Position(), node: node}
+func NewExpression(node Node) *ExprNode {
+	return &ExprNode{NodeType: NodeExpr, Pos: node.Position(), node: node}
 }
 
 func (v *ExprNode) String() string {
 	return v.node.String()
 }
 
-func (v *ExprNode) tree() *Tree {
-	return v.tr
-}
+// func (v *ExprNode) tree() *Tree {
+// 	return v.tr
+// }
 
 func (l *ExprNode) Position() int {
 	return l.Pos;
 }
 
 func (v *ExprNode) Copy() Node {
-	return &ExprNode{tr: v.tr, NodeType: NodeExpr, node: v.node}
+	return &ExprNode{NodeType: NodeExpr, node: v.node}
 }
 
 type FnExprNode struct {
 	NodeType
 	Pos    int
-	tr     *Tree
+	// tr     *Tree
 	Params []string
 	Body   *ExprNode
 }
 
-func (t *Tree) newFunctionExpression(pos int, params []string, body *ExprNode) *FnExprNode {
-	return &FnExprNode{tr: t, NodeType: NodeFnExpr, Params: params, Body: body}
+func NewFunctionExpression(pos int, params []string, body *ExprNode) *FnExprNode {
+	return &FnExprNode{NodeType: NodeFnExpr, Params: params, Body: body}
 }
 
 func (v *FnExprNode) String() string {
@@ -415,14 +416,14 @@ func (v *FnExprNode) String() string {
 	return s
 }
 
-func (v *FnExprNode) tree() *Tree {
-	return v.tr
-}
+// func (v *FnExprNode) tree() *Tree {
+// 	return v.tr
+// }
 
 func (l *FnExprNode) Position() int {
 	return l.Pos;
 }
 
 func (v *FnExprNode) Copy() Node {
-	return &FnExprNode{tr: v.tr, NodeType: NodeFnExpr, Params: v.Params, Body: v.Body}
+	return &FnExprNode{NodeType: NodeFnExpr, Params: v.Params, Body: v.Body}
 }

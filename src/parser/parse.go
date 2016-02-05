@@ -1,10 +1,11 @@
 package parse
 
 import (
+	"token"
+	"ast"
 	"fmt"
 	"runtime"
 	"strconv"
-	"strings"
 )
 
 
@@ -12,12 +13,12 @@ import (
 type Tree struct {
 	Name      string    // name of the template represented by the tree.
 	ParseName string    // name of the top-level template during parsing, for error messages.
-	Root      *ListNode // top-level root of the tree.
+	Root      *ast.ListNode // top-level root of the tree.
 	text      string    // text parsed to create the template (or its parent)
 	// Parsing only; cleared after parse.
 	funcs     []map[string]interface{}
 	lex       *lexer
-	token     [3]token // three-token lookahead for parser.
+	token     [3]token.Token // three-token lookahead for parser.
 	peekCount int
 	vars      []string // variables defined at the moment.
 	treeSet   map[string]*Tree
@@ -49,15 +50,15 @@ func Parse(name, text, leftDelim, rightDelim string, funcs ...map[string]interfa
 }
 
 // next returns the next token.
-func (t *Tree) next() token {
+func (t *Tree) next() token.Token {
 	fmt.Println("peekCount in next", t.peekCount);
 	if t.peekCount > 0 {
 		t.peekCount--
 	} else {
 		t.token[0] = t.lex.nextToken()
-		fmt.Println("Next Token", tokens[t.token[0].typ])
+		fmt.Println("Next Token", token.Tokens[t.token[0].Type()])
 	}
-	fmt.Println("Next Token", tokens[t.token[t.peekCount].typ])
+	fmt.Println("Next Token", token.Tokens[t.token[t.peekCount].Type()])
 	return t.token[t.peekCount]
 }
 
@@ -68,47 +69,47 @@ func (t *Tree) backup() {
 
 // backup2 backs the input stream up two tokens.
 // The zeroth token is already there.
-func (t *Tree) backup2(t1 token) {
+func (t *Tree) backup2(t1 token.Token) {
 	t.token[1] = t1
 	t.peekCount = 2
 }
 
 // backup3 backs the input stream up three tokens
 // The zeroth token is already there.
-func (t *Tree) backup3(t2, t1 token) { // Reverse order: we're pushing back.
+func (t *Tree) backup3(t2, t1 token.Token) { // Reverse order: we're pushing back.
 	t.token[1] = t1
 	t.token[2] = t2
 	t.peekCount = 3
 }
 
 // peek returns but does not consume the next token.
-func (t *Tree) peek() token {
+func (t *Tree) peek() token.Token {
 	if t.peekCount > 0 {
 		return t.token[t.peekCount-1]
 	}
 	t.peekCount += 1
 	t.token[0] = t.lex.nextToken()
-	fmt.Println("Peeking ", tokens[t.token[0].typ])
+	fmt.Println("Peeking ", token.Tokens[t.token[0].Type()])
 	return t.token[0]
 }
 
 // nextNonSpace returns the next non-space token.
-func (t *Tree) nextNonSpace() (tok token) {
+func (t *Tree) nextNonSpace() (tok token.Token) {
 	for {
 		tok = t.next()
-		if tok.typ != WHITESPACE {
+		if tok.Type() != token.WHITESPACE {
 			break
 		}
 	}
-	fmt.Println("next non space token", tokens[tok.typ])
+	fmt.Println("next non space token", token.Tokens[tok.Type()])
 	return tok
 }
 
 // peekNonSpace returns but does not consume the next non-space token.
-func (t *Tree) peekNonSpace() (tok token) {
+func (t *Tree) peekNonSpace() (tok token.Token) {
 	for {
 		tok = t.next()
-		if tok.typ != WHITESPACE {
+		if tok.Type() != token.WHITESPACE {
 			break
 		}
 	}
@@ -130,27 +131,27 @@ func New(name string, funcs ...map[string]interface{}) *Tree {
 // ErrorContext returns a textual representation of the location of the node in the input text.
 // The receiver is only used when the node does not have a pointer to the tree inside,
 // which can occur in old code.
-func (t *Tree) ErrorContext(n Node) (location, context string) {
-	pos := int(n.Position())
-	tree := n.tree()
-	if tree == nil {
-		tree = t
-	}
-	text := tree.text[:pos]
-	byteNum := strings.LastIndex(text, "\n")
-	if byteNum == -1 {
-		byteNum = pos // On first line.
-	} else {
-		byteNum++ // After the newline.
-		byteNum = pos - byteNum
-	}
-	lineNum := 1 + strings.Count(text, "\n")
-	context = n.String()
-	if len(context) > 20 {
-		context = fmt.Sprintf("%.20s...", context)
-	}
-	return fmt.Sprintf("%s:%d:%d", tree.ParseName, lineNum, byteNum), context
-}
+// func (t *Tree) ErrorContext(n ast.Node) (location, context string) {
+// 	pos := int(n.Position())
+// 	tree := n.tree()
+// 	if tree == nil {
+// 		tree = t
+// 	}
+// 	text := tree.text[:pos]
+// 	byteNum := strings.LastIndex(text, "\n")
+// 	if byteNum == -1 {
+// 		byteNum = pos // On first line.
+// 	} else {
+// 		byteNum++ // After the newline.
+// 		byteNum = pos - byteNum
+// 	}
+// 	lineNum := 1 + strings.Count(text, "\n")
+// 	context = n.String()
+// 	if len(context) > 20 {
+// 		context = fmt.Sprintf("%.20s...", context)
+// 	}
+// 	return fmt.Sprintf("%s:%d:%d", tree.ParseName, lineNum, byteNum), context
+// }
 
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(format string, args ...interface{}) {
@@ -165,25 +166,25 @@ func (t *Tree) error(err error) {
 }
 
 // expect consumes the next token and guarantees it has the required type.
-func (t *Tree) expect(expected tokenType, context string) token {
+func (t *Tree) expect(expected token.TokenType, context string) token.Token {
 	token := t.nextNonSpace()
-	if token.typ != expected {
+	if token.Type() != expected {
 		t.unexpected(token, context)
 	}
 	return token
 }
 
 // expectOneOf consumes the next token and guarantees it has one of the required types.
-func (t *Tree) expectOneOf(expected1, expected2 tokenType, context string) token {
+func (t *Tree) expectOneOf(expected1, expected2 token.TokenType, context string) token.Token {
 	token := t.nextNonSpace()
-	if token.typ != expected1 && token.typ != expected2 {
+	if token.Type() != expected1 && token.Type() != expected2 {
 		t.unexpected(token, context)
 	}
 	return token
 }
 
 // unexpected complains about the token and terminates processing.
-func (t *Tree) unexpected(token token, context string) {
+func (t *Tree) unexpected(token token.Token, context string) {
 	t.errorf("unexpected %s in %s", token, context)
 }
 
@@ -249,11 +250,11 @@ func (t *Tree) add() {
 }
 
 // IsEmptyTree reports whether this tree (node) is empty of everything but space.
-func IsEmptyTree(n Node) bool {
+func IsEmptyTree(n ast.Node) bool {
 	switch n := n.(type) {
 	case nil:
 		return true
-	case *ListNode:
+	case *ast.ListNode:
 		for _, node := range n.Nodes {
 			if !IsEmptyTree(node) {
 				return false
@@ -269,123 +270,124 @@ func IsEmptyTree(n Node) bool {
 // parse is the top-level parser for a template, essentially the same
 // as itemList except it also parses {{define}} actions.
 // It runs to EOF.
-func (t *Tree) parse() (next Node) {
-	t.Root = t.newList(t.peek().pos)
+func (t *Tree) parse() (next ast.Node) {
+	pTok := t.peek()
+	t.Root = ast.NewList(pTok.Pos())
 	
-	for tok := t.peek(); tok.typ != EOF; {
-		fmt.Println("loop iteration with token", tokens[tok.typ])
+	for tok := t.peek(); tok.Type() != token.EOF; {
+		fmt.Println("loop iteration with token", token.Tokens[tok.Type()])
 		n := t.parseStatement()
 		if n == nil {
 			break
 		}
-		t.Root.append(n)
+		t.Root.Append(n)
 	}
 	return nil
 }
 
-func (t *Tree) parseStatement() Node {
+func (t *Tree) parseStatement() ast.Node {
 	fmt.Println("parse statement")
 	const context = "statement"
 
-	token := t.nextNonSpace();
-	fmt.Println(token.val)
+	tok := t.nextNonSpace();
+	fmt.Println(tok.Val())
 
-	switch token.typ {
-	case LET:
-		return t.parseLetExpr(token.pos)
-	case FN:
-		return t.parseFuncExpr(token.pos)
+	switch tok.Type() {
+	case token.LET:
+		return t.parseLetExpr(tok.Pos())
+	case token.FN:
+		return t.parseFuncExpr(tok.Pos())
 	}
 
 	return nil
 }
 
-func (t *Tree) parseLetExpr(pos int) Node {
+func (t *Tree) parseLetExpr(pos int) ast.Node {
 	fmt.Println("parse let")
 	const context = "let statement"
 
-	var defns []*DefnNode
+	var defns []*ast.DefnNode
 
 	for {
 		defnNode := t.parseDefn()
 		defns = append(defns, defnNode)
-		if next := t.peekNonSpace(); next.val != "," {
+		if next := t.peekNonSpace(); next.Val() != "," {
 			break
 		}
 	}
 
-	t.expect(IN, context)
+	t.expect(token.IN, context)
 
-	return t.newLetExpr(pos, defns, t.parseExpr());
+	return ast.NewLetExpr(pos, defns, t.parseExpr());
 }
 
-func (t *Tree) parseDefn() *DefnNode {
+func (t *Tree) parseDefn() *ast.DefnNode {
 	fmt.Println("parse DEFN")
 	const context = "definition"
 
-	iden := t.expect(IDENT, context);
-	fmt.Println("variable name", iden.val)
+	iden := t.expect(token.IDENT, context);
+	fmt.Println("variable name", iden.Val())
 
-	t.expect(ASSIGN, context)
+	t.expect(token.ASSIGN, context)
 
 	exprNode := t.parseExpr()
 
-	return t.newDefinition(iden.pos, iden.val, exprNode)
+	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
 }
 
-func (t *Tree) parseFuncExpr(pos int) Node {
+func (t *Tree) parseFuncExpr(pos int) ast.Node {
 	const context = "function expression"
 
-	token := t.expectOneOf(LPAREN, IDENT, context)
+	tok := t.expectOneOf(token.LPAREN, token.IDENT, context)
 
 	var params []string
-	if token.typ == LPAREN {
+	if tok.Type() == token.LPAREN {
 		for {
-			param := t.expect(IDENT, context)
-			params = append(params, param.val)
-			if next := t.peekNonSpace(); next.val != "," {
+			param := t.expect(token.IDENT, context)
+			params = append(params, param.Val())
+			if next := t.peekNonSpace(); next.Val() != "," {
 				break
 			}
 		}
-		t.expect(RPAREN, context)
+		t.expect(token.RPAREN, context)
 	} else {
-		params = append(params, token.val)
+		params = append(params, tok.Val())
 	}
 
-	t.expect(ARROW, context)
+	t.expect(token.ARROW, context)
 	body := t.parseExpr()
 
-	return t.newFunctionExpression(pos, params, body)
+	return ast.NewFunctionExpression(pos, params, body)
 }
 
-func (t *Tree) parseExpr() *ExprNode {
+func (t *Tree) parseExpr() *ast.ExprNode {
 	fmt.Println("parse expression")
 	const context = "expression"
 
-	switch token := t.nextNonSpace(); token.typ {
-	case ILLEGAL:
-		t.errorf("%s", token.val)
-	case BOOLEAN:
-		boolean := t.newBool(token.pos, token.val == "True")
-		return t.newExpression(boolean)
-	case STRING:
-		s, err := strconv.Unquote(token.val)
+	switch tok := t.nextNonSpace(); tok.Type() {
+	case token.ILLEGAL:
+		t.errorf("%s", tok.Val())
+	case token.BOOLEAN:
+		boolean := ast.NewBool(tok.Pos(), tok.Val() == "True")
+		return ast.NewExpression(boolean)
+	case token.STRING:
+		s, err := strconv.Unquote(tok.Val())
 		if err != nil {
 			t.error(err)
 		}
-		return t.newExpression(t.newString(token.pos, token.val, s))
-	case INT:
-		number, err := t.newNumber(token.pos, token.val, token.typ)
+		return ast.NewExpression(ast.NewString(tok.Pos(), tok.Val(), s))
+	case token.INT:
+		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
-		return t.newExpression(number)
-	case FLOAT:
-		number, err := t.newNumber(token.pos, token.val, token.typ)
+		return ast.NewExpression(number)
+	case token.FLOAT:
+		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
-		return t.newExpression(number)
+		return ast.NewExpression(number)
 	}
 	t.backup()
 	return nil
@@ -412,8 +414,8 @@ func (t *Tree) popVars(n int) {
 
 // useVar returns a node for a variable reference. It errors if the
 // variable is not defined.
-func (t *Tree) useVar(pos int, name string) Node {
-	v := t.newVariable(pos, name)
+func (t *Tree) useVar(pos int, name string) ast.Node {
+	v := ast.NewVariable(pos, name)
 	for _, varName := range t.vars {
 		if varName == v.Ident {
 			return v
