@@ -51,14 +51,11 @@ func Parse(name, text, leftDelim, rightDelim string, funcs ...map[string]interfa
 
 // next returns the next token.
 func (t *Tree) next() token.Token {
-	fmt.Println("peekCount in next", t.peekCount);
 	if t.peekCount > 0 {
 		t.peekCount--
 	} else {
 		t.token[0] = t.lex.nextToken()
-		fmt.Println("Next Token", token.Tokens[t.token[0].Type()])
 	}
-	fmt.Println("Next Token", token.Tokens[t.token[t.peekCount].Type()])
 	return t.token[t.peekCount]
 }
 
@@ -89,7 +86,6 @@ func (t *Tree) peek() token.Token {
 	}
 	t.peekCount += 1
 	t.token[0] = t.lex.nextToken()
-	fmt.Println("Peeking ", token.Tokens[t.token[0].Type()])
 	return t.token[0]
 }
 
@@ -101,7 +97,6 @@ func (t *Tree) nextNonSpace() (tok token.Token) {
 			break
 		}
 	}
-	fmt.Println("next non space token", token.Tokens[tok.Type()])
 	return tok
 }
 
@@ -277,9 +272,11 @@ func (t *Tree) parse() (next ast.Node) {
 	for tok := t.peek(); tok.Type() != token.EOF; {
 		fmt.Println("loop iteration with token", token.Tokens[tok.Type()])
 		n := t.parseStatement()
+		fmt.Println("received", n)
 		if n == nil {
 			break
 		}
+		fmt.Println("appending", n)
 		t.Root.Append(n)
 	}
 	return nil
@@ -293,10 +290,18 @@ func (t *Tree) parseStatement() ast.Node {
 	fmt.Println(tok.Val())
 
 	switch tok.Type() {
+	case token.EOF:
+		fallthrough
+	case token.ILLEGAL:
+		return nil
 	case token.LET:
 		return t.parseLetExpr(tok.Pos())
 	case token.FN:
 		return t.parseFuncExpr(tok.Pos())
+	default:
+		fmt.Println("returning expression node")
+		t.backup()
+		return t.parseExpr()
 	}
 
 	return nil
@@ -363,8 +368,9 @@ func (t *Tree) parseFuncExpr(pos int) ast.Node {
 func (t *Tree) parseExpr() *ast.ExprNode {
 	fmt.Println("parse expression")
 	const context = "expression"
-
-	switch tok := t.nextNonSpace(); tok.Type() {
+	tok := t.nextNonSpace()
+	fmt.Println(token.Tokens[tok.Type()])
+	switch tok.Type() {
 	case token.ILLEGAL:
 		t.errorf("%s", tok.Val())
 	case token.BOOLEAN:
@@ -387,6 +393,7 @@ func (t *Tree) parseExpr() *ast.ExprNode {
 		if err != nil {
 			t.error(err)
 		}
+		fmt.Println("returning float node")
 		return ast.NewExpression(number)
 	}
 	t.backup()

@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"ast"
 	"token"
 	"flag"
 	"fmt"
@@ -41,7 +42,7 @@ func collectTokens(src, left, right string) (tokenList []string) {
 }
 
 func TestLetExpr(t *testing.T) {
-	src := "fn x -> True"
+	src := "2.43"
 
 	fmt.Println(collectTokens(src, "", ""))
 
@@ -50,5 +51,6 @@ func TestLetExpr(t *testing.T) {
 	if err != nil {
 		t.Errorf("Something went wrong", "let parse", err)
 	}
-	fmt.Println(tmpl.Root.String());
+
+	fmt.Println("parsed", tmpl.Root.String());
 }

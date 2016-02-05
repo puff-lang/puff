@@ -249,7 +249,7 @@ func NewNumber(pos int, text string, typ token.TokenType) (*NumberNode, error) {
 	return n, nil
 }
 
-func (n *NumberNode) String() string {
+func (n NumberNode) String() string {
 	return n.Text
 }
 
@@ -257,13 +257,13 @@ func (n *NumberNode) String() string {
 // 	return n.tr
 // }
 
-func (l *NumberNode) Position() int {
+func (l NumberNode) Position() int {
 	return l.Pos;
 }
 
-func (n *NumberNode) Copy() Node {
+func (n NumberNode) Copy() Node {
 	nn := new(NumberNode)
-	*nn = *n // Easy, fast, correct.
+	*nn =n // Easy, fast, correct.
 	return nn
 }
 
@@ -368,27 +368,27 @@ type ExprNode struct {
 	NodeType
 	Pos   int
 	// tr    *Tree
-	node  Node
+	Node  Node
 }
 
 func NewExpression(node Node) *ExprNode {
-	return &ExprNode{NodeType: NodeExpr, Pos: node.Position(), node: node}
+	return &ExprNode{NodeType: NodeExpr, Pos: node.Position(), Node: node}
 }
 
-func (v *ExprNode) String() string {
-	return v.node.String()
+func (v ExprNode) String() string {
+	return v.Node.String()
 }
 
 // func (v *ExprNode) tree() *Tree {
 // 	return v.tr
 // }
 
-func (l *ExprNode) Position() int {
+func (l ExprNode) Position() int {
 	return l.Pos;
 }
 
-func (v *ExprNode) Copy() Node {
-	return &ExprNode{NodeType: NodeExpr, node: v.node}
+func (v ExprNode) Copy() Node {
+	return &ExprNode{NodeType: NodeExpr, Node: v.Node}
 }
 
 type FnExprNode struct {
