@@ -1,20 +1,19 @@
 package parse
 
 import (
-	"token"
 	"ast"
 	"fmt"
 	"runtime"
 	"strconv"
+	"token"
 )
-
 
 // Tree is the representation of a single parsed template.
 type Tree struct {
-	Name      string    // name of the template represented by the tree.
-	ParseName string    // name of the top-level template during parsing, for error messages.
+	Name      string        // name of the template represented by the tree.
+	ParseName string        // name of the top-level template during parsing, for error messages.
 	Root      *ast.ListNode // top-level root of the tree.
-	text      string    // text parsed to create the template (or its parent)
+	text      string        // text parsed to create the template (or its parent)
 	// Parsing only; cleared after parse.
 	funcs     []map[string]interface{}
 	lex       *lexer
@@ -268,7 +267,7 @@ func IsEmptyTree(n ast.Node) bool {
 func (t *Tree) parse() (next ast.Node) {
 	pTok := t.peek()
 	t.Root = ast.NewList(pTok.Pos())
-	
+
 	for tok := t.peek(); tok.Type() != token.EOF; {
 		fmt.Println("loop iteration with token", token.Tokens[tok.Type()])
 		n := t.parseStatement()
@@ -286,7 +285,7 @@ func (t *Tree) parseStatement() ast.Node {
 	fmt.Println("parse statement")
 	const context = "statement"
 
-	tok := t.nextNonSpace();
+	tok := t.nextNonSpace()
 	fmt.Println(tok.Val())
 
 	switch tok.Type() {
@@ -323,14 +322,14 @@ func (t *Tree) parseLetExpr(pos int) ast.Node {
 
 	t.expect(token.IN, context)
 
-	return ast.NewLetExpr(pos, defns, t.parseExpr());
+	return ast.NewLetExpr(pos, defns, t.parseExpr())
 }
 
 func (t *Tree) parseDefn() *ast.DefnNode {
 	fmt.Println("parse DEFN")
 	const context = "definition"
 
-	iden := t.expect(token.IDENT, context);
+	iden := t.expect(token.IDENT, context)
 	fmt.Println("variable name", iden.Val())
 
 	t.expect(token.ASSIGN, context)
@@ -412,7 +411,6 @@ func (t *Tree) hasFunction(name string) bool {
 	}
 	return false
 }
-
 
 // popVars trims the variable list to the specified length
 func (t *Tree) popVars(n int) {

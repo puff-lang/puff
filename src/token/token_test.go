@@ -6,58 +6,58 @@ import (
 )
 
 var tokenName = [...]string{
-    ILLEGAL: "ILLEGAL",
+	ILLEGAL: "ILLEGAL",
 
-    EOF:     "EOF",
-    COMMENT: "COMMENT",
+	EOF:     "EOF",
+	COMMENT: "COMMENT",
 
-    IDENT:  "IDENT",
-    INT:    "INT",
-    BOOLEAN:"BOOL",
-    FLOAT:  "FLOAT",
-    CHAR:   "CHAR",
-    STRING: "STRING",
+	IDENT:   "IDENT",
+	INT:     "INT",
+	BOOLEAN: "BOOL",
+	FLOAT:   "FLOAT",
+	CHAR:    "CHAR",
+	STRING:  "STRING",
 
-    ASSIGN: "=",
+	ASSIGN: "=",
 
-    ADD: "+",
-    SUB: "-",
-    MUL: "*",
-    QUO: "/",
-    REM: "%",
+	ADD: "+",
+	SUB: "-",
+	MUL: "*",
+	QUO: "/",
+	REM: "%",
 
-    AND:     "&",
-    OR:      "|",
-    XOR:     "^",
-    SHL:     "<<",
-    SHR:     ">>",
+	AND: "&",
+	OR:  "|",
+	XOR: "^",
+	SHL: "<<",
+	SHR: ">>",
 
-    LAND:  "&&",
-    LOR:   "||",
+	LAND: "&&",
+	LOR:  "||",
 
-    EQL:    "==",
-    LSS:    "<",
-    GTR:    ">",
-    NOT:    "!",
+	EQL: "==",
+	LSS: "<",
+	GTR: ">",
+	NOT: "!",
 
-    LPAREN: "(",
-    LBRACK: "[",
-    LBRACE: "{",
-    COMMA:  ",",
-    PERIOD: ".",
+	LPAREN: "(",
+	LBRACK: "[",
+	LBRACE: "{",
+	COMMA:  ",",
+	PERIOD: ".",
 
-    RPAREN:    ")",
-    RBRACK:    "]",
-    RBRACE:    "}",
-    SEMICOLON: ";",
-    COLON:     ":",
+	RPAREN:    ")",
+	RBRACK:    "]",
+	RBRACE:    "}",
+	SEMICOLON: ";",
+	COLON:     ":",
 
-    FN: "fn",
-    LET:  "let",
-    TYPE: "type",
-    DATA: "data",
+	FN:   "fn",
+	LET:  "let",
+	TYPE: "type",
+	DATA: "data",
 
-    WHITESPACE: " \t\r\n",
+	WHITESPACE: " \t\r\n",
 }
 
 func (i tokenType) String() string {
@@ -69,20 +69,20 @@ func (i tokenType) String() string {
 }
 
 type lexTest struct {
-	name  string
-	input string
+	name   string
+	input  string
 	tokens []token
 }
 
 var (
-	tEOF        = token{EOF, 0, ""}
-	tLParen     = token{LPAREN, 0, "("}
-	tRParen     = token{RPAREN, 0, ")"}
+	tEOF    = token{EOF, 0, ""}
+	tLParen = token{LPAREN, 0, "("}
+	tRParen = token{RPAREN, 0, ")"}
 )
 
 var lexTests = []lexTest{
 	{"empty", "", []token{tEOF}},
-	{"number", "2", []token{{INT, 0, "2"}, 	token{EOF, 0, ""}}},
+	{"number", "2", []token{{INT, 0, "2"}, token{EOF, 0, ""}}},
 	{"add", "2 + 2", []token{
 		{INT, 0, "2"},
 		{ADD, 0, "+"},

@@ -1,9 +1,9 @@
 package token
 
 type Token struct {
-    typ TokenType
-    pos int
-    val string
+	typ TokenType
+	pos int
+	val string
 }
 
 type TokenType int
@@ -13,136 +13,134 @@ const (
 	ILLEGAL TokenType = iota
 	EOF
 	COMMENT
-    WHITESPACE
+	WHITESPACE
 
-	IDENT  // main
-    INT    // 12345
-    BOOLEAN // True
-    FLOAT  // 123.45
-    CHAR   // 'a'
-    STRING // "abc" 
+	IDENT   // main
+	INT     // 12345
+	BOOLEAN // True
+	FLOAT   // 123.45
+	CHAR    // 'a'
+	STRING  // "abc"
 
-    ASSIGN // =
+	ASSIGN // =
 
-    ADD // +
-    SUB // -
-    MUL // *
-    QUO // /
-    REM // %
+	ADD // +
+	SUB // -
+	MUL // *
+	QUO // /
+	REM // %
 
-    AND     // &
-    OR      // |
-    XOR     // ^
-    SHL     // <<
-    SHR     // >>
+	AND // &
+	OR  // |
+	XOR // ^
+	SHL // <<
+	SHR // >>
 
-    LAND  // &&
-    LOR   // ||
+	LAND // &&
+	LOR  // ||
 
-    EQL    // ==
-    LSS    // <
-    GTR    // >
-    NOT    // !
+	EQL // ==
+	LSS // <
+	GTR // >
+	NOT // !
 
-    LPAREN // (
-    LBRACK // [
-    LBRACE // {
-    COMMA  // ,
-    PERIOD // .
+	LPAREN // (
+	LBRACK // [
+	LBRACE // {
+	COMMA  // ,
+	PERIOD // .
 
-    RPAREN    // )
-    RBRACK    // ]
-    RBRACE    // }
-    SEMICOLON // ;
-    COLON     // :
-    ARROW     // ->
+	RPAREN    // )
+	RBRACK    // ]
+	RBRACE    // }
+	SEMICOLON // ;
+	COLON     // :
+	ARROW     // ->
 
-    Keyword  // Delimiter for keywords
-    FN
-    LET
-    IN
-    TYPE
-    DATA
+	Keyword // Delimiter for keywords
+	FN
+	LET
+	IN
+	TYPE
+	DATA
 )
 
-
 var Tokens = [...]string{
-    ILLEGAL: "ILLEGAL",
+	ILLEGAL: "ILLEGAL",
 
-    EOF:     "EOF",
-    COMMENT: "COMMENT",
+	EOF:     "EOF",
+	COMMENT: "COMMENT",
 
-    IDENT:  "IDENT",
-    INT:    "INT",
-    BOOLEAN:"BOOL",
-    FLOAT:  "FLOAT",
-    CHAR:   "CHAR",
-    STRING: "STRING",
+	IDENT:   "IDENT",
+	INT:     "INT",
+	BOOLEAN: "BOOL",
+	FLOAT:   "FLOAT",
+	CHAR:    "CHAR",
+	STRING:  "STRING",
 
-    ASSIGN: "=",
+	ASSIGN: "=",
 
-    ADD: "+",
-    SUB: "-",
-    MUL: "*",
-    QUO: "/",
-    REM: "%",
+	ADD: "+",
+	SUB: "-",
+	MUL: "*",
+	QUO: "/",
+	REM: "%",
 
-    AND:     "&",
-    OR:      "|",
-    XOR:     "^",
-    SHL:     "<<",
-    SHR:     ">>",
+	AND: "&",
+	OR:  "|",
+	XOR: "^",
+	SHL: "<<",
+	SHR: ">>",
 
-    LAND:  "&&",
-    LOR:   "||",
+	LAND: "&&",
+	LOR:  "||",
 
-    EQL:    "==",
-    LSS:    "<",
-    GTR:    ">",
-    NOT:    "!",
+	EQL: "==",
+	LSS: "<",
+	GTR: ">",
+	NOT: "!",
 
-    LPAREN: "(",
-    LBRACK: "[",
-    LBRACE: "{",
-    COMMA:  ",",
-    PERIOD: ".",
+	LPAREN: "(",
+	LBRACK: "[",
+	LBRACE: "{",
+	COMMA:  ",",
+	PERIOD: ".",
 
-    RPAREN:    ")",
-    RBRACK:    "]",
-    RBRACE:    "}",
-    SEMICOLON: ";",
-    COLON:     ":",
+	RPAREN:    ")",
+	RBRACK:    "]",
+	RBRACE:    "}",
+	SEMICOLON: ";",
+	COLON:     ":",
 
-    FN:   "fn",
-    LET:  "let",
-    IN:   "in",
-    TYPE: "type",
-    DATA: "data",
+	FN:   "fn",
+	LET:  "let",
+	IN:   "in",
+	TYPE: "type",
+	DATA: "data",
 
-    WHITESPACE: " \t\r\n",
+	WHITESPACE: " \t\r\n",
 }
 
-var Keywords = map[string]TokenType {
-    "fn": FN,
-    "let": LET,
-    "in": IN,
-    "type": TYPE,
-    "data": DATA,
+var Keywords = map[string]TokenType{
+	"fn":   FN,
+	"let":  LET,
+	"in":   IN,
+	"type": TYPE,
+	"data": DATA,
 }
-
 
 func NewToken(typ TokenType, pos int, val string) Token {
-    return Token{typ, pos, val}
+	return Token{typ, pos, val}
 }
 
 func (t *Token) Pos() int {
-    return t.pos
+	return t.pos
 }
 
 func (t *Token) Type() TokenType {
-    return t.typ
+	return t.typ
 }
 
 func (t *Token) Val() string {
-    return t.val
+	return t.val
 }

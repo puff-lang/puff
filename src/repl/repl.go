@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"bufio"
-	"io"
-	"os"
 	"compile"
+	"fmt"
+	"io"
 	"llvm.org/llvm/bindings/go/llvm"
+	"os"
 )
 
 func MainLoop(module llvm.Module, jit llmv.ExecutionEngine) {

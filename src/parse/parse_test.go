@@ -2,20 +2,19 @@ package parse
 
 import (
 	"ast"
-	"token"
 	"flag"
 	"fmt"
 	"testing"
+	"token"
 )
 
 var debug = flag.Bool("debug", false, "show the errors produced by the main tests")
 
 type numberTest struct {
-	text     string
-	isInt    bool
-	isFloat  bool
+	text    string
+	isInt   bool
+	isFloat bool
 }
-
 
 var numberTests = []numberTest{
 	// basics
@@ -52,5 +51,5 @@ func TestLetExpr(t *testing.T) {
 		t.Errorf("Something went wrong", "let parse", err)
 	}
 
-	fmt.Println("parsed", tmpl.Root.String());
+	fmt.Println("parsed", tmpl.Root.String())
 }

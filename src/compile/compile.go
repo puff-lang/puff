@@ -1,9 +1,9 @@
 package compile
 
 import (
-	"parse"
 	"fmt"
 	"llvm.org/llvm/bindings/go/llvm"
+	"parse"
 )
 
 var builtins = map[string]interface{}{

@@ -1,11 +1,11 @@
 package ast
 
 import (
-	"token"
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
-	"fmt"
+	"token"
 )
 
 // A Node is an element in the parse tree. The interface is trivial.
@@ -42,12 +42,12 @@ func (t NodeType) Type() NodeType {
 }
 
 const (
-	NodeIdentifier  NodeType = iota // An identifier; always a function name.
-	NodeBool                        // A boolean constant.
-	NodeList                        // A list of Nodes.
-	NodeNumber                      // A numerical constant.
-	NodeString                      // A string constant.
-	NodeVariable                    // A $ variable.
+	NodeIdentifier NodeType = iota // An identifier; always a function name.
+	NodeBool                       // A boolean constant.
+	NodeList                       // A list of Nodes.
+	NodeNumber                     // A numerical constant.
+	NodeString                     // A string constant.
+	NodeVariable                   // A $ variable.
 
 	NodeLet
 	NodeDefn
@@ -60,7 +60,7 @@ const (
 // ListNode holds a sequence of nodes.
 type ListNode struct {
 	NodeType
-	Pos   int
+	Pos int
 	// tr    *Tree
 	Nodes []Node // The element nodes in lexical order.
 }
@@ -78,7 +78,7 @@ func (l *ListNode) Append(n Node) {
 // }
 
 func (l *ListNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (l *ListNode) String() string {
@@ -107,7 +107,7 @@ func (l *ListNode) Copy() Node {
 // StringNode holds a string constant. The value has been "unquoted".
 type StringNode struct {
 	NodeType
-	Pos    int
+	Pos int
 	// tr     *Tree
 	Quoted string // The original text of the string, with quotes.
 	Text   string // The string, after quote processing.
@@ -126,7 +126,7 @@ func (s *StringNode) String() string {
 // }
 
 func (l *StringNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (s *StringNode) Copy() Node {
@@ -136,7 +136,7 @@ func (s *StringNode) Copy() Node {
 // BoolNode holds a boolean constant.
 type BoolNode struct {
 	NodeType
-	Pos  int
+	Pos int
 	// tr   *Tree
 	True bool // The value of the boolean constant.
 }
@@ -157,28 +157,27 @@ func (b *BoolNode) String() string {
 // }
 
 func (l *BoolNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (b *BoolNode) Copy() Node {
 	return NewBool(b.Pos, b.True)
 }
 
-
 // NumberNode holds a number: signed or unsigned integer, float, or complex.
 // The value is parsed and stored under all the types that can represent the value.
 // This simulates in a small amount of code the behavior of Go's ideal constants.
 type NumberNode struct {
 	NodeType
-	Pos        int
+	Pos int
 	// tr         *Tree
-	IsInt      bool       // Number has an integral value.
-	IsUint     bool       // Number has an unsigned integral value.
-	IsFloat    bool       // Number has a floating-point value.
-	Int64      int64      // The signed integer value.
-	Uint64     uint64     // The unsigned integer value.
-	Float64    float64    // The floating-point value.
-	Text       string     // The original textual representation from the input.
+	IsInt   bool    // Number has an integral value.
+	IsUint  bool    // Number has an unsigned integral value.
+	IsFloat bool    // Number has a floating-point value.
+	Int64   int64   // The signed integer value.
+	Uint64  uint64  // The unsigned integer value.
+	Float64 float64 // The floating-point value.
+	Text    string  // The original textual representation from the input.
 }
 
 func NewNumber(pos int, text string, typ token.TokenType) (*NumberNode, error) {
@@ -258,20 +257,19 @@ func (n NumberNode) String() string {
 // }
 
 func (l NumberNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (n NumberNode) Copy() Node {
 	nn := new(NumberNode)
-	*nn =n // Easy, fast, correct.
+	*nn = n // Easy, fast, correct.
 	return nn
 }
-
 
 // VariableNode holds a variable name.
 type VariableNode struct {
 	NodeType
-	Pos   int
+	Pos int
 	// tr    *Tree
 	Ident string // Variable name.
 }
@@ -289,18 +287,17 @@ func (v *VariableNode) String() string {
 // }
 
 func (l *VariableNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (v *VariableNode) Copy() Node {
 	return &VariableNode{NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
 }
 
-
 // LetNode represents let defns in expr
 type LetNode struct {
 	NodeType
-	Pos   int
+	Pos int
 	// tr    *Tree
 	Defns []*DefnNode
 	Expr  *ExprNode
@@ -327,7 +324,7 @@ func (v *LetNode) String() string {
 // }
 
 func (l *LetNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (v *LetNode) Copy() Node {
@@ -337,10 +334,10 @@ func (v *LetNode) Copy() Node {
 // DefnNode represents a variable definition
 type DefnNode struct {
 	NodeType
-	Pos   int
+	Pos int
 	// tr    *Tree
-	Var   string
-	Expr  *ExprNode
+	Var  string
+	Expr *ExprNode
 }
 
 func NewDefinition(pos int, variable string, exprNode *ExprNode) *DefnNode {
@@ -356,7 +353,7 @@ func (v *DefnNode) String() string {
 // }
 
 func (l *DefnNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (v *DefnNode) Copy() Node {
@@ -366,9 +363,9 @@ func (v *DefnNode) Copy() Node {
 // Abstract node to represent an expression
 type ExprNode struct {
 	NodeType
-	Pos   int
+	Pos int
 	// tr    *Tree
-	Node  Node
+	Node Node
 }
 
 func NewExpression(node Node) *ExprNode {
@@ -384,7 +381,7 @@ func (v ExprNode) String() string {
 // }
 
 func (l ExprNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (v ExprNode) Copy() Node {
@@ -393,7 +390,7 @@ func (v ExprNode) Copy() Node {
 
 type FnExprNode struct {
 	NodeType
-	Pos    int
+	Pos int
 	// tr     *Tree
 	Params []string
 	Body   *ExprNode
@@ -421,7 +418,7 @@ func (v *FnExprNode) String() string {
 // }
 
 func (l *FnExprNode) Position() int {
-	return l.Pos;
+	return l.Pos
 }
 
 func (v *FnExprNode) Copy() Node {

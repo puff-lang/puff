@@ -1,8 +1,8 @@
 package compile
 
 import (
-	"fmt"
 	"ast"
+	"fmt"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 
