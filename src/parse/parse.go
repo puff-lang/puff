@@ -365,10 +365,10 @@ func (t *Tree) parseFuncExpr(pos int) ast.Node {
 	return ast.NewFunctionExpression(pos, params, body)
 }
 
-func (t *Tree) parseExpr() *ast.ExprNode {
+func (t *Tree) parseExpr() ast.ExprNode {
 	const context = "expression"
 
-	var retNode *ast.ExprNode
+	var retNode ast.ExprNode
 	tok := t.nextNonSpace()
 
 	switch tok.Type() {
@@ -376,26 +376,26 @@ func (t *Tree) parseExpr() *ast.ExprNode {
 		t.errorf("%s", tok.Val())
 	case token.BOOLEAN:
 		boolean := ast.NewBool(tok.Pos(), tok.Val() == "True")
-		retNode = ast.NewExpression(boolean)
+		retNode = boolean
 	case token.STRING:
 		s, err := strconv.Unquote(tok.Val())
 		if err != nil {
 			t.error(err)
 		}
-		retNode = ast.NewExpression(ast.NewString(tok.Pos(), tok.Val(), s))
+		retNode = ast.NewString(tok.Pos(), tok.Val(), s)
 	case token.INT:
 		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
-		retNode = ast.NewExpression(number)
+		retNode = number
 	case token.FLOAT:
 		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
 		fmt.Println("returning float node")
-		retNode = ast.NewExpression(number)
+		retNode = number
 	}
 
 	if retNode == nil {
@@ -414,7 +414,7 @@ func (t *Tree) parseExpr() *ast.ExprNode {
 	}
 }
 
-func (t *Tree) parseInfixExpr(left *ast.ExprNode) *ast.ExprNode {
+func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 	fmt.Println("trying to parse infix")
 	const context = "infix expression"
 
@@ -437,7 +437,7 @@ func (t *Tree) parseInfixExpr(left *ast.ExprNode) *ast.ExprNode {
 			t.errorf("expected expression after binary operator %s in %s", tok.Val(), context)
 		}
 		fmt.Println("returning binary expression")
-		return ast.NewExpression(ast.NewBinaryExpr(tok.Pos(), left, tok.Type(), right))
+		return ast.NewBinaryExpr(tok.Pos(), left, tok.Type(), right)
 	}
 
 	fmt.Println("No binary operator present")

@@ -27,6 +27,11 @@ type Node interface {
 // NodeType identifies the type of a parse tree node.
 type NodeType int
 
+type ExprNode interface {
+	Node
+	exprNode()
+}
+
 /*
 type Pos int
 
@@ -134,6 +139,8 @@ func (s *StringNode) Copy() Node {
 	return NewString(s.Pos, s.Quoted, s.Text)
 }
 
+func (*StringNode) exprNode() {}
+
 // BoolNode holds a boolean constant.
 type BoolNode struct {
 	NodeType
@@ -164,6 +171,8 @@ func (l *BoolNode) Position() int {
 func (b *BoolNode) Copy() Node {
 	return NewBool(b.Pos, b.True)
 }
+
+func (*BoolNode) exprNode() {}
 
 // NumberNode holds a number: signed or unsigned integer, float, or complex.
 // The value is parsed and stored under all the types that can represent the value.
@@ -267,6 +276,8 @@ func (n NumberNode) Copy() Node {
 	return nn
 }
 
+func (*NumberNode) exprNode() {}
+
 // VariableNode holds a variable name.
 type VariableNode struct {
 	NodeType
@@ -301,10 +312,10 @@ type LetNode struct {
 	Pos int
 	// tr    *Tree
 	Defns []*DefnNode
-	Expr  *ExprNode
+	Expr  ExprNode
 }
 
-func NewLetExpr(pos int, defns []*DefnNode, exprNode *ExprNode) *LetNode {
+func NewLetExpr(pos int, defns []*DefnNode, exprNode ExprNode) *LetNode {
 	return &LetNode{NodeType: NodeLet, Pos: pos, Defns: defns, Expr: exprNode}
 }
 
@@ -332,16 +343,18 @@ func (v *LetNode) Copy() Node {
 	return &LetNode{NodeType: NodeLet, Pos: v.Pos, Defns: v.Defns, Expr: v.Expr}
 }
 
+func (*LetNode) exprNode() {}
+
 // DefnNode represents a variable definition
 type DefnNode struct {
 	NodeType
 	Pos int
 	// tr    *Tree
 	Var  string
-	Expr *ExprNode
+	Expr ExprNode
 }
 
-func NewDefinition(pos int, variable string, exprNode *ExprNode) *DefnNode {
+func NewDefinition(pos int, variable string, exprNode ExprNode) *DefnNode {
 	return &DefnNode{NodeType: NodeDefn, Pos: pos, Var: variable, Expr: exprNode}
 }
 
@@ -361,43 +374,15 @@ func (v *DefnNode) Copy() Node {
 	return &DefnNode{NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
 }
 
-// Abstract node to represent an expression
-type ExprNode struct {
-	NodeType
-	Pos int
-	// tr    *Tree
-	Node Node
-}
-
-func NewExpression(node Node) *ExprNode {
-	return &ExprNode{NodeType: NodeExpr, Pos: node.Position(), Node: node}
-}
-
-func (v ExprNode) String() string {
-	return v.Node.String()
-}
-
-// func (v *ExprNode) tree() *Tree {
-// 	return v.tr
-// }
-
-func (l ExprNode) Position() int {
-	return l.Pos
-}
-
-func (v ExprNode) Copy() Node {
-	return &ExprNode{NodeType: NodeExpr, Node: v.Node}
-}
-
 type FnExprNode struct {
 	NodeType
 	Pos int
 	// tr     *Tree
 	Params []string
-	Body   *ExprNode
+	Body   ExprNode
 }
 
-func NewFunctionExpression(pos int, params []string, body *ExprNode) *FnExprNode {
+func NewFunctionExpression(pos int, params []string, body ExprNode) *FnExprNode {
 	return &FnExprNode{NodeType: NodeFnExpr, Params: params, Body: body}
 }
 
@@ -426,17 +411,19 @@ func (v *FnExprNode) Copy() Node {
 	return &FnExprNode{NodeType: NodeFnExpr, Params: v.Params, Body: v.Body}
 }
 
+func (*FnExprNode) exprNode() {}
+
 // Infix Binary expression
 type BinaryExprNode struct {
 	NodeType
 	Pos int
 	// tr     *Tree
-	Left    *ExprNode
-	Right   *ExprNode
+	Left    ExprNode
+	Right   ExprNode
 	Op      token.TokenType
 }
 
-func NewBinaryExpr(pos int, left *ExprNode, tokenType token.TokenType, right *ExprNode) *BinaryExprNode {
+func NewBinaryExpr(pos int, left ExprNode, tokenType token.TokenType, right ExprNode) *BinaryExprNode {
 	return &BinaryExprNode{NodeType: NodeBinaryExpr, Pos: pos, Left: left, Right: right, Op: tokenType}
 }
 
@@ -455,3 +442,5 @@ func (l *BinaryExprNode) Position() int {
 func (v *BinaryExprNode) Copy() Node {
 	return &BinaryExprNode{NodeType: NodeBinaryExpr, Pos: v.Pos, Left: v.Left, Right: v.Right, Op: v.Op}
 }
+
+func (*BinaryExprNode) exprNode() {}
