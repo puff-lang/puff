@@ -53,6 +53,7 @@ const (
 	NodeDefn
 	NodeExpr
 	NodeFnExpr
+	NodeBinaryExpr
 )
 
 // Nodes.
@@ -423,4 +424,34 @@ func (l *FnExprNode) Position() int {
 
 func (v *FnExprNode) Copy() Node {
 	return &FnExprNode{NodeType: NodeFnExpr, Params: v.Params, Body: v.Body}
+}
+
+// Infix Binary expression
+type BinaryExprNode struct {
+	NodeType
+	Pos int
+	// tr     *Tree
+	Left    *ExprNode
+	Right   *ExprNode
+	Op      token.TokenType
+}
+
+func NewBinaryExpr(pos int, left *ExprNode, tokenType token.TokenType, right *ExprNode) *BinaryExprNode {
+	return &BinaryExprNode{NodeType: NodeBinaryExpr, Pos: pos, Left: left, Right: right, Op: tokenType}
+}
+
+func (v *BinaryExprNode) String() string {
+	return v.Left.String() + " " + token.Tokens[v.Op] + " " + v.Right.String()
+}
+
+// func (v *FnExprNode) tree() *Tree {
+// 	return v.tr
+// }
+
+func (l *BinaryExprNode) Position() int {
+	return l.Pos
+}
+
+func (v *BinaryExprNode) Copy() Node {
+	return &BinaryExprNode{NodeType: NodeBinaryExpr, Pos: v.Pos, Left: v.Left, Right: v.Right, Op: v.Op}
 }

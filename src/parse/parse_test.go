@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"ast"
 	"flag"
 	"fmt"
 	"testing"
@@ -41,14 +40,14 @@ func collectTokens(src, left, right string) (tokenList []string) {
 }
 
 func TestLetExpr(t *testing.T) {
-	src := "2.43"
+	src := "let a = 2.43 - 3.1 in 3 + 2"
 
 	fmt.Println(collectTokens(src, "", ""))
 
 	tmpl, err := New("let expression test").Parse(src, "", "", make(map[string]*Tree), builtins)
 
 	if err != nil {
-		t.Errorf("Something went wrong", "let parse", err)
+		fmt.Println("!!! Something went wrong! !!!\n", err.Error())
 	}
 
 	fmt.Println("parsed", tmpl.Root.String())

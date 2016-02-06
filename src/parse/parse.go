@@ -150,7 +150,7 @@ func New(name string, funcs ...map[string]interface{}) *Tree {
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(format string, args ...interface{}) {
 	t.Root = nil
-	format = fmt.Sprintf("template: %s: %s", t.ParseName, format)
+	format = fmt.Sprintf("%s: %s", t.ParseName, format)
 	panic(fmt.Errorf(format, args...))
 }
 
@@ -178,8 +178,8 @@ func (t *Tree) expectOneOf(expected1, expected2 token.TokenType, context string)
 }
 
 // unexpected complains about the token and terminates processing.
-func (t *Tree) unexpected(token token.Token, context string) {
-	t.errorf("unexpected %s in %s", token, context)
+func (t *Tree) unexpected(tok token.Token, context string) {
+	t.errorf("unexpected %s in %s", token.Tokens[tok.Type()], context)
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
@@ -336,6 +336,7 @@ func (t *Tree) parseDefn() *ast.DefnNode {
 
 	exprNode := t.parseExpr()
 
+	fmt.Println("returning definition")
 	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
 }
 
@@ -365,36 +366,82 @@ func (t *Tree) parseFuncExpr(pos int) ast.Node {
 }
 
 func (t *Tree) parseExpr() *ast.ExprNode {
-	fmt.Println("parse expression")
 	const context = "expression"
+
+	var retNode *ast.ExprNode
 	tok := t.nextNonSpace()
-	fmt.Println(token.Tokens[tok.Type()])
+
 	switch tok.Type() {
 	case token.ILLEGAL:
 		t.errorf("%s", tok.Val())
 	case token.BOOLEAN:
 		boolean := ast.NewBool(tok.Pos(), tok.Val() == "True")
-		return ast.NewExpression(boolean)
+		retNode = ast.NewExpression(boolean)
 	case token.STRING:
 		s, err := strconv.Unquote(tok.Val())
 		if err != nil {
 			t.error(err)
 		}
-		return ast.NewExpression(ast.NewString(tok.Pos(), tok.Val(), s))
+		retNode = ast.NewExpression(ast.NewString(tok.Pos(), tok.Val(), s))
 	case token.INT:
 		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
-		return ast.NewExpression(number)
+		retNode = ast.NewExpression(number)
 	case token.FLOAT:
 		number, err := ast.NewNumber(tok.Pos(), tok.Val(), tok.Type())
 		if err != nil {
 			t.error(err)
 		}
 		fmt.Println("returning float node")
-		return ast.NewExpression(number)
+		retNode = ast.NewExpression(number)
 	}
+
+	if retNode == nil {
+		t.backup()
+		return nil
+	}
+
+	// Testing for infix expression
+	fmt.Println("testing for infix")
+	infixNode := t.parseInfixExpr(retNode)
+
+	if infixNode == nil {
+		return retNode
+	} else {
+		return infixNode
+	}
+}
+
+func (t *Tree) parseInfixExpr(left *ast.ExprNode) *ast.ExprNode {
+	fmt.Println("trying to parse infix")
+	const context = "infix expression"
+
+	tok := t.nextNonSpace()
+	fmt.Println(token.Tokens[tok.Type()])
+
+	switch tok.Type() {
+	// Binary operators
+	case token.ADD:
+		fallthrough
+	case token.SUB:
+		fallthrough
+	case token.MUL:
+		fallthrough
+	case token.QUO:
+		fallthrough
+	case token.REM:
+		right := t.parseExpr()
+		if right ==  nil {
+			t.errorf("expected expression after binary operator %s in %s", tok.Val(), context)
+		}
+		fmt.Println("returning binary expression")
+		return ast.NewExpression(ast.NewBinaryExpr(tok.Pos(), left, tok.Type(), right))
+	}
+
+	fmt.Println("No binary operator present")
+
 	t.backup()
 	return nil
 }
