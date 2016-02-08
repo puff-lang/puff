@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 type Token struct {
 	typ TokenType
 	pos int
@@ -143,4 +145,12 @@ func (t *Token) Type() TokenType {
 
 func (t *Token) Val() string {
 	return t.val
+}
+
+func (i TokenType) String() string {
+	s := Tokens[i]
+	if s == "" {
+		return fmt.Sprintf("token%d", int(i))
+	}
+	return s
 }
