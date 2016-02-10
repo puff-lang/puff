@@ -461,12 +461,13 @@ func (c *CommentNode) End() int {
 	 return (int(c.Position()) + len(c.Text)) 
 }
 func (c *CommentNode) String() string {
-	text := c.Text
-	if strings.Contains(text, "\n"){
-		text = "Block COMMENT:" + text
-	} else {
-		text = "Line COMMENT:" +text
-	}
-	return text 
+	// text := c.Text
+	// if strings.Contains(text, "\n"){
+	// 	text = "Block COMMENT:" + text
+	// } else {
+	// 	text = "Line COMMENT:" +text
+	// }
+	// return text 
+	return ""
 }
 

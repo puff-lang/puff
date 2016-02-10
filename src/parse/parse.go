@@ -400,6 +400,8 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		}
 		fmt.Println("returning float node")
 		retNode = number
+	case token.IDENT:
+		retNode = t.useVar(token.Pos(), token.Val())
 	}
 
 	if retNode == nil {
@@ -472,11 +474,16 @@ func (t *Tree) popVars(n int) {
 // variable is not defined.
 func (t *Tree) useVar(pos int, name string) ast.Node {
 	v := ast.NewVariable(pos, name)
-	for _, varName := range t.vars {
-		if varName == v.Ident {
-			return v
-		}
-	}
+	// for _, varName := range t.vars {
+	// 	if varName == v.Ident {
+	// 		return v
+	// 	}
+	// }
 	t.errorf("undefined variable %q", v.Ident[0])
 	return nil
+
+
+	// check if variable is in current scope chain
+	// if no then stop parsing and throw error
+	// else return a VariableNode
 }
