@@ -21,6 +21,8 @@ type Tree struct {
 	peekCount int
 	vars      []string // variables defined at the moment.
 	treeSet   map[string]*Tree
+
+
 }
 
 // Copy returns a copy of the Tree. Any parsing state is discarded.
@@ -293,6 +295,8 @@ func (t *Tree) parseStatement() ast.Node {
 		fallthrough
 	case token.ILLEGAL:
 		return nil
+	case token.COMMENT:
+		return ast.NewCommentNode(tok.Pos(),tok.Val())
 	case token.LET:
 		return t.parseLetExpr(tok.Pos())
 	case token.FN:

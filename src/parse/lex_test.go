@@ -114,6 +114,18 @@ var lexTests = []lexTest{
 		token.NewToken(token.STRING, 0, "\"hello\""),
 		tEOF,
 	}},
+	{"line comment use", "//here our first comment goes.\n ", []token.Token{
+		token.NewToken(token.COMMENT, 0, "//here our first comment goes."),
+		tEOF,
+	}},
+	{"block comment use", "/* here our first \n* comment\n* goes.\n */ \n let x = \"hello\"\n ", []token.Token{
+		token.NewToken(token.COMMENT, 0, "/* here our first \n* comment\n* goes.\n */"),
+		token.NewToken(token.LET, 0, "let"),
+		token.NewToken(token.IDENT, 0, "x"),
+		token.NewToken(token.ASSIGN, 0, "="),
+		token.NewToken(token.STRING, 0, "\"hello\""),
+		tEOF,
+	}},
 	{"function expression", "fn x -> x + 1", []token.Token{
 		token.NewToken(token.FN, 0, "fn"),
 		token.NewToken(token.IDENT, 0, "x"),
@@ -123,7 +135,7 @@ var lexTests = []lexTest{
 		token.NewToken(token.INT, 0, "1"),
 		tEOF,
 	}},
-	{"function expression assignment", "let yo = fn x -> x + 1", []token.Token{
+	{"function expression assignment", "\nlet yo = fn x -> x + 1", []token.Token{
 		token.NewToken(token.LET, 0, "let"),
 		token.NewToken(token.IDENT, 0, "yo"),
 		token.NewToken(token.ASSIGN, 0, "="),

@@ -59,6 +59,7 @@ const (
 	NodeExpr
 	NodeFnExpr
 	NodeBinaryExpr
+	NodeComment
 )
 
 // Nodes.
@@ -431,10 +432,6 @@ func (v *BinaryExprNode) String() string {
 	return v.Left.String() + " " + token.Tokens[v.Op] + " " + v.Right.String()
 }
 
-// func (v *FnExprNode) tree() *Tree {
-// 	return v.tr
-// }
-
 func (l *BinaryExprNode) Position() int {
 	return l.Pos
 }
@@ -444,3 +441,32 @@ func (v *BinaryExprNode) Copy() Node {
 }
 
 func (*BinaryExprNode) exprNode() {}
+
+
+type CommentNode struct {
+	NodeType
+	Pos int
+	Text string
+}
+func NewCommentNode(pos int, text string ) *CommentNode {
+	return &CommentNode{NodeType: NodeComment, Pos: pos, Text: text}	
+}
+func (c *CommentNode) Copy() Node {
+	return &CommentNode{NodeType: NodeComment, Pos: c.Pos, Text: c.Text}
+}
+func (c *CommentNode) Position() int {
+	 return c.Pos
+}
+func (c *CommentNode) End() int {
+	 return (int(c.Position()) + len(c.Text)) 
+}
+func (c *CommentNode) String() string {
+	text := c.Text
+	if strings.Contains(text, "\n"){
+		text = "Block COMMENT:" + text
+	} else {
+		text = "Line COMMENT:" +text
+	}
+	return text 
+}
+

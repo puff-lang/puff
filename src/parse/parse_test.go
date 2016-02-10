@@ -40,7 +40,7 @@ func collectTokens(src, left, right string) (tokenList []string) {
 }
 
 func TestLetExpr(t *testing.T) {
-	src := "let a = 2.43 - 3.1 in 3 + 2"
+	src := "/* segsag */\n let a = 2.43 - 3.1 in 3 + 2"
 
 	fmt.Println(collectTokens(src, "", ""))
 
