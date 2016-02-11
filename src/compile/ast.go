@@ -18,8 +18,21 @@ import (
 // 	return llvm.ConstFloat(llvm.FloatType, node.val)
 // }
 
-func compileExpr(node *ast.ExprNode, module llvm.Module) llvm.Value {
-	return compileNode(node.Node, module)
+func compileExpr(node interface{}, module llvm.Module) llvm.Value {
+	switch n := node.(type) {
+	// case *ast.LetNode:
+	// 	return compileLet(node)
+	// case *ast.FnExprNode:
+	// 	return compileFnExpr(node)
+	case *ast.NumberNode:
+		fmt.Println("compiling number")
+		return compileNumber(n)
+	case *ast.LetNode:
+		fmt.Println("compiling let expression")
+		return compileLet(n, module)
+	default:
+		return llvm.ConstFloat(llvm.FloatType(), 3)
+	}
 }
 
 func compileNumber(node *ast.NumberNode) llvm.Value {
@@ -36,9 +49,6 @@ func compileNode(node interface{}, module llvm.Module) llvm.Value {
 	// 	return compileLet(node)
 	// case *ast.FnExprNode:
 	// 	return compileFnExpr(node)
-	case *ast.NumberNode:
-		fmt.Println("compiling number")
-		return compileNumber(n)
 	case *ast.ExprNode:
 		fmt.Println("compiling expression")
 		return compileExpr(n, module)

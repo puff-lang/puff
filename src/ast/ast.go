@@ -285,6 +285,7 @@ type VariableNode struct {
 	Pos int
 	// tr    *Tree
 	Ident string // Variable name.
+	// Value *Node
 }
 
 func NewVariable(pos int, ident string) *VariableNode {
@@ -307,6 +308,11 @@ func (v *VariableNode) Copy() Node {
 	return &VariableNode{NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
 }
 
+
+func (v *VariableNode) exprNode() {}
+
+
+
 // LetNode represents let defns in expr
 type LetNode struct {
 	NodeType
@@ -324,7 +330,7 @@ func (v *LetNode) String() string {
 	s := "let "
 	for i, d := range v.Defns {
 		s += d.String()
-		if i > 0 && i < len(v.Defns) {
+		if i >= 0 && i < len(v.Defns) - 1 {
 			s += ", "
 		}
 	}
@@ -470,4 +476,76 @@ func (c *CommentNode) String() string {
 	// return text 
 	return ""
 }
+
+// A Scope maintains the set of named language entities declared
+// in the scope and a link to the immediately surrounding (outer)
+// scope.
+type Scope struct {
+	Outer *Scope
+	Objects map[string]*Object
+}
+// NewScope creates a new scope nested in the outer scope.
+func NewScope(outer *Scope) *Scope {
+	const num = 5 //Initial Scope Capacity
+	return &Scope{Outer: outer, Objects: make(map[string]*Object, num)}
+}
+// Lookup returns the object with the given name if it is found 
+//in scope s, otherwise it returns nil. Outer scopes are ignored
+func (s *Scope) Lookup(name string) *Object {
+	fmt.Println("Im in Lookup")
+	fmt.Println(s)
+	return s.Objects[name]
+}
+// Insert attempts to insert a named object obj into the scope s.
+// If the scope already contains an object alt with the same name,
+// Insert leaves the scope unchanged and returns alt. Otherwise
+// it inserts obj and returns nil.
+func (s *Scope) Insert(obj *Object) (alt *Object) {
+	if alt = s.Objects[obj.Name]; alt == nil {
+		s.Objects[obj.Name] = obj
+	}
+	return
+}
+func (s *Scope) String() string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "scope %p {", s)
+	if s != nil && len(s.Objects) > 0 {
+		fmt.Fprintln(&buf)
+		for _, obj := range s.Objects {
+			fmt.Fprintf(&buf, "\t %s\n", obj.Name)
+		}
+	}
+	fmt.Fprintf(&buf, "}\n")
+	return buf.String()
+}
+
+// Objects
+// An Object describes a named language entity such as a package,
+type Object struct{
+	//Kind token.IDENT
+	Name string
+	//Value *NumberNode
+}
+
+func NewObj( name string ) *Object {
+	// return &Object{Kind: kind, Name: name, Value: numNode}
+	return &Object{Name: name}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

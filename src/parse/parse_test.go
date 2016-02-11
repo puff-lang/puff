@@ -26,7 +26,7 @@ var parseTests = [] parseTest{
 	{"number", "-0", noError, ""},
 	{"number", "73", noError, "73"},
 	{"comment", "//This is comment \n  ", noError, ""},
-	{"LetExpr", "/* segsag */\n let a = 2.43 - 3.1 in 3 + 2", noError, "let a = 2.43 - 3.1 in 3 + 2"},
+	{"LetExpr","let a = 10, b = 5 in a + b", noError, "let a = 10, b = 5 in a + b"},
 }
 
 var builtins = map[string]interface{}{
@@ -67,6 +67,7 @@ func testParse(doCopy bool, t *testing.T) {
 
 func TestParse( t *testing.T) {
 	testParse(false, t)
+	fmt.Println("parsed")
 }
 
 

@@ -246,6 +246,9 @@ func lexExpr(l *lexer) LexFn {
 	case r == '+':
 		l.emit(token.ADD)
 		return lexStatement
+	case r == ',':
+		l.emit(token.COMMA)
+		return lexStatement
 	case r == '-':
 		n := l.next()
 		if n == '>' {

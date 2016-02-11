@@ -22,6 +22,9 @@ type Tree struct {
 	vars      []string // variables defined at the moment.
 	treeSet   map[string]*Tree
 
+	topScope *ast.Scope // Scope for Global Variables inside the file
+
+
 
 }
 
@@ -207,6 +210,7 @@ func (t *Tree) startParse(funcs []map[string]interface{}, lex *lexer, treeSet ma
 	t.vars = []string{"$"}
 	t.funcs = funcs
 	t.treeSet = treeSet
+	t.topScope = ast.NewScope(nil)
 }
 
 // stopParse terminates parsing.
@@ -316,17 +320,24 @@ func (t *Tree) parseLetExpr(pos int) ast.Node {
 
 	var defns []*ast.DefnNode
 
+	t.openScope()
+
 	for {
 		defnNode := t.parseDefn()
 		defns = append(defns, defnNode)
-		if next := t.peekNonSpace(); next.Val() != "," {
+		
+		next := t.peekNonSpace()
+		if next.Type() != token.COMMA {
 			break
 		}
+		t.nextNonSpace()
 	}
 
 	t.expect(token.IN, context)
 
-	return ast.NewLetExpr(pos, defns, t.parseExpr())
+	letNode := ast.NewLetExpr(pos, defns, t.parseExpr())
+	t.closeScope()
+	return letNode
 }
 
 func (t *Tree) parseDefn() *ast.DefnNode {
@@ -339,6 +350,16 @@ func (t *Tree) parseDefn() *ast.DefnNode {
 	t.expect(token.ASSIGN, context)
 
 	exprNode := t.parseExpr()
+
+	fmt.Println("Looking up variable",iden.Val())
+	fmt.Println(t.topScope)
+	//if found nil then create new Object in scope else it is already in the scope
+	if t.topScope.Lookup(iden.Val()) == nil { 
+		fmt.Println("Creating object")
+		obj := ast.NewObj(iden.Val())
+		fmt.Println("Inserting variable")
+		t.topScope.Insert(obj)
+	}		
 
 	fmt.Println("returning definition")
 	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
@@ -401,7 +422,8 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		fmt.Println("returning float node")
 		retNode = number
 	case token.IDENT:
-		retNode = t.useVar(token.Pos(), token.Val())
+		ident := t.useVar(tok.Pos(), tok.Val())
+		retNode = ident
 	}
 
 	if retNode == nil {
@@ -413,6 +435,7 @@ func (t *Tree) parseExpr() ast.ExprNode {
 	fmt.Println("testing for infix")
 	infixNode := t.parseInfixExpr(retNode)
 
+	fmt.Println("not a infix expr")
 	if infixNode == nil {
 		return retNode
 	} else {
@@ -472,18 +495,23 @@ func (t *Tree) popVars(n int) {
 
 // useVar returns a node for a variable reference. It errors if the
 // variable is not defined.
-func (t *Tree) useVar(pos int, name string) ast.Node {
-	v := ast.NewVariable(pos, name)
-	// for _, varName := range t.vars {
-	// 	if varName == v.Ident {
-	// 		return v
-	// 	}
-	// }
-	t.errorf("undefined variable %q", v.Ident[0])
+func (t *Tree) useVar(pos int, name string) ast.ExprNode {
+	
+
+	for s := t.topScope; s != nil; s = s.Outer {
+		if obj := s.Lookup(name); obj != nil {
+			v := ast.NewVariable(pos, name)
+			// v.Obj = obj
+			return v
+		}
+	}
+	t.errorf("undefined variable %q", name)
 	return nil
-
-
-	// check if variable is in current scope chain
-	// if no then stop parsing and throw error
-	// else return a VariableNode
+}
+//Scoping Support
+func  (t *Tree) openScope() {
+	t.topScope = ast.NewScope(t.topScope)
+}
+func (t *Tree) closeScope() {
+	t.topScope = t.topScope.Outer
 }
