@@ -4,6 +4,7 @@ import (
 	"ast"
 	"fmt"
 	"llvm.org/llvm/bindings/go/llvm"
+	"token"
 )
 
 // IRBuilder := GlobalContext.NewBuilder()
@@ -35,12 +36,36 @@ func compileExpr(node interface{}, module llvm.Module) llvm.Value {
 	}
 }
 
+func compileLet(node *ast.LetNode) llvm.Value {
+	// define vars
+	// compile expression
+}
+
 func compileNumber(node *ast.NumberNode) llvm.Value {
 	if node.IsFloat {
 		return llvm.ConstFloat(llvm.FloatType(), node.Float64)
 	}
 
 	return llvm.ConstFloat(llvm.FloatType(), node.Float64)
+}
+
+
+func compileBinaryExpr(node *ast.BinaryExprNode) llvm.Value {
+	left := compileExpr(node.left)
+	right := compileExpr(node.right)
+	operand := node.op
+	switch operand := token.Type {
+		case token.ADD:
+			return llvm.ConstAdd(left, right)
+		case token.SUB:
+			return llvm.ConstSub(left, right)
+		case token.MUL:
+			return llvm.ConstMul(left, right)
+		case token.QUO:
+			return llvm.ConstSDiv(left, right)
+		case token.REM:
+			return llvm.ConstSRem(left, right)
+	}
 }
 
 func compileNode(node interface{}, module llvm.Module) llvm.Value {

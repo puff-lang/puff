@@ -263,7 +263,6 @@ func lexExpr(l *lexer) LexFn {
 	case r == '\'':
 		return lexChar
 	}
-
 	return lexStatement
 }
 

@@ -57,6 +57,10 @@ var tokenName = [...]string{
 	token.TYPE: "type",
 	token.DATA: "data",
 
+	token.IF:	"if",
+	token.THEN: "then",
+	token.ELSE:	"else",
+
 	token.WHITESPACE: " \t\r\n",
 }
 
@@ -132,6 +136,17 @@ var lexTests = []lexTest{
 		token.NewToken(token.ARROW, 0, "->"),
 		token.NewToken(token.IDENT, 0, "x"),
 		token.NewToken(token.ADD, 0, "+"),
+		token.NewToken(token.INT, 0, "1"),
+		tEOF,
+	}},
+	{"if then else Block", "if x = 5 then 0 else 1", []token.Token{
+		token.NewToken(token.IF, 0, "if"),
+		token.NewToken(token.IDENT, 0, "x"),
+		token.NewToken(token.ASSIGN, 0, "="),
+		token.NewToken(token.INT, 0, "5"),
+		token.NewToken(token.THEN, 0, "then"),
+		token.NewToken(token.INT, 0, "0"),
+		token.NewToken(token.ELSE, 0, "else"),
 		token.NewToken(token.INT, 0, "1"),
 		tEOF,
 	}},

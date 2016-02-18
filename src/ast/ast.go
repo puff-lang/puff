@@ -59,6 +59,7 @@ const (
 	NodeExpr
 	NodeFnExpr
 	NodeBinaryExpr
+	NodeIf
 	NodeComment
 )
 
@@ -381,6 +382,7 @@ func (v *DefnNode) Copy() Node {
 	return &DefnNode{NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
 }
 
+
 type FnExprNode struct {
 	NodeType
 	Pos int
@@ -397,7 +399,7 @@ func (v *FnExprNode) String() string {
 	s := "fn ("
 	for i, d := range v.Params {
 		s += d
-		if i > 0 && i < len(v.Params) {
+		if i >= 0 && i < len(v.Params) -1 {
 			s += ", "
 		}
 	}
@@ -419,6 +421,9 @@ func (v *FnExprNode) Copy() Node {
 }
 
 func (*FnExprNode) exprNode() {}
+
+
+
 
 // Infix Binary expression
 type BinaryExprNode struct {
@@ -447,6 +452,39 @@ func (v *BinaryExprNode) Copy() Node {
 }
 
 func (*BinaryExprNode) exprNode() {}
+
+
+
+type IfNode struct{
+	NodeType
+	Pos int
+	Cond ExprNode
+	Then ExprNode
+	Else ExprNode
+}
+func (v *IfNode) exprNode() {}
+
+func NewIfNode(pos int, condStmt ExprNode, thenStmt ExprNode, elseStmt ExprNode) *IfNode{
+	return &IfNode{NodeType: NodeIf, Cond: condStmt, Then: thenStmt, Else: elseStmt}
+}
+
+func (v *IfNode) String() string {
+	s:= "if " + v.Cond.String() + " then " + v.Then.String()
+	if v.Else != nil {
+		s += " else " + v.Else.String()   	
+	}  
+	return s 
+}
+
+func  (v *IfNode) Position() int  {
+	return v.Pos
+}
+
+func (v *IfNode) Copy() Node {
+	return &IfNode{NodeType: NodeIf, Cond: v.Cond, Then: v.Then, Else: v.Then}
+}
+
+
 
 
 type CommentNode struct {
@@ -492,8 +530,6 @@ func NewScope(outer *Scope) *Scope {
 // Lookup returns the object with the given name if it is found 
 //in scope s, otherwise it returns nil. Outer scopes are ignored
 func (s *Scope) Lookup(name string) *Object {
-	fmt.Println("Im in Lookup")
-	fmt.Println(s)
 	return s.Objects[name]
 }
 // Insert attempts to insert a named object obj into the scope s.

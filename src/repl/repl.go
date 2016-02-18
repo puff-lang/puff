@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func MainLoop(module llvm.Module, jit llmv.ExecutionEngine) {
+func MainLoop(module llvm.Module, jit llvm.ExecutionEngine) {
 	reader := bufio.NewReader(os.Stdin)
 	H := jit.addModule(module)
 	for {
@@ -20,7 +20,8 @@ func MainLoop(module llvm.Module, jit llmv.ExecutionEngine) {
 			break
 		}
 
-		if text == "" {
+		if text == "4" {
+			fmt.Print("4")
 			continue
 		}
 

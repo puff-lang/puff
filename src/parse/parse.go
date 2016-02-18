@@ -341,53 +341,59 @@ func (t *Tree) parseLetExpr(pos int) ast.Node {
 }
 
 func (t *Tree) parseDefn() *ast.DefnNode {
-	fmt.Println("parse DEFN")
 	const context = "definition"
 
 	iden := t.expect(token.IDENT, context)
-	fmt.Println("variable name", iden.Val())
-
-	t.expect(token.ASSIGN, context)
-
-	exprNode := t.parseExpr()
-
-	fmt.Println("Looking up variable",iden.Val())
-	fmt.Println(t.topScope)
 	//if found nil then create new Object in scope else it is already in the scope
 	if t.topScope.Lookup(iden.Val()) == nil { 
-		fmt.Println("Creating object")
 		obj := ast.NewObj(iden.Val())
-		fmt.Println("Inserting variable")
 		t.topScope.Insert(obj)
-	}		
+	}
 
-	fmt.Println("returning definition")
+	t.expect(token.ASSIGN, context)
+	exprNode := t.parseExpr()
 	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
 }
 
+
 func (t *Tree) parseFuncExpr(pos int) ast.Node {
 	const context = "function expression"
-
+	t.openScope()
 	tok := t.expectOneOf(token.LPAREN, token.IDENT, context)
 
 	var params []string
 	if tok.Type() == token.LPAREN {
 		for {
 			param := t.expect(token.IDENT, context)
+			//if found nil then create new Object in scope else it is already in the scope
+			if t.topScope.Lookup(param.Val()) == nil { 
+				obj := ast.NewObj(param.Val())
+				t.topScope.Insert(obj)
+			}
+			fmt.Println(param.Val())
 			params = append(params, param.Val())
-			if next := t.peekNonSpace(); next.Val() != "," {
+			
+			if  next := t.peekNonSpace(); next.Type() != token.COMMA {
 				break
 			}
+			t.nextNonSpace()
 		}
 		t.expect(token.RPAREN, context)
+
 	} else {
-		params = append(params, tok.Val())
+		if t.topScope.Lookup(tok.Val()) == nil { 
+			obj := ast.NewObj(tok.Val())
+			t.topScope.Insert(obj)
+		}
+		fmt.Println(tok.Val())
+		params = append(params, tok.Val())		
 	}
 
 	t.expect(token.ARROW, context)
 	body := t.parseExpr()
-
-	return ast.NewFunctionExpression(pos, params, body)
+	tmpNode := ast.NewFunctionExpression(pos, params, body)
+	t.closeScope()
+	return tmpNode
 }
 
 func (t *Tree) parseExpr() ast.ExprNode {
@@ -424,6 +430,8 @@ func (t *Tree) parseExpr() ast.ExprNode {
 	case token.IDENT:
 		ident := t.useVar(tok.Pos(), tok.Val())
 		retNode = ident
+	case token.IF:
+		retNode = t.parseIfStmt(tok.Pos())
 	}
 
 	if retNode == nil {
@@ -473,6 +481,19 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 
 	t.backup()
 	return nil
+}
+
+func (t *Tree) parseIfStmt(pos int) *ast.IfNode {
+	const context = "If statement "
+	condNode := t.parseExpr()
+	t.expect(token.THEN, context)
+	thenNode := t.parseExpr()
+	tok := t.peek() 
+	if tok.Type() == token.ELSE{
+		t.expect(token.ELSE, context)
+		return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
+	}
+	return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
 }
 
 // hasFunction reports if a function name exists in the Tree's maps.

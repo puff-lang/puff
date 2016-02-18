@@ -65,6 +65,10 @@ const (
 	IN
 	TYPE
 	DATA
+
+	IF 		//if
+	THEN 	//then
+	ELSE	//else
 )
 
 var Tokens = [...]string{
@@ -121,6 +125,10 @@ var Tokens = [...]string{
 	DATA: "data",
 
 	WHITESPACE: " \t\r\n",
+
+	IF:		"if",
+	THEN: 	"then",
+	ELSE:	"else",
 }
 
 var Keywords = map[string]TokenType{
@@ -129,6 +137,9 @@ var Keywords = map[string]TokenType{
 	"in":   IN,
 	"type": TYPE,
 	"data": DATA,
+	"if":	IF,
+	"then":	THEN,
+	"else":	ELSE,
 }
 
 func NewToken(typ TokenType, pos int, val string) Token {

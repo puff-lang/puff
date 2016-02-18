@@ -21,13 +21,19 @@ const (
 )
 
 var parseTests = [] parseTest{
-	{"empty", "", noError, ""},
-	{"number", "0", noError, "0"},
-	{"number", "-0", noError, ""},
-	{"number", "73", noError, "73"},
-	{"comment", "//This is comment \n  ", noError, ""},
+    {"empty", "", noError, ""},
+    {"number", "0", noError, "0"},
+	{"number", "-0", noError, ""}, 
+	{"number", "73", noError, "73"},     
+	{"comment", "//This is comment\n ", noError, ""}, 
 	{"LetExpr","let a = 10, b = 5 in a + b", noError, "let a = 10, b = 5 in a + b"},
-}
+	{"FunExprs","fn (x, y, z) -> x + y + z", noError, "fn (x, y, z) -> x + y + z"},
+	{"FunExprs","fn x -> x + 1", noError, "fn (x) -> x + 1"}, 
+	{"If Statement", "if 10 then 0 else 1", noError, "if 10 then 0 else 1"}, 
+	{"Let with if", "let a = 2, b = 3 in if a then a + b else a -b", noError, "let a = 2, b = 3 in if a then a + b else a - b"},
+ 	{"if without else", "if 10 then 3", noError, "if 10 then 3"},
+ 	{"Nested if", "if 10 then if 2 then 3 else if 4 then 5", noError, "if 10 then if 2 then 3 else if 4 then 5"},
+ }
 
 var builtins = map[string]interface{}{
 	"printf": fmt.Sprintf,
@@ -69,29 +75,3 @@ func TestParse( t *testing.T) {
 	testParse(false, t)
 	fmt.Println("parsed")
 }
-
-
-// func collectTokens(src, left, right string) (tokenList []string) {
-// 	l := lex("testing", src, left, right)
-
-// 	for {
-// 		tok := l.nextToken()
-// 		tokenList = append(tokenList, token.Tokens[tok.Type()])
-// 		if tok.Type() == token.EOF || tok.Type() == token.ILLEGAL {
-// 			break
-// 		}
-// 	}
-// 	return
-// }
-
-// func TestLetExpr(t *testing.T) {
-// 	for _, test := range parseTests {
-// 		fmt.Println(collectTokens(test.input, "", ""))
-// 		tmpl, err := New("let expression test").Parse(test.input, "", "", make(map[string]*Tree), builtins)
-// 		if err != nil {
-// 			fmt.Println("!!! Something went wrong! !!!\n", err.Error())
-// 		}
-// 		fmt.Println("parsed", tmpl.Root.String())
-// 	}
-// }
-
