@@ -9,6 +9,8 @@ import (
 
 // IRBuilder := GlobalContext.NewBuilder()
 
+//https://onedrive.live.com/redir?resid=E8C19698FE429F68!164&authkey=!AL5uGtAPIElr2L8&ithint=file%2cpptx
+
 // func compileLet(node *ast.LetNode) llvm.Value {
 // 	GlobalContext := llvm.GlobalContext()
 // 	return llvm.ConstFloat(llvm.FloatType, node.val)
@@ -24,7 +26,7 @@ func compileExpr(node interface{}, module llvm.Module) llvm.Value {
 	// case *ast.LetNode:
 	// 	return compileLet(node)
 	// case *ast.FnExprNode:
-	// 	return compileFnExpr(node)
+	// 	retu	rn compileFnExpr(node)
 	case *ast.NumberNode:
 		fmt.Println("compiling number")
 		return compileNumber(n)
@@ -36,7 +38,7 @@ func compileExpr(node interface{}, module llvm.Module) llvm.Value {
 	}
 }
 
-func compileLet(node *ast.LetNode) llvm.Value {
+func compileLet(node *ast.LetNode, module llvm.Module) llvm.Value {
 	// define vars
 	// compile expression
 }
@@ -50,10 +52,10 @@ func compileNumber(node *ast.NumberNode) llvm.Value {
 }
 
 
-func compileBinaryExpr(node *ast.BinaryExprNode) llvm.Value {
-	left := compileExpr(node.left)
-	right := compileExpr(node.right)
-	operand := node.op
+func compileBinaryExpr(node *ast.BinaryExprNode, module llvm.Module) llvm.Value {
+	left := compileExpr(node.Left, module)
+	right := compileExpr(node.Right, module)
+	operand := node.Op
 	switch operand := token.Type {
 		case token.ADD:
 			return llvm.ConstAdd(left, right)
@@ -63,7 +65,7 @@ func compileBinaryExpr(node *ast.BinaryExprNode) llvm.Value {
 			return llvm.ConstMul(left, right)
 		case token.QUO:
 			return llvm.ConstSDiv(left, right)
-		case token.REM:
+		default token.REM:
 			return llvm.ConstSRem(left, right)
 	}
 }
@@ -80,5 +82,4 @@ func compileNode(node interface{}, module llvm.Module) llvm.Value {
 	default:
 		return llvm.ConstFloat(llvm.FloatType(), 3)
 	}
-
 }
