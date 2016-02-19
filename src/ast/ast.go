@@ -59,6 +59,8 @@ const (
 	NodeExpr
 	NodeFnExpr
 	NodeBinaryExpr
+	NodeIf
+	NodeComment
 )
 
 // Nodes.
@@ -284,6 +286,7 @@ type VariableNode struct {
 	Pos int
 	// tr    *Tree
 	Ident string // Variable name.
+	// Value *Node
 }
 
 func NewVariable(pos int, ident string) *VariableNode {
@@ -306,6 +309,11 @@ func (v *VariableNode) Copy() Node {
 	return &VariableNode{NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
 }
 
+
+func (v *VariableNode) exprNode() {}
+
+
+
 // LetNode represents let defns in expr
 type LetNode struct {
 	NodeType
@@ -323,7 +331,7 @@ func (v *LetNode) String() string {
 	s := "let "
 	for i, d := range v.Defns {
 		s += d.String()
-		if i > 0 && i < len(v.Defns) {
+		if i >= 0 && i < len(v.Defns) - 1 {
 			s += ", "
 		}
 	}
@@ -374,6 +382,7 @@ func (v *DefnNode) Copy() Node {
 	return &DefnNode{NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
 }
 
+
 type FnExprNode struct {
 	NodeType
 	Pos int
@@ -390,7 +399,7 @@ func (v *FnExprNode) String() string {
 	s := "fn ("
 	for i, d := range v.Params {
 		s += d
-		if i > 0 && i < len(v.Params) {
+		if i >= 0 && i < len(v.Params) -1 {
 			s += ", "
 		}
 	}
@@ -413,6 +422,9 @@ func (v *FnExprNode) Copy() Node {
 
 func (*FnExprNode) exprNode() {}
 
+
+
+
 // Infix Binary expression
 type BinaryExprNode struct {
 	NodeType
@@ -431,10 +443,6 @@ func (v *BinaryExprNode) String() string {
 	return v.Left.String() + " " + token.Tokens[v.Op] + " " + v.Right.String()
 }
 
-// func (v *FnExprNode) tree() *Tree {
-// 	return v.tr
-// }
-
 func (l *BinaryExprNode) Position() int {
 	return l.Pos
 }
@@ -444,3 +452,136 @@ func (v *BinaryExprNode) Copy() Node {
 }
 
 func (*BinaryExprNode) exprNode() {}
+
+
+
+type IfNode struct{
+	NodeType
+	Pos int
+	Cond ExprNode
+	Then ExprNode
+	Else ExprNode
+}
+func (v *IfNode) exprNode() {}
+
+func NewIfNode(pos int, condStmt ExprNode, thenStmt ExprNode, elseStmt ExprNode) *IfNode{
+	return &IfNode{NodeType: NodeIf, Cond: condStmt, Then: thenStmt, Else: elseStmt}
+}
+
+func (v *IfNode) String() string {
+	s:= "if " + v.Cond.String() + " then " + v.Then.String()
+	if v.Else != nil {
+		s += " else " + v.Else.String()   	
+	}  
+	return s 
+}
+
+func  (v *IfNode) Position() int  {
+	return v.Pos
+}
+
+func (v *IfNode) Copy() Node {
+	return &IfNode{NodeType: NodeIf, Cond: v.Cond, Then: v.Then, Else: v.Then}
+}
+
+
+
+
+type CommentNode struct {
+	NodeType
+	Pos int
+	Text string
+}
+func NewCommentNode(pos int, text string ) *CommentNode {
+	return &CommentNode{NodeType: NodeComment, Pos: pos, Text: text}	
+}
+func (c *CommentNode) Copy() Node {
+	return &CommentNode{NodeType: NodeComment, Pos: c.Pos, Text: c.Text}
+}
+func (c *CommentNode) Position() int {
+	 return c.Pos
+}
+func (c *CommentNode) End() int {
+	 return (int(c.Position()) + len(c.Text)) 
+}
+func (c *CommentNode) String() string {
+	// text := c.Text
+	// if strings.Contains(text, "\n"){
+	// 	text = "Block COMMENT:" + text
+	// } else {
+	// 	text = "Line COMMENT:" +text
+	// }
+	// return text 
+	return ""
+}
+
+// A Scope maintains the set of named language entities declared
+// in the scope and a link to the immediately surrounding (outer)
+// scope.
+type Scope struct {
+	Outer *Scope
+	Objects map[string]*Object
+}
+// NewScope creates a new scope nested in the outer scope.
+func NewScope(outer *Scope) *Scope {
+	const num = 5 //Initial Scope Capacity
+	return &Scope{Outer: outer, Objects: make(map[string]*Object, num)}
+}
+// Lookup returns the object with the given name if it is found 
+//in scope s, otherwise it returns nil. Outer scopes are ignored
+func (s *Scope) Lookup(name string) *Object {
+	return s.Objects[name]
+}
+// Insert attempts to insert a named object obj into the scope s.
+// If the scope already contains an object alt with the same name,
+// Insert leaves the scope unchanged and returns alt. Otherwise
+// it inserts obj and returns nil.
+func (s *Scope) Insert(obj *Object) (alt *Object) {
+	if alt = s.Objects[obj.Name]; alt == nil {
+		s.Objects[obj.Name] = obj
+	}
+	return
+}
+func (s *Scope) String() string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "scope %p {", s)
+	if s != nil && len(s.Objects) > 0 {
+		fmt.Fprintln(&buf)
+		for _, obj := range s.Objects {
+			fmt.Fprintf(&buf, "\t %s\n", obj.Name)
+		}
+	}
+	fmt.Fprintf(&buf, "}\n")
+	return buf.String()
+}
+
+// Objects
+// An Object describes a named language entity such as a package,
+type Object struct{
+	//Kind token.IDENT
+	Name string
+	//Value *NumberNode
+}
+
+func NewObj( name string ) *Object {
+	// return &Object{Kind: kind, Name: name, Value: numNode}
+	return &Object{Name: name}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
