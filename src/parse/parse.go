@@ -21,6 +21,11 @@ type Tree struct {
 	peekCount int
 	vars      []string // variables defined at the moment.
 	treeSet   map[string]*Tree
+
+	topScope *ast.Scope // Scope for Global Variables inside the file
+
+
+
 }
 
 // Copy returns a copy of the Tree. Any parsing state is discarded.
@@ -205,6 +210,7 @@ func (t *Tree) startParse(funcs []map[string]interface{}, lex *lexer, treeSet ma
 	t.vars = []string{"$"}
 	t.funcs = funcs
 	t.treeSet = treeSet
+	t.topScope = ast.NewScope(nil)
 }
 
 // stopParse terminates parsing.
@@ -293,6 +299,8 @@ func (t *Tree) parseStatement() ast.Node {
 		fallthrough
 	case token.ILLEGAL:
 		return nil
+	case token.COMMENT:
+		return ast.NewCommentNode(tok.Pos(),tok.Val())
 	case token.LET:
 		return t.parseLetExpr(tok.Pos())
 	case token.FN:
@@ -312,57 +320,80 @@ func (t *Tree) parseLetExpr(pos int) ast.Node {
 
 	var defns []*ast.DefnNode
 
+	t.openScope()
+
 	for {
 		defnNode := t.parseDefn()
 		defns = append(defns, defnNode)
-		if next := t.peekNonSpace(); next.Val() != "," {
+		
+		next := t.peekNonSpace()
+		if next.Type() != token.COMMA {
 			break
 		}
+		t.nextNonSpace()
 	}
 
 	t.expect(token.IN, context)
 
-	return ast.NewLetExpr(pos, defns, t.parseExpr())
+	letNode := ast.NewLetExpr(pos, defns, t.parseExpr())
+	t.closeScope()
+	return letNode
 }
 
 func (t *Tree) parseDefn() *ast.DefnNode {
-	fmt.Println("parse DEFN")
 	const context = "definition"
 
 	iden := t.expect(token.IDENT, context)
-	fmt.Println("variable name", iden.Val())
+	//if found nil then create new Object in scope else it is already in the scope
+	if t.topScope.Lookup(iden.Val()) == nil { 
+		obj := ast.NewObj(iden.Val())
+		t.topScope.Insert(obj)
+	}
 
 	t.expect(token.ASSIGN, context)
-
 	exprNode := t.parseExpr()
-
-	fmt.Println("returning definition")
 	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
 }
 
+
 func (t *Tree) parseFuncExpr(pos int) ast.Node {
 	const context = "function expression"
-
+	t.openScope()
 	tok := t.expectOneOf(token.LPAREN, token.IDENT, context)
 
 	var params []string
 	if tok.Type() == token.LPAREN {
 		for {
 			param := t.expect(token.IDENT, context)
+			//if found nil then create new Object in scope else it is already in the scope
+			if t.topScope.Lookup(param.Val()) == nil { 
+				obj := ast.NewObj(param.Val())
+				t.topScope.Insert(obj)
+			}
+			fmt.Println(param.Val())
 			params = append(params, param.Val())
-			if next := t.peekNonSpace(); next.Val() != "," {
+			
+			if  next := t.peekNonSpace(); next.Type() != token.COMMA {
 				break
 			}
+			t.nextNonSpace()
 		}
 		t.expect(token.RPAREN, context)
+
 	} else {
-		params = append(params, tok.Val())
+		if t.topScope.Lookup(tok.Val()) == nil { 
+			obj := ast.NewObj(tok.Val())
+			t.topScope.Insert(obj)
+		}
+		fmt.Println(tok.Val())
+		params = append(params, tok.Val())		
 	}
 
 	t.expect(token.ARROW, context)
 	body := t.parseExpr()
-
-	return ast.NewFunctionExpression(pos, params, body)
+	tmpNode := ast.NewFunctionExpression(pos, params, body)
+	t.closeScope()
+	return tmpNode
 }
 
 func (t *Tree) parseExpr() ast.ExprNode {
@@ -396,6 +427,11 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		}
 		fmt.Println("returning float node")
 		retNode = number
+	case token.IDENT:
+		ident := t.useVar(tok.Pos(), tok.Val())
+		retNode = ident
+	case token.IF:
+		retNode = t.parseIfStmt(tok.Pos())
 	}
 
 	if retNode == nil {
@@ -407,6 +443,7 @@ func (t *Tree) parseExpr() ast.ExprNode {
 	fmt.Println("testing for infix")
 	infixNode := t.parseInfixExpr(retNode)
 
+	fmt.Println("not a infix expr")
 	if infixNode == nil {
 		return retNode
 	} else {
@@ -446,6 +483,19 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 	return nil
 }
 
+func (t *Tree) parseIfStmt(pos int) *ast.IfNode {
+	const context = "If statement "
+	condNode := t.parseExpr()
+	t.expect(token.THEN, context)
+	thenNode := t.parseExpr()
+	tok := t.peek() 
+	if tok.Type() == token.ELSE{
+		t.expect(token.ELSE, context)
+		return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
+	}
+	return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
+}
+
 // hasFunction reports if a function name exists in the Tree's maps.
 func (t *Tree) hasFunction(name string) bool {
 	for _, funcMap := range t.funcs {
@@ -466,13 +516,23 @@ func (t *Tree) popVars(n int) {
 
 // useVar returns a node for a variable reference. It errors if the
 // variable is not defined.
-func (t *Tree) useVar(pos int, name string) ast.Node {
-	v := ast.NewVariable(pos, name)
-	for _, varName := range t.vars {
-		if varName == v.Ident {
+func (t *Tree) useVar(pos int, name string) ast.ExprNode {
+	
+
+	for s := t.topScope; s != nil; s = s.Outer {
+		if obj := s.Lookup(name); obj != nil {
+			v := ast.NewVariable(pos, name)
+			// v.Obj = obj
 			return v
 		}
 	}
-	t.errorf("undefined variable %q", v.Ident[0])
+	t.errorf("undefined variable %q", name)
 	return nil
+}
+//Scoping Support
+func  (t *Tree) openScope() {
+	t.topScope = ast.NewScope(t.topScope)
+}
+func (t *Tree) closeScope() {
+	t.topScope = t.topScope.Outer
 }

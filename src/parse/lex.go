@@ -70,6 +70,14 @@ func (l *lexer) accept(valid string) bool {
 	return false
 }
 
+
+func (l *lexer) skipWhitespace() {
+	r := l.peek()
+	for r == ' ' || r == '\t' || r == '\n' || r == '\r' {
+		l.next()
+	}
+}
+
 // acceptRun consumes a run of runes from the valid set.
 func (l *lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
@@ -140,6 +148,14 @@ func lexStatement(l *lexer) LexFn {
 		return lexSpace
 	case ch == '=':
 		return lexEqual
+	case ch == '/':
+		nextChar := l.peek()
+		if nextChar == '/' {
+			return lexLineComment
+		}else if  nextChar == '*' {
+			return lexBlockComment	
+		} 
+		fallthrough
 	case ch == eof:
 		l.emit(token.EOF)
 		return nil
@@ -147,6 +163,37 @@ func lexStatement(l *lexer) LexFn {
 		l.backup()
 		return lexExpr
 	}
+}
+
+func lexLineComment(l *lexer) LexFn {
+	r := l.next()
+	Loop:
+	for {
+		r = l.peek()
+	 	if r == '\n' {
+	 		l.emit(token.COMMENT)
+	 		break Loop
+	 	} else {
+	 		l.next()
+	 	}
+	}
+	return lexStatement
+}
+
+func  lexBlockComment(l *lexer) LexFn {
+	r := l.next()
+	Loop:
+	for {
+	 	if r == '*' {
+	 		if l.next() == '/' {
+	 			l.emit(token.COMMENT)
+	 			break Loop
+	 		}	 		
+	 	}
+	 	fmt.Printf("%c", r)
+	 	r = l.next()
+	}
+	return lexStatement
 }
 
 func lexIdentifier(l *lexer) LexFn {
@@ -199,6 +246,9 @@ func lexExpr(l *lexer) LexFn {
 	case r == '+':
 		l.emit(token.ADD)
 		return lexStatement
+	case r == ',':
+		l.emit(token.COMMA)
+		return lexStatement
 	case r == '-':
 		n := l.next()
 		if n == '>' {
@@ -213,7 +263,6 @@ func lexExpr(l *lexer) LexFn {
 	case r == '\'':
 		return lexChar
 	}
-
 	return lexStatement
 }
 
@@ -296,6 +345,7 @@ Loop:
 	for {
 		switch r := l.next(); {
 		case isSpace(r):
+			fmt.Println(r)
 			l.ignore()
 		default:
 			l.backup()
@@ -320,7 +370,7 @@ func lexEqual(l *lexer) LexFn {
 
 // isSpace reports whether r is a space character.
 func isSpace(r rune) bool {
-	return r == ' ' || r == '\t'
+	return r == ' ' || r == '\t' || r == '\n'
 }
 
 // isEndOfLine reports whether r is an end-of-line character.
