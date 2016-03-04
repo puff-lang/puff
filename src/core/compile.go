@@ -68,32 +68,36 @@ func (e NNum) isNode() {}
 type NAp *Expr *Expr // Applications
 func (e NAp) isNode() {}
 
-type NGlobal int //Globals(contain no of arg that global expects & the code sequence to be exec when the global has enough argms)
+type NGlobal struct { //Globals(contain no of arg that global expects & the code sequence to be exec when the global has enough argms)
+	nargs  int
+	gmCode GmCode
+}
 func (e NGlobal) isNode() {}
 
 
-type GmHeap struct{
+type GmHeap struct {
 	hNode Node
 	nargs  int
 	insts []Instruction
 	index int
 }
 
-func HInitial() GmHeap{
+func HInitial() GmHeap {
 	var h GmHeap
 	h.index = -1
 	return h
 }
 
-func (h *Heap) HAlloc(hNode Node, nargs int, instn []Instruction) {
+func (h *Heap) HAlloc(node Node) {
 	h.index = h.index + 1
 	h.hNode = hNode;
 	h.instn = instn;
 }
 
-func getHeap(gState GmState) GmHeap{
+func getHeap(gState GmState) GmHeap {
 	return gState.gmh
 }
+
 func putHeap(gmh GmCode, gState GmState) GmState {
 	gState.gmh = gmh
 	return gState
@@ -116,6 +120,7 @@ type GmStats int
 func getStats(gState GmState) GmStats{
 	return gState.gmst
 }
+
 func putStats(gmst GmStats, gState GmState) GmStats{
 	gState.gmst = gmst
 	return gState
@@ -128,18 +133,18 @@ func Compile(p Program) GmState {
 	return GmState{initialCode, [], heap, globals, statInitial}
 }
 
-
 func buildInitialHeap(p Program) (GmHeap, GmGlobals) {
 	var compiled []GmCompiledSC
 	gmHeap := HInitial()
 
 	for _, sc := range p {
-		compiled = append(compiled, sc)
+		compiled = append(compiled, compileSc(sc))
 	}
 	// mapAccuml allocateSc hInitial compiled
-	for _, compiledSc := range compiled {
-		allocateSc(gmHeap, compiledSc)	
-	}
+	// for _, compiledSc := range compiled {
+	// 	allocateSc(gmHeap, compiledSc)	
+	// }
+	return mapAccuml(allocateSc, gmHeap, compiled)
 }
 
 //---------------------------------------------------------------------
@@ -156,8 +161,9 @@ type Object struct{
 type allocates func(GmHeap, GmCompiledSC) (GmHeap, Object) 
 
 // allocateSc implements allocates, returning GmHeap & Object
-func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object){
-	gmh.HAlloc()
+func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object) {
+	addr := gmh.HAlloc(NGlobal{gCSC.Length, gCSC.body})
+	return gmh, Object{gCSC.Name, addr}
 }
 
 func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) {
