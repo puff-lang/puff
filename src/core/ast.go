@@ -2,7 +2,7 @@ package core
 
 type Name string
 
-type Expr interface {
+type CoreExpr interface {
 	isExpr()
 }
 
@@ -27,39 +27,39 @@ type EConstr struct {
 func (e EConstr) isExpr() {}
 
 type EAp struct {
-	Left Expr
-	Body Expr
+	Left CoreExpr
+	Body CoreExpr
 }
 func (e EAp) isExpr() {}
 
 type ELet struct {
 	IsRec bool
 	Defns []Defn
-	Body  Expr
+	Body  CoreExpr
 }
 func (e ELet) isExpr() {}
 
 type ELam struct {
 	Params []Name
-	Body   Expr
+	Body   CoreExpr
 }
 func (e ELam) isExpr() {}
 
 type Alter struct {
 	Num  int
 	Vars []Name
-	Expr Expr
+	Expr CoreExpr
 }
 
 type Defn struct {
 	Var  Name
-	Expr Expr
+	Expr CoreExpr
 }
 
 type ScDefn struct {
 	Name Name
 	Args []Name
-	Expr Expr
+	Expr CoreExpr
 }
 
 type Program []ScDefn
@@ -73,8 +73,8 @@ func BindersOf(defns []Defn) []Name {
 	return names
 }
 
-func RhssOf(defns []Defn) []Expr {
-	var rhss []Expr 
+func RhssOf(defns []Defn) []CoreExpr {
+	var rhss []CoreExpr 
 	for _, defn := range defns {
 		rhss = append(rhss, defn.Expr)
 	}

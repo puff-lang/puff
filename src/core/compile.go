@@ -167,9 +167,16 @@ func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object) {
 }
 
 func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) {
-	acc1, xdash := f(acc, list.head())
-	acc2, xsdash := mapAccuml(f, acc1, list.tail());
-	return acc2, xsdash.concat(xdash);
+	acc1 := acc
+	xsdash := []Object{}
+	var xdash Object
+
+	for _, sc := range list {
+		acc1, xdash = f(acc1, sc)
+		xsdash = append([]Object{xdash}, xsdash...)
+	}
+
+	return acc1, xsdash
 }
 
 func initialCode() GmCode {
@@ -199,6 +206,9 @@ type GmEnvironment struct{
 	Int int
 }
 
+
+// type GmCompiler = func(CoreExpr, GmEnvironment) GmCode
+
 //Creates code which instnst the expr e in env ρ, for a SC of arity d, and then proceeds to unwind the resulting stack
 func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
 
@@ -207,7 +217,11 @@ func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
 }
 
 //generates code which creates the graph of e in env ρ,leaving a pointer to it on top of the stack
-func compileC(cexp CoreExpr, env GmEnvironment) GmCode{
+func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
+	return cexp.compileC(env)
+}
 
-
+func (expr ENum) compileC(env GmEnvironment) GmCode {
+	var inst Pushint = expr.Int64
+	return []Instruction{inst}
 }
