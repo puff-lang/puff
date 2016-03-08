@@ -13,7 +13,7 @@ func PpExpr(expr interface{}) string {
 	}
 }
 
-func PpAExpr(expr Expr) string {
+func PpAExpr(expr CoreExpr) string {
 	if IsAtomicExpr(expr) {
 		return PpExpr(expr)
 	} else {
