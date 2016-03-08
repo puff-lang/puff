@@ -192,36 +192,81 @@ type GmCompiledSC struct{
 }
 
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
-func compileSc(name string, env []string, cexp CoreExpr) GmCompiledSC {
-	var gmCSC = GmCompiledSC
+func compileSc(name string, envStrings []string, cexp CoreExpr) GmCompiledSC {
+	var gmCSC = GmCompiledSC{}
 	gmCSC.name = name
-	gmCSC.Length = length(env)
-	for _, gmCSC.body := range env {
-		
+	gmCSC.Length = length(envStrings)
+	gmCSC.body = []Instruction{}
+	i := 0
+	for _, eString := range envStrings {
+		env := Environment{i, eString}
+		append(gmCSC.body,compilerR(cexp, env))
 	}
 }
 
-type GmEnvironment struct{
+
+
+type Environment struct{
 	Name string
 	Int int
 }
 
+type GmEnvironment []Environment
+
+func elem(name Name, assoc GmEnvironment) Int {
+	for _,obj := range assoc {
+		if obj.Name == name  {
+			return obj.Int
+		}
+	}
+	return -1 //Default Value: null string
+}
 
 // type GmCompiler = func(CoreExpr, GmEnvironment) GmCode
 
 //Creates code which instnst the expr e in env ρ, for a SC of arity d, and then proceeds to unwind the resulting stack
 func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
-
-
-	
+	inst := []Instruction{}
+	cC := compileC(cexp,env)
+	for _,obj := range cC {
+		append(inst, obj)
+	}
+	append(inst, Slide(len(env) + 1))
+	append(inst, Unwind)
+	return inst	
 }
 
 //generates code which creates the graph of e in env ρ,leaving a pointer to it on top of the stack
 func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
-	return cexp.compileC(env)
+	switch exp := e.(type) {
+        case EVar:
+        	expr := cexp.(EVar)
+        	n := elem(expr.Name, env)
+        	if n != -1 {
+        		return []Instruction{Push(n)}
+        	} else {
+        		return []Instruction{Pushglobal(expr.Name)}
+        	}
+
+		case ENum:
+			expr := cexp.(Enum)
+			if expr.IsInt {
+				return []Instruction{Pushint(expr.Int64)}
+			} else if expr.isUint {
+				return []Instruction{Pushint(expr.Uint64)}
+			}
+			return []Instruction{Pushint(42)} // TODO
+		case EAp:
+			expr := cexp.(EAp)
+			return []Instruction{compileC(expr.body, env), compileC(expr.left, argOffset(1, env)), Mkap{}}
+    }
+	return 
 }
 
-func (expr ENum) compileC(env GmEnvironment) GmCode {
-	var inst Pushint = expr.Int64
-	return []Instruction{inst}
+func argOffset(n Int, env GmEnvironment) GmEnvironment 
+{	
+	for _,obj := range env {
+		env.Int = env.Int + n
+	}
+	return env
 }
