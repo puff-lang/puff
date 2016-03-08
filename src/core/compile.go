@@ -1,8 +1,11 @@
 package core
 
+import (
+	"fmt"
+)
 
 type GmState struct{
-	gmc gmCode 			//Current instruction stream
+	gmc GmCode 			//Current instruction stream
 	gms GmStack			//Current stack
 	gmh GmHeap			//Heap of Nodes
 	gmg GmGlobals		//Global Addresses in heap
@@ -14,7 +17,7 @@ type GmState struct{
 type Instruction interface{
 	isInstruction()
 }
-type Unwind bool
+type Unwind struct{}
 func (e Unwind) isInstruction() {}
 
 type Pushglobal string
@@ -26,7 +29,7 @@ func (e Pushint) isInstruction() {}
 type Push int
 func (e Push) isInstruction() {}
 
-type Mkap bool
+type Mkap struct{}
 func (e Mkap) isInstruction() {}
 
 type Slide int
@@ -65,7 +68,10 @@ type Node interface {
 type NNum int //Numbers
 func (e NNum) isNode() {}
 
-type NAp *Expr *Expr // Applications
+type NAp struct {
+	Left CoreExpr
+	Body CoreExpr
+}
 func (e NAp) isNode() {}
 
 type NGlobal struct { //Globals(contain no of arg that global expects & the code sequence to be exec when the global has enough argms)
@@ -78,8 +84,8 @@ func (e NGlobal) isNode() {}
 type GmHeap struct {
 	hNode Node
 	nargs  int
-	insts []Instruction
-	index int
+	instn []Instruction
+	index Addr
 }
 
 func HInitial() GmHeap {
@@ -88,17 +94,18 @@ func HInitial() GmHeap {
 	return h
 }
 
-func (h *Heap) HAlloc(node Node) {
+func (h *GmHeap) HAlloc(node Node) Addr {
 	h.index = h.index + 1
-	h.hNode = hNode;
-	h.instn = instn;
+	h.hNode = node;
+	h.instn = []Instruction{};
+	return h.index
 }
 
 func getHeap(gState GmState) GmHeap {
 	return gState.gmh
 }
 
-func putHeap(gmh GmCode, gState GmState) GmState {
+func putHeap(gmh GmHeap, gState GmState) GmState {
 	gState.gmh = gmh
 	return gState
 }
@@ -106,10 +113,11 @@ func putHeap(gmh GmCode, gState GmState) GmState {
 
 
 //Implementation of GmGlobals for the GmState 
-type GmGlobals struct{
-	Name string
-	Addr int
+type Object struct{
+	Name Name
+	addr Addr
 }
+type  GmGlobals []Object
 
 func getGlobals(gState GmState) GmGlobals{
 	return gState.gmg
@@ -121,7 +129,7 @@ func getStats(gState GmState) GmStats{
 	return gState.gmst
 }
 
-func putStats(gmst GmStats, gState GmState) GmStats{
+func putStats(gmst GmStats, gState GmState) GmState{
 	gState.gmst = gmst
 	return gState
 }
@@ -129,8 +137,9 @@ func putStats(gmst GmStats, gState GmState) GmStats{
 //--------------------------------------------------------------------------
 
 func Compile(p Program) GmState {
+	var stats GmStats = 0
 	heap, globals := buildInitialHeap(p)
-	return GmState{initialCode, [], heap, globals, statInitial}
+	return GmState{initialCode(), []Addr{}, heap, globals, stats}
 }
 
 func buildInitialHeap(p Program) (GmHeap, GmGlobals) {
@@ -147,15 +156,6 @@ func buildInitialHeap(p Program) (GmHeap, GmGlobals) {
 	return mapAccuml(allocateSc, gmHeap, compiled)
 }
 
-//---------------------------------------------------------------------
-
-//This structure resembles with the structure of GmGlobal. We can use GmGlobal instead of this.
-type Name string
-type Addr int
-type Object struct{
-	name Name
-	addr Addr
-}
 //-------------------------------------------------------------------
 //We must define the type for passing function as parameter
 type allocates func(GmHeap, GmCompiledSC) (GmHeap, Object) 
@@ -166,54 +166,49 @@ func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object) {
 	return gmh, Object{gCSC.Name, addr}
 }
 
-func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) {
+func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) (GmHeap, GmGlobals) {
 	acc1 := acc
-	xsdash := []Object{}
+	xsdash := GmGlobals{}
 	var xdash Object
 
 	for _, sc := range list {
 		acc1, xdash = f(acc1, sc)
-		xsdash = append([]Object{xdash}, xsdash...)
+		xsdash = append(GmGlobals{xdash}, xsdash...)
 	}
-
 	return acc1, xsdash
 }
 
 func initialCode() GmCode {
-	gmCode := [2]Instruction{Pushglobal "main", Unwind}
-	return gmCode
+	return GmCode{Pushglobal("main"), Unwind{}}
 }
 
 
 type GmCompiledSC struct{
-	Name string
+	Name   Name
 	Length int
-	body []Instruction
+	body   GmCode
 }
 
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
-func compileSc(name string, envStrings []string, cexp CoreExpr) GmCompiledSC {
-	var gmCSC = GmCompiledSC{}
-	gmCSC.name = name
-	gmCSC.Length = length(envStrings)
-	gmCSC.body = []Instruction{}
-	i := 0
-	for _, eString := range envStrings {
-		env := Environment{i, eString}
-		append(gmCSC.body,compilerR(cexp, env))
+func compileSc(sc ScDefn) GmCompiledSC {
+	var gmE = GmEnvironment{}
+
+	for i,eString := range sc.Args {
+		gmE = append(gmE, Environment{eString, i})
 	}
+	fmt.Println("hello")
+
+	return GmCompiledSC{sc.Name, len(sc.Args), compilerR(sc.Expr, gmE)}
 }
 
-
-
 type Environment struct{
-	Name string
+	Name Name
 	Int int
 }
 
 type GmEnvironment []Environment
 
-func elem(name Name, assoc GmEnvironment) Int {
+func elem(name Name, assoc GmEnvironment) int {
 	for _,obj := range assoc {
 		if obj.Name == name  {
 			return obj.Int
@@ -229,44 +224,47 @@ func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
 	inst := []Instruction{}
 	cC := compileC(cexp,env)
 	for _,obj := range cC {
-		append(inst, obj)
+		inst = append(inst, obj)
 	}
-	append(inst, Slide(len(env) + 1))
-	append(inst, Unwind)
+	inst = append(inst, Slide(len(env) + 1))
+	inst = append(inst, Unwind{})
 	return inst	
 }
 
 //generates code which creates the graph of e in env ρ,leaving a pointer to it on top of the stack
 func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
-	switch exp := e.(type) {
+	switch cexp.(type) {
         case EVar:
         	expr := cexp.(EVar)
-        	n := elem(expr.Name, env)
+        	n := elem(Name(expr), env)
         	if n != -1 {
-        		return []Instruction{Push(n)}
+        		return GmCode{Push(n)}
         	} else {
-        		return []Instruction{Pushglobal(expr.Name)}
+        		return GmCode{Pushglobal(Name(expr))}
         	}
 
 		case ENum:
-			expr := cexp.(Enum)
+			expr := cexp.(ENum)
 			if expr.IsInt {
-				return []Instruction{Pushint(expr.Int64)}
-			} else if expr.isUint {
-				return []Instruction{Pushint(expr.Uint64)}
+				return GmCode{Pushint(expr.Int64)}
+			} else if expr.IsUint {
+				return GmCode{Pushint(expr.Uint64)}
 			}
-			return []Instruction{Pushint(42)} // TODO
+			return GmCode{Pushint(42)} // TODO
 		case EAp:
 			expr := cexp.(EAp)
-			return []Instruction{compileC(expr.body, env), compileC(expr.left, argOffset(1, env)), Mkap{}}
+			var gmC = GmCode{}
+			gmC = append(gmC, compileC(expr.Body, env)...)
+			gmC = append(gmC, compileC(expr.Left, argOffset(1, env))...)
+			gmC = append(gmC, Mkap{})
+			return gmC
     }
-	return 
+	return GmCode{}
 }
 
-func argOffset(n Int, env GmEnvironment) GmEnvironment 
-{	
+func argOffset(n int, env GmEnvironment) GmEnvironment {	
 	for _,obj := range env {
-		env.Int = env.Int + n
+		obj.Int = obj.Int + n
 	}
 	return env
 }
