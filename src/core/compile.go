@@ -2,7 +2,7 @@ package core
 
 
 type GmState struct{
-	gmc gmCode 			//Current instruction stream
+	gmc GmCode 			//Current instruction stream
 	gms GmStack			//Current stack
 	gmh GmHeap			//Heap of Nodes
 	gmg GmGlobals		//Global Addresses in heap
