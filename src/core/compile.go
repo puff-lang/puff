@@ -32,6 +32,15 @@ func (e Push) isInstruction() {}
 type Mkap struct{}
 func (e Mkap) isInstruction() {}
 
+type Update int
+func (e Update) isInstruction() {}
+
+type Pop int
+func (e Pop) isInstruction() {}
+
+type Alloc int
+func (e Alloc) isInstruction() {}
+
 type Slide int
 func (e Slide) isInstruction() {}
 
@@ -80,10 +89,15 @@ type NGlobal struct { //Globals(contain no of arg that global expects & the code
 }
 func (e NGlobal) isNode() {}
 
+type NInd Addr
+func (e NInd) isNode() {}
+
+
+
 
 type GmHeap struct {
-	hNode Node
-	nargs  int
+	hNode [10]Node
+	// nargs  int
 	instn []Instruction
 	index Addr
 }
@@ -94,9 +108,14 @@ func HInitial() GmHeap {
 	return h
 }
 
+func (h *GmHeap) HNull() Addr{
+	h.index = 0
+	return h.index
+}
+
 func (h *GmHeap) HAlloc(node Node) Addr {
 	h.index = h.index + 1
-	h.hNode = node;
+	h.hNode[h.index] = node;
 	h.instn = []Instruction{};
 	return h.index
 }
@@ -110,7 +129,7 @@ func putHeap(gmh GmHeap, gState GmState) GmState {
 	return gState
 }
 
-
+//{[        {0 [4 test {} 1 {}]} {1 [0 2 {}]}   ] 0 [] 1}
 
 //Implementation of GmGlobals for the GmState 
 type Object struct{
@@ -217,7 +236,7 @@ func elem(name Name, assoc GmEnvironment) int {
 	return -1 //Default Value: null string
 }
 
-// type GmCompiler = func(CoreExpr, GmEnvironment) GmCode
+type GmCompiler func(CoreExpr, GmEnvironment) (GmCode)
 
 //Creates code which instnst the expr e in env ρ, for a SC of arity d, and then proceeds to unwind the resulting stack
 func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
@@ -226,7 +245,10 @@ func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
 	for _,obj := range cC {
 		inst = append(inst, obj)
 	}
-	inst = append(inst, Slide(len(env) + 1))
+	length := len(env)
+	inst = append(inst, Update(length))
+	inst = append(inst, Pop(length))
+	//inst = append(inst, Slide(len(env) + 1))
 	inst = append(inst, Unwind{})
 	return inst	
 }
@@ -258,13 +280,61 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
 			gmC = append(gmC, compileC(expr.Left, argOffset(1, env))...)
 			gmC = append(gmC, Mkap{})
 			return gmC
+		case ELet:
+			expr := cexp.(ELet)
+			if expr.IsRec {
+				return compileLetrec(compileC, expr.Defns, expr.Body, env)
+			} else {
+				return compileLet(compileC, expr.Defns, expr.Body, env)
+			}
     }
 	return GmCode{}
 }
 
-func argOffset(n int, env GmEnvironment) GmEnvironment {	
-	for _,obj := range env {
-		obj.Int = obj.Int + n
+
+func compileLet(comp GmCompiler, defs []Defn, expr CoreExpr, env GmEnvironment) GmCode {
+	envdash := compileArgs(defs, env) // Creating New Environment
+	gmC := GmCode{}
+	gmC = append(gmC, compileLetDash(defs, envdash)...)
+	gmC = append(gmC,  comp(expr, envdash)...)
+	return append(gmC,Slide(len(defs)))
+}
+
+func compileLetrec(comp GmCompiler, defs []Defn, expr CoreExpr, env GmEnvironment) GmCode {
+	envdash := compileArgs(defs, env) // Creating New Environment
+	gmC := GmCode{Alloc(len(defs))}
+	gmC = append(gmC, compileLetDash(defs, envdash)...)
+	gmC = append(gmC, Update(0))
+	gmC = append(gmC,  comp(expr, envdash)...)
+	return append(gmC,Slide(len(defs)))
+}
+
+func compileLetDash(defns []Defn, env GmEnvironment) GmCode {
+	envdash := env
+	gmC := GmCode{}
+	for _, defn := range defns {
+		gmC = append(gmC, compileC(defn.Expr, envdash)...)
+		envdash = argOffset(1, envdash)
 	}
-	return env
+	return gmC
+}
+
+func compileArgs(defns []Defn, env GmEnvironment) (GmEnvironment) {
+	n := len(defns)
+	var gmE GmEnvironment
+	for _, defn := range defns {
+		tmpEnv := Environment{defn.Var, n-1}
+		gmE = append(gmE, tmpEnv)
+		n = n - 1
+	}
+	return append(gmE, argOffset(len(defns), env)...)
+}
+
+func argOffset(n int, env GmEnvironment) GmEnvironment {	
+	var gmE GmEnvironment
+	for _,obj := range env {
+		tmpEnv := Environment{obj.Name, obj.Int + n}
+		gmE = append(gmE, tmpEnv)
+	}
+	return gmE
 }
