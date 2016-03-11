@@ -55,12 +55,14 @@ type Defn struct {
 	Var  Name
 	Expr CoreExpr
 }
+func (e Defn) isExpr() {}
 
 type ScDefn struct {
 	Name Name
 	Args []Name
 	Expr CoreExpr
 }
+func (e ScDefn) isExpr() {}
 
 type Program []ScDefn
 

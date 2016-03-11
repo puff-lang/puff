@@ -362,6 +362,8 @@ type DefnNode struct {
 	Expr ExprNode
 }
 
+func (*DefnNode) exprNode() {}
+
 func NewDefinition(pos int, variable string, exprNode ExprNode) *DefnNode {
 	return &DefnNode{NodeType: NodeDefn, Pos: pos, Var: variable, Expr: exprNode}
 }

@@ -12,19 +12,18 @@ type compileScTest struct {
 }
 
 var compileScTests = []compileScTest{
-	//{ScDefn{"Y", []Name{"f"}, ELet{true, [{"x", EAp{EVar("f"), EVar("x")}}], EVar("x")}}, GmCompiledSC{}},
-// 	{ScDefn{"compose", []Name{"f","g","x"}, EAp{EVar("f"), EAp{EVar("g"), EVar("x")}}}, GmCompiledSC{"compose", 3, GmCode{Push(2), Push(1), Mkap{}, Push(0), Mkap{}, Slide(4), Unwind{}}}},
-// 	{ScDefn{"twice", []Name{"f"}, EAp{EAp{EVar("compose"), EVar("f")}, EVar("f")}},GmCompiledSC{"twice", 1, GmCode{Push(0), Push(0), Pushglobal("compose"), Mkap{}, Mkap{} ,Slide(2), Unwind{}}}},    
+	// {ScDefn{"compose", []Name{"f","g","x"}, EAp{EVar("f"), EAp{EVar("g"), EVar("x")}}}, GmCompiledSC{"compose", 3, GmCode{Push(2), Push(1), Mkap{}, Push(0), Mkap{}, Update(2), Pop(2), Unwind{}}}},
+// 	{ScDefn{"twice", []Name{"f"}, EAp{EAp{EVar("compose"), EVar("f")}, EVar("f")}},GmCompiledSC{"twice", 1, GmCode{Push(0), Push(0), Pushglobal("compose"), Mkap{}, Mkap{} , Update(2), Pop(2), Unwind{}}}},    
 // 	{ScDefn{"S", []Name{"f","g","x"}, EAp{ EAp {EVar("f"), EVar("x")},EAp {EVar("g"), EVar("x")}}}, GmCompiledSC{"S", 3, GmCode{Push(2), Push(1),Mkap{}, Push(2), Push(0), Mkap{}, Mkap{},
-// Slide(4), Unwind{}}}},
-	{ScDefn{
-		"Let", []Name{"f"},
-		ELet{true, []Defn{{Name("x"), EAp{EVar("f"), EVar("x")}}}, EVar("x")}}, GmCompiledSC{"Let", 1, GmCode{},
-	}},
-	{ScDefn{"K", []Name{"x", "y"}, EVar("x")}, GmCompiledSC{"K", 2, GmCode{Push(0), Slide(3), Unwind{}}}},
-	{ScDefn{"K1", []Name{"x", "y"}, EVar("y")}, GmCompiledSC{"K1", 2, []Instruction{Push(1), Slide(3), Unwind{} }}},
-	{ScDefn{"I", []Name{"x"}, EVar("x")}, GmCompiledSC{"I", 1, []Instruction{Push(0), Slide(2), Unwind{} }}},
-	{ScDefn{"K2", []Name{"x","y"}, EVar("z")}, GmCompiledSC{"K2", 2, []Instruction{Pushglobal("z"), Slide(3), Unwind{}}}},
+// Update(2), Pop(2), Unwind{}}}},
+	{ScDefn{"K", []Name{"x", "y"}, EVar("x")}, GmCompiledSC{"K", 2, GmCode{Push(0), Update(2), Pop(2), Unwind{}}}},	
+	// {ScDefn{
+	// 	"Let", []Name{"f"},
+	// 	ELet{true, []Defn{{Name("x"), EAp{EVar("f"), EVar("x")}}}, EVar("x")}}, GmCompiledSC{"Let", 1, GmCode{},
+	// }},
+	// {ScDefn{"K1", []Name{"x", "y"}, EVar("y")}, GmCompiledSC{"K1", 2, []Instruction{Push(1), Update(3), Pop(3), Unwind{} }}},
+	// {ScDefn{"I", []Name{"x"}, EVar("x")}, GmCompiledSC{"I", 1, []Instruction{Push(0), Update(2), Pop(2), Unwind{} }}},
+	// {ScDefn{"K2", []Name{"x","y"}, EVar("z")}, GmCompiledSC{"K2", 2, []Instruction{Pushglobal("z"), Update(3), Pop(3), Unwind{}}}},
 }
 
 func printBody(body GmCode) {
@@ -38,14 +37,7 @@ func TestCompile(t *testing.T) {
 	for _, cScTest := range compileScTests{
 		result := compileSc(cScTest.input)
 		if (result.Name == cScTest.input.Name) && (len(cScTest.input.Args)==result.Length) {
-			// i := 0
-			// for _,arr := range cScTest.output {
-			// 	if arr != result.body[i] {
-			// 		fmt.Println("Error while executing", cScTest.input.Name)
-			// 		return
-			// 	}
-			// 	i = i + 1
-			// }
+			
 			if cScTest.output.Name != result.Name {
 				fmt.Println("Error while executing", cScTest.output.Name)
 				return

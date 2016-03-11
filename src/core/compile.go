@@ -2,11 +2,13 @@ package core
 
 import (
 	"fmt"
+	"reflect"
 )
 
 type GmState struct{
 	gmc GmCode 			//Current instruction stream
 	gms GmStack			//Current stack
+	gmd GmDump			//current Dump
 	gmh GmHeap			//Heap of Nodes
 	gmg GmGlobals		//Global Addresses in heap
 	gmst GmStats		//Statitics
@@ -32,6 +34,9 @@ func (e Push) isInstruction() {}
 type Mkap struct{}
 func (e Mkap) isInstruction() {}
 
+type Eval struct{}
+func (e Eval) isInstruction() {}
+
 type Update int
 func (e Update) isInstruction() {}
 
@@ -43,6 +48,45 @@ func (e Alloc) isInstruction() {}
 
 type Slide int
 func (e Slide) isInstruction() {}
+
+type Add struct{}
+func (e Add) isInstruction() {}
+
+type Sub struct{}
+func (e Sub) isInstruction() {}
+
+type Mul struct{}
+func (e Mul) isInstruction() {}
+
+type Div struct{}
+func (e Div) isInstruction() {}
+
+type Neg struct{}
+func (e Neg) isInstruction() {}
+
+type Eq struct{}
+func (e Eq) isInstruction() {}
+
+type Ne struct{}
+func (e Ne) isInstruction() {}
+
+type Lt struct{}
+func (e Lt) isInstruction() {}
+
+type Le struct{}
+func (e Le) isInstruction() {}
+
+type Gt struct{}
+func (e Gt) isInstruction() {}
+
+type Ge struct{}
+func (e Ge) isInstruction() {}
+
+type Cond struct{
+	gm1 GmCode
+	gm2 GmCode
+}
+func (e Cond) isInstruction() {}
 
 type GmCode []Instruction
 
@@ -67,8 +111,27 @@ func putStack(gms GmStack, gState GmState) GmState {
 	gState.gms = gms
 	return gState
 }
+//--------------------------------------------------------------------------
+//GmDump Implementation required for the GmState
+type GmDumpItem struct {
+	gmc GmCode
+	gms GmStack
+}
+
+type GmDump []GmDumpItem
+
+func getDump(gState GmState) GmDump {
+	return gState.gmd
+}
+
+func putDump(gmd GmDump, gState GmState) GmState{
+	gState.gmd = gmd
+	return gState
+}
 
 
+
+//--------------------------------------------------------------------------
 //GmHeap Implementation required for the GmState
 //minimal G-machine have only three types of nodes
 type Node interface {
@@ -120,6 +183,15 @@ func (h *GmHeap) HAlloc(node Node) Addr {
 	return h.index
 }
 
+// func (h *GmHeap) HLookup(addr Addr) Node{
+// 	for i := 0; i <= h.index; i++ {
+// 		if h.addr == addr {
+// 			return h.hNode[i]
+// 		}
+// 	}
+// 	return NNum{}
+// }
+
 func getHeap(gState GmState) GmHeap {
 	return gState.gmh
 }
@@ -152,14 +224,36 @@ func putStats(gmst GmStats, gState GmState) GmState{
 	gState.gmst = gmst
 	return gState
 }
+
+func initialDump() GmDump{
+	return GmDump{GmDumpItem{GmCode{},GmStack{}}}
+}
 //Part of GmState implementation is over.
 //--------------------------------------------------------------------------
+type compiledPrimitives []GmCompiledSC
+
+var compPrim = compiledPrimitives{
+	GmCompiledSC{"+", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Add{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"-", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Sub{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"*", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Mul{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"/", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Div{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"negate", 2, GmCode{Push(0), Eval{}, Neg{}, Update(1), Pop(1), Unwind{}}},
+	GmCompiledSC{"==", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Eq{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"~=", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Ne{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"<", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Lt{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"<=", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Le{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{">", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Gt{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{">=", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Ge{}, Update(2), Pop(2), Unwind{}}},
+	GmCompiledSC{"if", 3, GmCode{Push(0), Eval{}, Cond{GmCode{Push(1)}, GmCode{Push(2)}}, Update(3), Pop(3), Unwind{}}},
+}
+
 
 func Compile(p Program) GmState {
 	var stats GmStats = 0
 	heap, globals := buildInitialHeap(p)
-	return GmState{initialCode(), []Addr{}, heap, globals, stats}
+	return GmState{initialCode(), []Addr{}, initialDump(), heap, globals, stats}
 }
+
 
 func buildInitialHeap(p Program) (GmHeap, GmGlobals) {
 	var compiled []GmCompiledSC
@@ -198,7 +292,7 @@ func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) (GmHeap, GmGlobals)
 }
 
 func initialCode() GmCode {
-	return GmCode{Pushglobal("main"), Unwind{}}
+	return GmCode{Pushglobal("main"), Eval{}}
 }
 
 
@@ -208,8 +302,25 @@ type GmCompiledSC struct{
 	body   GmCode
 }
 
+func (sc GmCompiledSC) Body() GmCode {
+	return sc.body
+}
+
+
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
 func compileSc(sc ScDefn) GmCompiledSC {
+	var gmE = GmEnvironment{}
+
+	for i,eString := range sc.Args {
+		gmE = append(gmE, Environment{eString, i})
+	}
+	fmt.Println("hello")
+
+	return GmCompiledSC{sc.Name, len(sc.Args), compilerR(sc.Expr, gmE)}
+}
+
+//Each SuperCombinator is compiled using compileSc which implements SC scheme
+func CompileSc(sc ScDefn) GmCompiledSC {
 	var gmE = GmEnvironment{}
 
 	for i,eString := range sc.Args {
@@ -337,4 +448,11 @@ func argOffset(n int, env GmEnvironment) GmEnvironment {
 		gmE = append(gmE, tmpEnv)
 	}
 	return gmE
+}
+
+func PrintBody(body GmCode) {
+	for _, inst := range body {
+		fmt.Print(reflect.TypeOf(inst), inst, "  ")
+	}
+	fmt.Println()
 }
