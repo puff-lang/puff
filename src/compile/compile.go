@@ -36,3 +36,14 @@ func Translate(src string) core.CoreExpr {
 	node := tree.Root.Nodes[0]
 	return translateNode(node)
 }
+
+func run(str string) string { //Almost Done
+	contentProgram := core.Compile(core.Program{
+            core.ScDefn{"main", []core.Name{}, Translate(string(str))},
+    	})
+	result := core.EvalState(contentProgram) // []GmState
+	fmt.Println(result)
+	return string("result")
+}
+
+

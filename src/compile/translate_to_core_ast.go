@@ -29,9 +29,9 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 	var oper string
 	switch node.Op {
 		case token.ADD:
-			oper = "+"
+			oper = "add"
 		case token.SUB:
-			oper = "-"
+			oper = "sub"
 		case token.MUL:
 			oper = "*"
 		case token.QUO:
