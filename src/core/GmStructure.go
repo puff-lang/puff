@@ -293,13 +293,13 @@ func (h *GmHeap) HAlloc(node Node) Addr {
 
 func (h *GmHeap) HLookup(addr Addr) Node{
 	if addr < 0 {
-		return NGlobal{}	
+		return nil	
 	}
 	if h.index >= addr {
 		 fmt.Println("")//Heap Structure: ",h.hNode[addr])
 		return h.hNode[addr]
 	}	
-	return NGlobal{}
+	return nil
 }
 
 func (h *GmHeap) HUpdate(addr Addr, node Node) {

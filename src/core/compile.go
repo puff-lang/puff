@@ -122,6 +122,10 @@ func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
 	return inst	
 }
 
+
+
+
+
 // func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
 // 	switch cexp.(type) {
 // 		case ENum:

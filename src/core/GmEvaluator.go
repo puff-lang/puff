@@ -8,17 +8,14 @@ import (
 
 
 func EvalState(gmState GmState) []GmState { //Done
-	var restState []GmState
+	//result := gmState
 	if gmFinal(gmState) == true {
-		restState = []GmState{}
+		return []GmState{gmState}
 	}  else {
 		fmt.Println("Dispatching: ", gmState.gmc)
-		restState = EvalState(doAdmin(step(gmState)))
+		return append([]GmState{gmState}, EvalState(doAdmin(step(gmState)))...)
 	}
-	result := []GmState{gmState}
-	return append(result, restState...)
 }
-
 
 func doAdmin(gmState GmState) GmState { //Done
 	return GmState{gmState.gmo, gmState.gmc, gmState.gms, gmState.gmd, gmState.gmvstack, gmState.gmh, gmState.gmg, statIncSteps(gmState.gmst)}
@@ -27,9 +24,11 @@ func doAdmin(gmState GmState) GmState { //Done
 func statIncSteps(gmst GmStats) GmStats { //Done
 	return gmst + 1
 }
+
 func gmFinal(gmState GmState) bool { //Done
-	fmt.Println("GMCODE Len: ", len(gmState.gmc))
+	fmt.Println("GmCode Len: ", len(gmState.gmc))
 	if len(gmState.gmc) == 0 {
+		fmt.Println("Got it Final GmCode")
 		return true
 	}
 	return false
@@ -92,9 +91,17 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 func unwind(gmState GmState) GmState { //Done
 	heap := gmState.gmh
 	fmt.Println(gmState.gms)
-	addr := gmState.gms.TopOfStack()
+	addr := gmState.gms.PopStack()
 	fmt.Println("Address:", addr)
-	return newState(heap.HLookup(addr), gmState)
+	node := heap.HLookup(addr)/*
+	gmState.gms.PushStack(Addr(NidNode.(NInd)))*/
+	fmt.Println("Node:", node)
+	fmt.Println("Heap: ", heap)
+	if  node == nil {
+		fmt.Println("End of all GmStates")
+		return GmState{}
+	}
+	return newState(node, gmState)
 }
 
 func newState(node Node, gmState GmState) GmState { //Error
@@ -121,17 +128,21 @@ func newState(node Node, gmState GmState) GmState { //Error
 
 			fmt.Println("Node")
 			fmt.Println(node)
+
+			fmt.Println(node.(NGlobal).Nargs, ">", stack.Index + 1)
 												
-			if node.(NGlobal).Nargs > len(stack.Addrs)-1 {
+			if node.(NGlobal).Nargs > (stack.Index + 1) {
 				fmt.Println("Inside if of NGlobal")
+				fmt.Println("Dump:",dump)
 				if len(dump) == 0 {
 					fmt.Println("Not enough arguments on the stack")
 					return GmState{}
 				} else {
-					dumpElement := dump[0:1][0]
+					dumpElement := dump[0]
 					is := dumpElement.gms
 					ss := stack.BottomOfStack()
 					is.PushStack(ss)
+					fmt.Println(dumpElement.gmc)
 					return GmState{gmState.gmo, (dumpElement.gmc), is, gmState.gmd, dumpElement.gmvstack, gmState.gmh, gmState.gmg, gmState.gmst}
 				}
 			} else {
@@ -145,6 +156,8 @@ func newState(node Node, gmState GmState) GmState { //Error
 			fmt.Println("Inside NInd")
 			stack := gmState.gms
 			stack.TopOfStack()
+			fmt.Println("NInd Addr: ",(node.(NInd)))
+			fmt.Println("Heap item: ",gmState.gmh.HLookup(Addr(node.(NInd))))
 			stack.PushStack(Addr(node.(NInd)))
 			return GmState{gmState.gmo, GmCode{Unwind{}}, stack, gmState.gmd, gmState.gmvstack, gmState.gmh, gmState.gmg, gmState.gmst}
 	}
@@ -153,7 +166,7 @@ func newState(node Node, gmState GmState) GmState { //Error
 
 func unwindDump(gmState GmState)  GmState { //DONE:
 	addr := gmState.gms.TopOfStack()
-	dumpElement := gmState.gmd[0:1][0]
+	dumpElement := gmState.gmd[0]
 	gmState.gms = dumpElement.gms
 	gmState.gms.PushStack(addr)
 	gmState.gmc = dumpElement.gmc
@@ -204,6 +217,8 @@ func mkap(gmState GmState) GmState { //Done
 	a1 := gmState.gms.PopStack()
 	a2 := gmState.gms.PopStack()
 	addrDash := gmState.gmh.HAlloc(NAp{a1, a2}) //Doubt About Passing type ENum or EVar
+	fmt.Println("Address of NAp: ", addrDash)
+	fmt.Println("Node: ", NAp{a1, a2})
 	gmState.gms.PushStack(addrDash)
 	return gmState
 }
@@ -215,12 +230,14 @@ func push(n int, gmState GmState) GmState { //Done: Doubt addr taken from stack 
 }
 
 func update(n int, gmState GmState) GmState { //Done
-	a := gmState.gms.PopStack()
 	fmt.Println(n)
 	fmt.Println(gmState.gms)
 	redexRoot := gmState.gms.AddrsByIndexOf(n)
+	a := gmState.gms.PopStack()
 	fmt.Println("Readexroot: ", redexRoot)
-	gmState.gmh.HUpdate(redexRoot, NInd(a)) 
+	nidaddrs := gmState.gmh.HAlloc(NInd(a))
+	//Stack n+1 condition
+	gmState.gms.PushStack(nidaddrs)
 	return gmState
 }
 
@@ -264,7 +281,9 @@ func eval2(gmState GmState) GmState { //DOne
 	vstack := gmState.gmvstack
 	a := gmState.gms.PopStack()
 	code := gmState.gmc
+	fmt.Println("Inside Eval2", gmState.gmc)
 	dumpDash := GmDump{GmDumpItem{code, gmState.gms, vstack}}
+	fmt.Println(dumpDash)
 	dumpDash = append(dumpDash, gmState.gmd...)
 	gmState.gmd = dumpDash
 	gmState.gmc = GmCode{Unwind{}}
