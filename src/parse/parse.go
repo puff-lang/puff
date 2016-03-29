@@ -23,9 +23,6 @@ type Tree struct {
 	treeSet   map[string]*Tree
 
 	topScope *ast.Scope // Scope for Global Variables inside the file
-
-
-
 }
 
 // Copy returns a copy of the Tree. Any parsing state is discarded.
@@ -356,7 +353,7 @@ func (t *Tree) parseDefn() *ast.DefnNode {
 }
 
 
-func (t *Tree) parseFuncExpr(pos int) ast.Node {
+func (t *Tree) parseFuncExpr(pos int) ast.ExprNode {
 	const context = "function expression"
 	t.openScope()
 	tok := t.expectOneOf(token.LPAREN, token.IDENT, context)
@@ -432,6 +429,11 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		retNode = ident
 	case token.IF:
 		retNode = t.parseIfStmt(tok.Pos())
+	case token.FN:
+		retNode = t.parseFuncExpr(tok.Pos())
+	case token.LPAREN:
+		retNode = t.parseExpr()
+		t.expect(token.RPAREN, "expression")
 	}
 
 	if retNode == nil {
