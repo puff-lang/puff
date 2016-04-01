@@ -79,9 +79,9 @@ func compileSc(sc ScDefn) GmCompiledSC {
 	for i,eString := range sc.Args {
 		gmE = append(gmE, Environment{eString, i})
 	}
-	fmt.Println("hello")
-
-	return GmCompiledSC{sc.Name, len(sc.Args), compilerR(sc.Expr, gmE)}
+	l := len(sc.Args)
+	fmt.Println("hello",l)
+	return GmCompiledSC{sc.Name, l, compilerR(l, sc.Expr, gmE)}
 }
 
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
@@ -92,8 +92,8 @@ func CompileSc(sc ScDefn) GmCompiledSC {
 		gmE = append(gmE, Environment{eString, i})
 	}
 	fmt.Println("hello")
-
-	return GmCompiledSC{sc.Name, len(sc.Args), compilerR(sc.Expr, gmE)}
+	l := len(sc.Args)
+	return GmCompiledSC{sc.Name, l, compilerR(l, sc.Expr, gmE)}
 }
 
 func elem(name Name, assoc GmEnvironment) int {
@@ -108,44 +108,102 @@ func elem(name Name, assoc GmEnvironment) int {
 type GmCompiler func(CoreExpr, GmEnvironment) (GmCode)
 
 //Creates code which instnst the expr e in env ρ, for a SC of arity d, and then proceeds to unwind the resulting stack
-func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
+func compilerR(d int, cexp CoreExpr, env GmEnvironment) GmCode {
 	inst := []Instruction{}
-	cC := compileC(cexp,env)
+	cC := compileE(cexp,env)
 	for _,obj := range cC {
 		inst = append(inst, obj)
 	}
-	length := len(env)
-	inst = append(inst, Update(length))
-	inst = append(inst, Pop(length))
+	inst = append(inst, Update(d))
+	inst = append(inst, Pop(d))
 	//inst = append(inst, Slide(len(env) + 1))
 	inst = append(inst, Unwind{})
 	return inst	
 }
 
 
+func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
+	switch cexp.(type) {
+		case ENum:
+			expr := cexp.(ENum)
+			if expr.IsInt {
+				return GmCode{Pushint(expr.Int64)}
+			} else  { //if expr.IsUint
+				return GmCode{Pushint(expr.Uint64)}
+			}
+		
+		case EAp:
+			expr := cexp.(EAp)
+			switch expr.Left.(type) {
+				case EAp:
+					expr1 := expr.Left.(EAp)
+					switch expr1.Left.(type) {
+						case EVar:
+							expr2 := expr1.Left.(EVar)
+							if aHasKey(built, string(expr2)) {
+								return append(compileB(expr, env), intOrBool(Name(expr2)))
+							} else {
+								return append(compileC(expr,env), Eval{})
+							}
+							
+						default:
+							fmt.Println("CompileE expression syntax")
+							return append(compileC(expr, env), Eval{})
+					}
+
+				default:
+					fmt.Println("CompileE expression syntax")
+					return append(compileC(expr, env), Eval{})
+			}
+
+		default:
+			expr := cexp
+			fmt.Println("CompileE expression syntax")
+			return append(compileC(expr, env), Eval{})		
+	}
+}
 
 
+func compileB(cexp CoreExpr, env GmEnvironment) GmCode {
+	switch cexp.(type) {
+		case ENum:
+			expr := cexp.(ENum)
+			if expr.IsInt {
+				return GmCode{Pushbasic(expr.Int64)}
+			} else  { //if expr.IsUint
+				return GmCode{Pushbasic(expr.Uint64)}
+			}
+		
+		case EAp:
+			expr := cexp.(EAp)
+			switch expr.Left.(type) {
+				case EAp:
+					expr1 := expr.Left.(EAp)
+					switch expr1.Left.(type) {
+						case EVar:
+							expr2 := expr1.Left.(EVar)
+							if aHasKey(built, string(expr2)) {
+								result := GmCode{}
+								result = append(result, compileB(expr.Body, env)...)
+								result = append(result, compileB(expr1.Body, env)...)
+								result = append(result, aLookup(built, string(expr2)))
+								return result
+							} else {
+								return append(compileE(expr,env), Get{})
+							}
 
-// func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
-// 	switch cexp.(type) {
-// 		case ENum:
-// 			expr := cexp.(ENum)
-// 			if expr.IsInt {
-// 				return GmCode{Pushint(expr.Int64)}
-// 			} else if expr.IsUint {
-// 				return GmCode{Pushint(expr.Uint64)}
-// 			}
+						default:
+							return append(compileE(expr, env), Get{})
+					}
 
-// 		case EChar:
-// 			expr := cexp.(ENum)
-// 			return GmCode{PushChar()}
-
-// 		case ELet:
-			
-			
-// 		case EAp:
-// 	}
-// }
+				default:
+					return append(compileE(expr, env), Get{})
+			}
+		default:
+			expr := cexp
+			return append(compileE(expr, env), Get{})
+	}
+}
 
 //generates code which creates the graph of e in env ρ,leaving a pointer to it on top of the stack
 func compileC(cexp CoreExpr, env GmEnvironment) GmCode {

@@ -645,37 +645,77 @@ define i64 @main() {
 }
 
 define void @_main() {
-    ; *************** Pushint 2 ***************
+    ; *************** Pushint 19 ***************
 ; create the num node on the heap
-%ptag1 = call i64*(i64)* @hAllocNum(i64 2)
+%ptag1 = call i64*(i64)* @hAllocNum(i64 19)
 
 ; push node address onto the stack
 call void(i64*)* @push(i64* %ptag1)
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
 
+; *************** Pushint 23 ***************
+; create the num node on the heap
+%ptag2 = call i64*(i64)* @hAllocNum(i64 23)
+
+; push node address onto the stack
+call void(i64*)* @push(i64* %ptag2)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
+
+; *************** Pushglobal add ***************
+; allocate global node on the heap
+%pglobal3 = call i64*(i64, void()*)* @hAllocGlobal(i64 1, void()* @_add)
+
+; store function cell address on the stack
+call void(i64*)* @push(i64* %pglobal3)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushglobalmsg, i32 0, i32 0))
+
+; *************** Mkap ***************
+%fun4 = call i64*()* @pop()
+%arg4 = call i64*()* @pop()
+
+; create application node on the heap
+%ap4 = call i64*(i64*, i64*)* @hAllocAp(i64* %fun4, i64* %arg4)
+
+; push the newly allocated appliation node address onto the stack
+call void(i64*)* @push(i64* %ap4)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @mkapmsg, i32 0, i32 0))
+
+; *************** Mkap ***************
+%fun5 = call i64*()* @pop()
+%arg5 = call i64*()* @pop()
+
+; create application node on the heap
+%ap5 = call i64*(i64*, i64*)* @hAllocAp(i64* %fun5, i64* %arg5)
+
+; push the newly allocated appliation node address onto the stack
+call void(i64*)* @push(i64* %ap5)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @mkapmsg, i32 0, i32 0))
+
+; *************** Eval ***************
+call void()* @eval()
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
+
 ; *************** Update 0 ***************
-%top2 = call i64*()* @pop()
+%top7 = call i64*()* @pop()
 
 ; update the nth node on the stack to hold the same value as the top node
-%vsp2 = load i64* @sp
-%n12 = add i64 0, 1
-%rootIndex2 = sub i64 %vsp2, %n12
-%toUpdate2 = call i64**(i64)* @getItemPtr(i64 %rootIndex2)
+%vsp7 = load i64* @sp
+%n17 = add i64 0, 1
+%rootIndex7 = sub i64 %vsp7, %n17
+%toUpdate7 = call i64**(i64)* @getItemPtr(i64 %rootIndex7)
 
 ; create ind node on the heap
-%ind2 = call i64*(i64*)* @hAllocInd(i64* %top2)
+%ind7 = call i64*(i64*)* @hAllocInd(i64* %top7)
 
-store i64* %ind2, i64** %toUpdate2
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0))
-
-; *************** Pop 0 ***************
-%vsp3 = load i64* @sp
+store i64* %ind7, i64** %toUpdate7
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 0 ***************
+%vsp8 = load i64* @sp
 
 ; update the stack pointer
-%vsp13 = sub i64 %vsp3, 0
-store i64 %vsp13, i64* @sp
+%vsp18 = sub i64 %vsp8, 0
+store i64 %vsp18, i64* @sp
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @popmsg, i32 0, i32 0))
-; *************** Unwind 4***************
+; *************** Unwind 9***************
 call void()* @unwind()
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
 
@@ -727,9 +767,7 @@ call void(i64)* @pushV(i64 %res.5)
 %ind6 = call i64*(i64*)* @hAllocInd(i64* %top6)
 
 store i64* %ind6, i64** %toUpdate6
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0))
-
-; *************** Pop 2 ***************
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 2 ***************
 %vsp7 = load i64* @sp
 
 ; update the stack pointer
@@ -788,9 +826,7 @@ call void(i64)* @pushV(i64 %res.5)
 %ind6 = call i64*(i64*)* @hAllocInd(i64* %top6)
 
 store i64* %ind6, i64** %toUpdate6
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0))
-
-; *************** Pop 2 ***************
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 2 ***************
 %vsp7 = load i64* @sp
 
 ; update the stack pointer

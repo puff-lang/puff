@@ -111,6 +111,12 @@ type Select struct{
 }
 func (e Select) isInstruction() {}
 
+type Pushbasic int
+func (e Pushbasic) isInstruction() {}
+
+type Get struct{}
+func (e Get) isInstruction() {}
+
 type GmCode []Instruction
 
 func GetCode(gState GmState) GmCode{
@@ -173,10 +179,6 @@ func (s *GmStack) StackLookup(addr Addr) bool{
 	return false
 }
 
-// From which side stack should be removed from top or bottom(Here, Assuming top)
-func (s *GmStack) DropStack(n int) {  
-	s.Index = s.Index -n
-}
 
 func (s *GmStack) TopOfStack() Addr { //Done
 	if s.Index < 0 {
@@ -189,7 +191,11 @@ func (s *GmStack) BottomOfStack() Addr { //Done
 	return s.Addrs[0]
 } 
 
-func (s *GmStack) TailStack() GmStack {
+
+func (s *GmStack) TailStack() GmStack { 
+	if s.Index < 0 {
+		return GmStack{}
+	}
 	var argaddrs [STACK_SIZE]Addr
 	for i, addr := range s.Addrs {
 		if i != 0 {
@@ -199,15 +205,40 @@ func (s *GmStack) TailStack() GmStack {
 	return GmStack{argaddrs, s.Index-1}
 }
 
-func(s *GmStack) TakeNStack(n int) GmStack{
- 	var argaddrs [STACK_SIZE]Addr
- 	for i, addr := range s.Addrs {
-		if i < n {
-			argaddrs[i] = addr
-		}
+func(s *GmStack) TakeNStack(n int) GmStack{ //Done
+	if s.Index < n {
+		return *s
 	}
-	return GmStack{argaddrs, n}
+ 	var argaddrs [STACK_SIZE]Addr
+ 	for i := s.Index; i > (s.Index - n - 1); i-- {
+			argaddrs[i] = s.Addrs[i]
+ 	}	
+	return GmStack{argaddrs, n - 1}
  }
+
+// From which side stack should be removed from top or bottom(Here, Assuming top)
+func (s *GmStack) DropStack(n int) {  
+	s.Index = s.Index -n
+}
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+// func (s *GmStack) TailStack() GmStack {
+// 	if s.Index >= 0 {
+// 		addr := s.PopStack()
+// 		fmt.Println("TailStack removed: ", addr)
+// 	}
+// 	return *s
+// }
+
+// func (s *GmStack) DropStack(n int) {  
+// 	var argaddrs [STACK_SIZE]Addr
+//  	for i, addr := range s.Addrs {
+// 		if i >= n {
+// 			argaddrs[i] = addr
+// 		}
+// 	}
+// 	*s = GmStack{argaddrs, n}
+// }
 
 
 //--------------------------------------------------------------------------
@@ -411,7 +442,11 @@ var builtinDyadicBool []builDyadic = []builDyadic {
 	builDyadic{">=", Ge{}},
 }
 
-var builtinDyadic []builDyadic = addbuilDyadic()
+
+type builtinDyadic struct{
+	bd []builDyadic 
+}
+var built builtinDyadic= builtinDyadic{ addbuilDyadic() }
 
 func addbuilDyadic() []builDyadic { //Done
 	tmpbuiltinDyadic := []builDyadic{}
@@ -420,6 +455,23 @@ func addbuilDyadic() []builDyadic { //Done
 	return tmpbuiltinDyadic
 }
 
+func aHasKey(bUilt builtinDyadic, name string) bool{
+	for _,element := range built.bd {
+		if element.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func aLookup(bUilt builtinDyadic, name string) Instruction{
+	for _,element := range built.bd {
+		if element.Name == name {
+			return element.Inst
+		}
+	}
+	return Error("Impossible Dude")
+}
 
 func preCompiledScs() []GmCompiledSC { //Done
 	acc := []GmCompiledSC{}
