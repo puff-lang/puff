@@ -12,4 +12,3 @@
 
 store i64* %ind{{.Ninstr}}, i64** %toUpdate{{.Ninstr}}
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0))
-
