@@ -125,6 +125,7 @@ func compilerR(d int, cexp CoreExpr, env GmEnvironment) GmCode {
 func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
 	switch cexp.(type) {
 		case ENum:
+			fmt.Println("ENum of compileEEE")
 			expr := cexp.(ENum)
 			if expr.IsInt {
 				return GmCode{Pushint(expr.Int64)}
@@ -134,13 +135,18 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
 		
 		case EAp:
 			expr := cexp.(EAp)
+			fmt.Println("EAp 1")
 			switch expr.Left.(type) {
 				case EAp:
+					fmt.Println("EAp 2")
 					expr1 := expr.Left.(EAp)
 					switch expr1.Left.(type) {
 						case EVar:
+							fmt.Println("EVar 1")
 							expr2 := expr1.Left.(EVar)
+							fmt.Println(aHasKey(built, string(expr2)), " Buildyadic:  ",built)
 							if aHasKey(built, string(expr2)) {
+								fmt.Println("Going for CompileB")
 								return append(compileB(expr, env), intOrBool(Name(expr2)))
 							} else {
 								return append(compileC(expr,env), Eval{})

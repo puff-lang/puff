@@ -645,77 +645,27 @@ define i64 @main() {
 }
 
 define void @_main() {
-    ; *************** Pushint 19 ***************
-; create the num node on the heap
-%ptag1 = call i64*(i64)* @hAllocNum(i64 19)
-
-; push node address onto the stack
-call void(i64*)* @push(i64* %ptag1)
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
-
-; *************** Pushint 23 ***************
-; create the num node on the heap
-%ptag2 = call i64*(i64)* @hAllocNum(i64 23)
-
-; push node address onto the stack
-call void(i64*)* @push(i64* %ptag2)
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
-
-; *************** Pushglobal add ***************
-; allocate global node on the heap
-%pglobal3 = call i64*(i64, void()*)* @hAllocGlobal(i64 1, void()* @_add)
-
-; store function cell address on the stack
-call void(i64*)* @push(i64* %pglobal3)
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushglobalmsg, i32 0, i32 0))
-
-; *************** Mkap ***************
-%fun4 = call i64*()* @pop()
-%arg4 = call i64*()* @pop()
-
-; create application node on the heap
-%ap4 = call i64*(i64*, i64*)* @hAllocAp(i64* %fun4, i64* %arg4)
-
-; push the newly allocated appliation node address onto the stack
-call void(i64*)* @push(i64* %ap4)
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @mkapmsg, i32 0, i32 0))
-
-; *************** Mkap ***************
-%fun5 = call i64*()* @pop()
-%arg5 = call i64*()* @pop()
-
-; create application node on the heap
-%ap5 = call i64*(i64*, i64*)* @hAllocAp(i64* %fun5, i64* %arg5)
-
-; push the newly allocated appliation node address onto the stack
-call void(i64*)* @push(i64* %ap5)
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @mkapmsg, i32 0, i32 0))
-
-; *************** Eval ***************
-call void()* @eval()
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
-
-; *************** Update 0 ***************
-%top7 = call i64*()* @pop()
+    ; *************** Update 0 ***************
+%top0 = call i64*()* @pop()
 
 ; update the nth node on the stack to hold the same value as the top node
-%vsp7 = load i64* @sp
-%n17 = add i64 0, 1
-%rootIndex7 = sub i64 %vsp7, %n17
-%toUpdate7 = call i64**(i64)* @getItemPtr(i64 %rootIndex7)
+%vsp0 = load i64* @sp
+%n10 = add i64 0, 1
+%rootIndex0 = sub i64 %vsp0, %n10
+%toUpdate0 = call i64**(i64)* @getItemPtr(i64 %rootIndex0)
 
 ; create ind node on the heap
-%ind7 = call i64*(i64*)* @hAllocInd(i64* %top7)
+%ind0 = call i64*(i64*)* @hAllocInd(i64* %top0)
 
-store i64* %ind7, i64** %toUpdate7
+store i64* %ind0, i64** %toUpdate0
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 0 ***************
-%vsp8 = load i64* @sp
+%vsp1 = load i64* @sp
 
 ; update the stack pointer
-%vsp18 = sub i64 %vsp8, 0
-store i64 %vsp18, i64* @sp
+%vsp11 = sub i64 %vsp1, 0
+store i64 %vsp11, i64* @sp
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @popmsg, i32 0, i32 0))
-; *************** Unwind 9***************
+; *************** Unwind 2***************
 call void()* @unwind()
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
 
@@ -723,7 +673,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
     ret void
 }
 
-define void @_sub() {
+define void @_-() {
     ; *************** Push 1***************
 %vsp1 = load i64* @sp
 %tmp1 = add i64 1, 1
@@ -782,7 +732,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
     ret void
 }
 
-define void @_add() {
+define void @_+() {
     ; *************** Push 1***************
 %vsp1 = load i64* @sp
 %tmp1 = add i64 1, 1
