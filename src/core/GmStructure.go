@@ -292,6 +292,7 @@ func (e NInd) isNode() {}
 type NConstr struct {
 	Nargs int
 	Addrs [10]Addr
+	Index int
 }
 func (e NConstr) isNode() {}
 

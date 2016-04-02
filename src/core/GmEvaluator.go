@@ -89,8 +89,15 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 		case Get:
 			fmt.Println("Get")
 			return get(gmState)
+		case MkInt:
+			fmt.Println("MkInt")
+			return GmState{}
+		case MkBool:
+			fmt.Println("MkBool")
+			return GmState{}
 		default:
 			fmt.Println("Default")
+			// fmt.Println(instr.(type))
 			return mod(gmState)
 
 	}
@@ -348,6 +355,28 @@ func eval2(gmState GmState) GmState { //DOne
 	return gmState
 }
 
+func get(gmState GmState) GmState { // Done 
+	vstack :=  gmState.gmvstack
+	a := gmState.gms.PopStack()	
+	node := gmState.gmh.HLookup(a)
+	switch  node.(type) {
+		case NNum:
+			vstack = append(vstack, int(node.(NNum)))
+		case NConstr:
+			length := node.(NConstr).Index
+			for i := 0; i <= length ; i++ {
+				vstack[len(vstack) + i] = int(node.(NConstr).Addrs[i])
+			}
+	}
+	gmState.gmvstack = vstack
+	return gmState
+}
+
+func pushBasic(n int ,gmState GmState) GmState { //Done
+	gmState.gmvstack = append(gmState.gmvstack, n)
+	return gmState
+}
+
 func add(gmState GmState) GmState{ //Done
 	return arithmetic2("+", gmState)
 }
@@ -393,9 +422,14 @@ func relational2(op string, gmState GmState) GmState{
 func binOp(op string, gmState GmState) GmState{ //DOne
 	vstack := gmState.gmvstack
 	fmt.Println("Inside binOp vstack: ", vstack)
-	newVS := []int{calculate(op,vstack[len(vstack)-1],vstack[len(vstack)-2])}
-	gmState.gmvstack = append(newVS, vstack[0:len(vstack)-2]...)
-	return gmState
+	fmt.Println(int(vstack[len(vstack)-2])," > ", 0)
+	if int(vstack[len(vstack)-2]) > 0 {
+		newVS := []int{calculate(op, int(vstack[len(vstack)-1]), int(vstack[len(vstack)-2]))}
+		gmState.gmvstack = append(newVS, vstack[0:len(vstack)-2]...)
+		fmt.Println("gmvstack: ", gmState.gmvstack)
+		return gmState
+	}
+	return GmState{}
 }
 
 func calculate(op string, v1 int, v2 int) int{ //Done
@@ -417,29 +451,9 @@ func calculate(op string, v1 int, v2 int) int{ //Done
 //------------------------------------Extra PArt----------------------------------------
 //--------------------------------------------------------------------------------------
 
-func get(gmState GmState) GmState { // Done with some errors
-	vstack :=  gmState.gmvstack
-	a := gmState.gms.PopStack()	
-	node := gmState.gmh.HLookup(a)
-	switch  node.(type) {
-		case NNum:
-			vstack = append(vstack, int(node.(NNum)))
-		case NConstr:
-			vstack = append(vstack, node.(NConstr).Addrs...)
-	}
-	gmState.gmvstack = vstack
-	return gmState
-}
-
-
-func pushBasic(n int ,gmState GmState) GmState { //Done
-	gmState.gmvstack = append(gmState.gmvstack, n)
-	return gmState
-}
-
 func pack(t int, n int, gmState GmState) GmState {
 	take := gmState.gms.TakeNStack(n)
-	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs})
+	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs, take.Index})
 	gmState.gms.DropStack(n)
 	gmState.gms.PushStack(addr)
 	return gmState
