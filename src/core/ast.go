@@ -20,6 +20,12 @@ type ENum struct {
 }
 func (e ENum) isExpr() {}
 
+type EChar int
+func (e EChar) isExpr() {}
+
+type EConstrName Name
+func (e EConstrName) isExpr() {}
+
 type EConstr struct {
 	Tag   int
 	Arity int
@@ -55,12 +61,14 @@ type Defn struct {
 	Var  Name
 	Expr CoreExpr
 }
+func (e Defn) isExpr() {}
 
 type ScDefn struct {
 	Name Name
 	Args []Name
 	Expr CoreExpr
 }
+func (e ScDefn) isExpr() {}
 
 type Program []ScDefn
 

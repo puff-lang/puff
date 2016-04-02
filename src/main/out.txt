@@ -1,0 +1,122 @@
+4 + 6
+returning new Tree  Program
+Parsing src:  4 + 6
+32
+loop iteration with token INT
+parse statement
+4
+returning expression node
+testing for infix
+trying to parse infix
++
+32
+testing for infix
+trying to parse infix
+EOF
+No binary operator present
+not a infix expr
+returning binary expression
+not a infix expr
+received 4 + 6
+appending 4 + 6
+loop iteration with token INT
+parse statement
+
+received <nil>
+[{select-1-0 1 [0 {} {1 0} 1 1 {}]} {select-2-0 1 [0 {} {2 0} 1 1 {}]} {select-2-1 1 [0 {} {2 1} 1 1 {}]} {select-3-0 1 [0 {} {3 0} 1 1 {}]} {select-3-1 1 [0 {} {3 1} 1 1 {}]} {select-3-2 1 [0 {} {3 2} 1 1 {}]} {select-4-0 1 [0 {} {4 0} 1 1 {}]} {select-4-1 1 [0 {} {4 1} 1 1 {}]} {select-4-2 1 [0 {} {4 2} 1 1 {}]} {select-4-3 1 [0 {} {4 3} 1 1 {}]} {select-5-0 1 [0 {} {5 0} 1 1 {}]} {select-5-1 1 [0 {} {5 1} 1 1 {}]} {select-5-2 1 [0 {} {5 2} 1 1 {}]} {select-5-3 1 [0 {} {5 3} 1 1 {}]} {select-5-4 1 [0 {} {5 4} 1 1 {}]}]
+hello
+Got Eval
+GMCODE Len:  2
+Dispatching:  [main {}]
+Instruction:  main
+{[0 0 0 0 0 0 0 0 0 0] -1}
+Pushglobal
+GMCODE Len:  1
+Dispatching:  [{}]
+Instruction:  {}
+{[2 0 0 0 0 0 0 0 0 0] 0}
+GMCODE Len:  1
+Dispatching:  [{}]
+Instruction:  {}
+{[2 0 0 0 0 0 0 0 0 0] 0}
+Unwind
+{[2 0 0 0 0 0 0 0 0 0] 0}
+Address: 2
+
+Inside NewState
+Inside NGlobal
+Node
+{0 [6 4 add {} {} 0 0 {}]}
+Inside else of NGlobal
+{2 [1 {} 1 {} {} 2 2 {}]}
+Done with arg:  2
+{2 [1 {} 1 {} {} 2 2 {}]}
+Done with arg:  2
+{0 [6 4 add {} {} 0 0 {}]}
+Done with arg:  0
+Heap Addr:  0
+Done with rearrange
+GMCODE Len:  8
+Dispatching:  [6 4 add {} {} 0 0 {}]
+Instruction:  6
+{[0 0 0 0 0 0 0 0 0 0] -1}
+Pushint
+in Pushint
+Error: Undeclared global identifier  6
+Inside Pushgen
+GMCODE Len:  7
+Dispatching:  [4 add {} {} 0 0 {}]
+Instruction:  4
+{[3 0 0 0 0 0 0 0 0 0] 0}
+Pushint
+in Pushint
+Error: Undeclared global identifier  4
+Inside Pushgen
+GMCODE Len:  6
+Dispatching:  [add {} {} 0 0 {}]
+Instruction:  add
+{[3 4 0 0 0 0 0 0 0 0] 1}
+Pushglobal
+GMCODE Len:  5
+Dispatching:  [{} {} 0 0 {}]
+Instruction:  {}
+{[3 4 0 0 0 0 0 0 0 0] 2}
+Mkap
+GMCODE Len:  4
+Dispatching:  [{} 0 0 {}]
+Instruction:  {}
+{[3 5 0 0 0 0 0 0 0 0] 1}
+Mkap
+GMCODE Len:  3
+Dispatching:  [0 0 {}]
+Instruction:  0
+{[6 5 0 0 0 0 0 0 0 0] 0}
+Update
+0
+{[6 5 0 0 0 0 0 0 0 0] -1}
+Readexroot:  -1
+Not found in Heap
+GMCODE Len:  2
+Dispatching:  [0 {}]
+Instruction:  0
+{[6 5 0 0 0 0 0 0 0 0] -1}
+Pop
+GMCODE Len:  1
+Dispatching:  [{}]
+Instruction:  {}
+{[6 5 0 0 0 0 0 0 0 0] -1}
+Unwind
+{[6 5 0 0 0 0 0 0 0 0] -1}
+Address: -1
+Inside NewState
+Inside NGlobal
+Node
+{0 []}
+Inside else of NGlobal
+{2 [1 {} 1 {} {} 2 2 {}]}
+Done with arg:  2
+{2 [1 {} 1 {} {} 2 2 {}]}
+Done with arg:  2
+{0 [6 4 add {} {} 0 0 {}]}
+Done with arg:  0
+Heap Addr:  0

@@ -147,7 +147,14 @@ func lexStatement(l *lexer) LexFn {
 		l.backup()
 		return lexSpace
 	case ch == '=':
-		return lexEqual
+		n := l.next()
+		if n == '>' {
+			l.emit(token.ARROW)
+			return lexStatement
+		} else {
+			l.backup()
+			return lexEqual
+		}
 	case ch == '/':
 		nextChar := l.peek()
 		if nextChar == '/' {
@@ -250,13 +257,7 @@ func lexExpr(l *lexer) LexFn {
 		l.emit(token.COMMA)
 		return lexStatement
 	case r == '-':
-		n := l.next()
-		if n == '>' {
-			l.emit(token.ARROW)
-		} else {
-			l.backup()
-			l.emit(token.SUB)
-		}
+		l.emit(token.SUB)
 		return lexStatement
 	case r == '"':
 		return lexQuote
