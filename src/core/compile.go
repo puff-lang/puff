@@ -107,20 +107,28 @@ func elem(name Name, assoc GmEnvironment) int {
 
 type GmCompiler func(CoreExpr, GmEnvironment) (GmCode)
 
-//Creates code which instnst the expr e in env ρ, for a SC of arity d, and then proceeds to unwind the resulting stack
 func compilerR(d int, cexp CoreExpr, env GmEnvironment) GmCode {
-	inst := []Instruction{}
-	cC := compileE(cexp,env)
-	for _,obj := range cC {
-		inst = append(inst, obj)
-	}
-	inst = append(inst, Update(d))
-	inst = append(inst, Pop(d))
-	//inst = append(inst, Slide(len(env) + 1))
-	inst = append(inst, Unwind{})
-	return inst	
-}
+	switch cexp.(type) {
+		case ELet:
+			expr := cexp.(ELet)
+			if expr.IsRec {
+				return compileLetrec(compileC, expr.Defns, expr.Body, env)
+			} else {
+				return compileLet(compileC, expr.Defns, expr.Body, env)
+			}
+		default:
+			inst := []Instruction{}
+			cC := compileE(cexp,env)
+			for _,obj := range cC {
+				inst = append(inst, obj)
+			}
+			inst = append(inst, Update(d))
+			inst = append(inst, Pop(d))
+			inst = append(inst, Unwind{})
+			return inst	
 
+	}
+}
 
 func compileE(cexp CoreExpr, env GmEnvironment) GmCode {
 	switch cexp.(type) {
