@@ -732,7 +732,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
     ret void
 }
 
-define void @_+() {
+define void @_add() {
     ; *************** Push 1***************
 %vsp1 = load i64* @sp
 %tmp1 = add i64 1, 1

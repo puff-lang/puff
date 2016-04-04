@@ -2,7 +2,7 @@ package compile
 
 import (
 	"ast"
-	// "fmt"
+	"fmt"
 	"token"
 	"core"
 )
@@ -38,9 +38,12 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 			oper = "/"
 		case token.REM:
 			oper = "%"
+		case token.EQL:
+			oper = "=="
 		default:
 			oper = ""
 	}
+	fmt.Println(oper)
 	return core.EAp{core.EAp{core.EVar(oper), left}, right} // TODO: Incomplete fn require support of prelude in core-ast
 }
 
