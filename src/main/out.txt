@@ -1,122 +1,395 @@
-4 + 6
+fn numadd(x, y) => x + y 
+fn main => let a = 24 in numadd(a, 32)
 returning new Tree  Program
-Parsing src:  4 + 6
+Parsing src:  fn numadd(x, y) => x + y 
+fn main => let a = 24 in numadd(a, 32)
 32
-loop iteration with token INT
+loop iteration with token fn
 parse statement
-4
-returning expression node
-testing for infix
+fn
+Parsing function definition
+x
+32
+y
+32
+32
+32
 trying to parse infix
 +
 32
-testing for infix
+32
+10
+trying to parse infix
+fn
+received fn (x, y) -> x + y
+appending fn (x, y) -> x + y
+loop iteration with token fn
+parse statement
+fn
+32
+32
+Parsing function definition
+32
+32
+parse let
+32
+32
+32
+32
+trying to parse infix
+in
+32
+trying to parse infix
+,
+Arg: a
+trying to parse infix
+)
+Arg: 32
+No. of args  [a 32]
 trying to parse infix
 EOF
-No binary operator present
-not a infix expr
-returning binary expression
-not a infix expr
-received 4 + 6
-appending 4 + 6
-loop iteration with token INT
+No. of args:  2
+received fn () -> let a = 24 in numadd(a, 32)
+No. of args:  2
+appending fn () -> let a = 24 in numadd(a, 32)
+loop iteration with token fn
 parse statement
 
 received <nil>
++
+AP Left,  numadd
 [{select-1-0 1 [0 {} {1 0} 1 1 {}]} {select-2-0 1 [0 {} {2 0} 1 1 {}]} {select-2-1 1 [0 {} {2 1} 1 1 {}]} {select-3-0 1 [0 {} {3 0} 1 1 {}]} {select-3-1 1 [0 {} {3 1} 1 1 {}]} {select-3-2 1 [0 {} {3 2} 1 1 {}]} {select-4-0 1 [0 {} {4 0} 1 1 {}]} {select-4-1 1 [0 {} {4 1} 1 1 {}]} {select-4-2 1 [0 {} {4 2} 1 1 {}]} {select-4-3 1 [0 {} {4 3} 1 1 {}]} {select-5-0 1 [0 {} {5 0} 1 1 {}]} {select-5-1 1 [0 {} {5 1} 1 1 {}]} {select-5-2 1 [0 {} {5 2} 1 1 {}]} {select-5-3 1 [0 {} {5 3} 1 1 {}]} {select-5-4 1 [0 {} {5 4} 1 1 {}]}]
-hello
+SC Name:  numadd
+SC Args length:  2
+EAp 1
+EAp 2
+EVar 1
+true  Buildyadic:   {[{== {}} {!= {}} {< {}} {<= {}} {> {}} {>= {}} {+ {}} {- {}} {* {}} {/ {}}]}
+Going for CompileB
+229 CompileE expression syntax
+229 CompileE expression syntax
+SC Name:  main
+SC Args length:  0
+EAp 1
+EAp 2
+EVar 1
+false  Buildyadic:   {[{== {}} {!= {}} {< {}} {<= {}} {> {}} {>= {}} {+ {}} {- {}} {* {}} {/ {}}]}
+SC:  + stored at:  0
+SC:  - stored at:  1
+SC:  numadd stored at:  2
+SC:  main stored at:  3
 Got Eval
-GMCODE Len:  2
+GmCode Len:  2 Stack:  {[0 0 0 0 0 0 0 0 0 0] -1}
 Dispatching:  [main {}]
 Instruction:  main
 {[0 0 0 0 0 0 0 0 0 0] -1}
 Pushglobal
-GMCODE Len:  1
+GmGlobalsLookup Addr:  3
+GmCode Len:  1 Stack:  {[3 0 0 0 0 0 0 0 0 0] 0}
 Dispatching:  [{}]
 Instruction:  {}
-{[2 0 0 0 0 0 0 0 0 0] 0}
-GMCODE Len:  1
+{[3 0 0 0 0 0 0 0 0 0] 0}
+Eval2
+Inside Eval2(GmCode):  []
+Here Dump is added in GmDump:  [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []}]
+GmCode Len:  1 Stack:  {[3 0 0 0 0 0 0 0 0 0] 0}
 Dispatching:  [{}]
 Instruction:  {}
-{[2 0 0 0 0 0 0 0 0 0] 0}
+{[3 0 0 0 0 0 0 0 0 0] 0}
 Unwind
-{[2 0 0 0 0 0 0 0 0 0] 0}
-Address: 2
+GmStack:  {[3 0 0 0 0 0 0 0 0 0] 0}
+Address: 3
 
+Reading node from:  3
+Node: {0 [24 32 1 numadd {} {} {} 0 0 {}]}
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 3}
 Inside NewState
+Stack:  {[3 0 0 0 0 0 0 0 0 0] 0}
 Inside NGlobal
 Node
-{0 [6 4 add {} {} 0 0 {}]}
+{0 [24 32 1 numadd {} {} {} 0 0 {}]}
+0 > 0
 Inside else of NGlobal
-{2 [1 {} 1 {} {} 2 2 {}]}
-Done with arg:  2
-{2 [1 {} 1 {} {} 2 2 {}]}
-Done with arg:  2
-{0 [6 4 add {} {} 0 0 {}]}
-Done with arg:  0
-Heap Addr:  0
 Done with rearrange
-GMCODE Len:  8
-Dispatching:  [6 4 add {} {} 0 0 {}]
-Instruction:  6
-{[0 0 0 0 0 0 0 0 0 0] -1}
-Pushint
-in Pushint
-Error: Undeclared global identifier  6
-Inside Pushgen
-GMCODE Len:  7
-Dispatching:  [4 add {} {} 0 0 {}]
-Instruction:  4
+GmCode Len:  10 Stack:  {[3 0 0 0 0 0 0 0 0 0] 0}
+Dispatching:  [24 32 1 numadd {} {} {} 0 0 {}]
+Instruction:  24
 {[3 0 0 0 0 0 0 0 0 0] 0}
 Pushint
 in Pushint
-Error: Undeclared global identifier  4
+Error: Undeclared global identifier  24
 Inside Pushgen
-GMCODE Len:  6
-Dispatching:  [add {} {} 0 0 {}]
-Instruction:  add
+GmCode Len:  9 Stack:  {[3 4 0 0 0 0 0 0 0 0] 1}
+Dispatching:  [32 1 numadd {} {} {} 0 0 {}]
+Instruction:  32
 {[3 4 0 0 0 0 0 0 0 0] 1}
+Pushint
+in Pushint
+Error: Undeclared global identifier  32
+Inside Pushgen
+GmCode Len:  8 Stack:  {[3 4 5 0 0 0 0 0 0 0] 2}
+Dispatching:  [1 numadd {} {} {} 0 0 {}]
+Instruction:  1
+{[3 4 5 0 0 0 0 0 0 0] 2}
+Push
+GmCode Len:  7 Stack:  {[3 4 5 4 0 0 0 0 0 0] 3}
+Dispatching:  [numadd {} {} {} 0 0 {}]
+Instruction:  numadd
+{[3 4 5 4 0 0 0 0 0 0] 3}
 Pushglobal
-GMCODE Len:  5
+GmGlobalsLookup Addr:  2
+GmCode Len:  6 Stack:  {[3 4 5 4 2 0 0 0 0 0] 4}
+Dispatching:  [{} {} {} 0 0 {}]
+Instruction:  {}
+{[3 4 5 4 2 0 0 0 0 0] 4}
+Mkap
+Address of NAp:  6
+Node:  {2 4}
+GmCode Len:  5 Stack:  {[3 4 5 6 2 0 0 0 0 0] 3}
 Dispatching:  [{} {} 0 0 {}]
 Instruction:  {}
-{[3 4 0 0 0 0 0 0 0 0] 2}
+{[3 4 5 6 2 0 0 0 0 0] 3}
 Mkap
-GMCODE Len:  4
+Address of NAp:  7
+Node:  {6 5}
+GmCode Len:  4 Stack:  {[3 4 7 6 2 0 0 0 0 0] 2}
 Dispatching:  [{} 0 0 {}]
 Instruction:  {}
-{[3 5 0 0 0 0 0 0 0 0] 1}
-Mkap
-GMCODE Len:  3
-Dispatching:  [0 0 {}]
-Instruction:  0
-{[6 5 0 0 0 0 0 0 0 0] 0}
-Update
-0
-{[6 5 0 0 0 0 0 0 0 0] -1}
-Readexroot:  -1
-Not found in Heap
-GMCODE Len:  2
-Dispatching:  [0 {}]
-Instruction:  0
-{[6 5 0 0 0 0 0 0 0 0] -1}
-Pop
-GMCODE Len:  1
+{[3 4 7 6 2 0 0 0 0 0] 2}
+Eval2
+Inside Eval2(GmCode):  [0 0 {}]
+Here Dump is added in GmDump:  [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []}]
+GmCode Len:  1 Stack:  {[7 0 0 0 0 0 0 0 0 0] 0}
 Dispatching:  [{}]
 Instruction:  {}
-{[6 5 0 0 0 0 0 0 0 0] -1}
+{[7 0 0 0 0 0 0 0 0 0] 0}
 Unwind
-{[6 5 0 0 0 0 0 0 0 0] -1}
-Address: -1
+GmStack:  {[7 0 0 0 0 0 0 0 0 0] 0}
+Address: 7
+
+Reading node from:  7
+Node: {6 5}
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7}
 Inside NewState
+Stack:  {[7 0 0 0 0 0 0 0 0 0] 0}
+Inside NAp
+GmCode Len:  1 Stack:  {[7 6 0 0 0 0 0 0 0 0] 1}
+Dispatching:  [{}]
+Instruction:  {}
+{[7 6 0 0 0 0 0 0 0 0] 1}
+Unwind
+GmStack:  {[7 6 0 0 0 0 0 0 0 0] 1}
+Address: 6
+
+Reading node from:  6
+Node: {2 4}
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7}
+Inside NewState
+Stack:  {[7 6 0 0 0 0 0 0 0 0] 1}
+Inside NAp
+GmCode Len:  1 Stack:  {[7 6 2 0 0 0 0 0 0 0] 2}
+Dispatching:  [{}]
+Instruction:  {}
+{[7 6 2 0 0 0 0 0 0 0] 2}
+Unwind
+GmStack:  {[7 6 2 0 0 0 0 0 0 0] 2}
+Address: 2
+
+Reading node from:  2
+Node: {2 [1 {} {} 0 {} {} {} {} 2 2 {}]}
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7}
+Inside NewState
+Stack:  {[7 6 2 0 0 0 0 0 0 0] 2}
 Inside NGlobal
 Node
-{0 []}
+{2 [1 {} {} 0 {} {} {} {} 2 2 {}]}
+2 > 2
 Inside else of NGlobal
-{2 [1 {} 1 {} {} 2 2 {}]}
-Done with arg:  2
-{2 [1 {} 1 {} {} 2 2 {}]}
-Done with arg:  2
-{0 [6 4 add {} {} 0 0 {}]}
-Done with arg:  0
-Heap Addr:  0
+Stack Before TailStack:  {[7 6 2 0 0 0 0 0 0 0] 2}
+TailStack:  {[6 2 0 0 0 0 0 0 0 0] 1} 
+ n:  2
+TakeNStack:  {[6 2 0 0 0 0 0 0 0 0] 1}
+
+Heap Node:  {2 [1 {} 1 {} {} 2 2 {}]}
+
+Heap Node:  {2 [1 {} 1 {} {} 2 2 {}]}
+
+Heap Node:  {2 [1 {} {} 0 {} {} {} {} 2 2 {}]}
+
+Heap Node:  {0 [24 32 1 numadd {} {} {} 0 0 {}]}
+
+Heap Node:  24
+
+Heap Node:  32
+
+get arg:  {2 4}
+Heap Node:  {2 4} 
+Heap Addr:  4
+
+get arg:  {6 5}
+Heap Node:  {6 5} 
+Heap Addr:  5
+Hello
+i:  2  j:  0
+i:  3  j:  1
+rearrange returns stack:  {[4 5 7 6 0 0 0 0 0 0] 3}
+Done with rearrange
+GmCode Len:  11 Stack:  {[4 5 7 6 0 0 0 0 0 0] 3}
+Dispatching:  [1 {} {} 0 {} {} {} {} 2 2 {}]
+Instruction:  1
+{[4 5 7 6 0 0 0 0 0 0] 3}
+Push
+GmCode Len:  10 Stack:  {[4 5 7 6 5 0 0 0 0 0] 4}
+Dispatching:  [{} {} 0 {} {} {} {} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 0 0 0 0 0] 4}
+Eval2
+Inside Eval2(GmCode):  [{} 0 {} {} {} {} 2 2 {}]
+Here Dump is added in GmDump:  [{[{} 0 {} {} {} {} 2 2 {}] {[4 5 7 6 5 0 0 0 0 0] 4} []}]
+GmCode Len:  1 Stack:  {[5 0 0 0 0 0 0 0 0 0] 0}
+Dispatching:  [{}]
+Instruction:  {}
+{[5 0 0 0 0 0 0 0 0 0] 0}
+Unwind
+GmStack:  {[5 0 0 0 0 0 0 0 0 0] 0}
+Address: 5
+
+Reading node from:  5
+Node: 32
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7}
+Inside NewState
+Stack:  {[5 0 0 0 0 0 0 0 0 0] 0}
+Inide NNum
+UnwindDump: Pushing  5  inside stack
+Dump GmCode:  [{} 0 {} {} {} {} 2 2 {}]
+GmCode Len:  9 Stack:  {[4 5 7 6 5 5 0 0 0 0] 5}
+Dispatching:  [{} 0 {} {} {} {} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 5 0 0 0 0] 5}
+Get
+
+GmCode Len:  8 Stack:  {[4 5 7 6 5 5 0 0 0 0] 4}
+Dispatching:  [0 {} {} {} {} 2 2 {}]
+Instruction:  0
+{[4 5 7 6 5 5 0 0 0 0] 4}
+Push
+GmCode Len:  7 Stack:  {[4 5 7 6 5 4 0 0 0 0] 5}
+Dispatching:  [{} {} {} {} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 4 0 0 0 0] 5}
+Eval2
+Inside Eval2(GmCode):  [{} {} {} 2 2 {}]
+Here Dump is added in GmDump:  [{[{} {} {} 2 2 {}] {[4 5 7 6 5 4 0 0 0 0] 5} [32]}]
+GmCode Len:  1 Stack:  {[4 0 0 0 0 0 0 0 0 0] 0}
+Dispatching:  [{}]
+Instruction:  {}
+{[4 0 0 0 0 0 0 0 0 0] 0}
+Unwind
+GmStack:  {[4 0 0 0 0 0 0 0 0 0] 0}
+Address: 4
+
+Reading node from:  4
+Node: 24
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7}
+Inside NewState
+Stack:  {[4 0 0 0 0 0 0 0 0 0] 0}
+Inide NNum
+UnwindDump: Pushing  4  inside stack
+Dump GmCode:  [{} {} {} 2 2 {}]
+GmCode Len:  6 Stack:  {[4 5 7 6 5 4 4 0 0 0] 6}
+Dispatching:  [{} {} {} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 4 4 0 0 0] 6}
+Get
+
+GmCode Len:  5 Stack:  {[4 5 7 6 5 4 4 0 0 0] 5}
+Dispatching:  [{} {} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 4 4 0 0 0] 5}
+Add
+Inside binOp vstack:  [32 24]
+32  >  0
+gmvstack:  [56]
+GmCode Len:  4 Stack:  {[4 5 7 6 5 4 4 0 0 0] 5}
+Dispatching:  [{} 2 2 {}]
+Instruction:  {}
+{[4 5 7 6 5 4 4 0 0 0] 5}
+MkInt
+GmCode Len:  3 Stack:  {[4 5 7 6 5 4 8 0 0 0] 6}
+Dispatching:  [2 2 {}]
+Instruction:  2
+{[4 5 7 6 5 4 8 0 0 0] 6}
+Update
+2
+{[4 5 7 6 5 4 8 0 0 0] 6}
+Readexroot:  7
+GmCode Len:  2 Stack:  {[4 5 7 6 5 4 9 0 0 0] 6}
+Dispatching:  [2 {}]
+Instruction:  2
+{[4 5 7 6 5 4 9 0 0 0] 6}
+Pop
+GmCode Len:  1 Stack:  {[4 5 7 6 5 4 9 0 0 0] 4}
+Dispatching:  [{}]
+Instruction:  {}
+{[4 5 7 6 5 4 9 0 0 0] 4}
+Unwind
+GmStack:  {[4 5 7 6 5 4 9 0 0 0] 4}
+Address: 5
+
+Reading node from:  5
+Node: 32
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 9}
+Inside NewState
+Stack:  {[4 5 7 6 5 4 9 0 0 0] 4}
+Inide NNum
+UnwindDump: Pushing  5  inside stack
+Dump GmCode:  [0 0 {}]
+GmCode Len:  3 Stack:  {[3 4 7 5 2 0 0 0 0 0] 3}
+Dispatching:  [0 0 {}]
+Instruction:  0
+{[3 4 7 5 2 0 0 0 0 0] 3}
+Update
+0
+{[3 4 7 5 2 0 0 0 0 0] 3}
+Readexroot:  3
+GmCode Len:  2 Stack:  {[3 4 7 10 2 0 0 0 0 0] 3}
+Dispatching:  [0 {}]
+Instruction:  0
+{[3 4 7 10 2 0 0 0 0 0] 3}
+Pop
+GmCode Len:  1 Stack:  {[3 4 7 10 2 0 0 0 0 0] 3}
+Dispatching:  [{}]
+Instruction:  {}
+{[3 4 7 10 2 0 0 0 0 0] 3}
+Unwind
+GmStack:  {[3 4 7 10 2 0 0 0 0 0] 3}
+Address: 10
+
+Reading node from:  10
+Node: 5
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10}
+Inside NewState
+Stack:  {[3 4 7 10 2 0 0 0 0 0] 3}
+Inside NInd
+NInd Addr:  5
+
+Heap item:  32
+GmCode Len:  1 Stack:  {[3 4 7 10 5 0 0 0 0 0] 4}
+Dispatching:  [{}]
+Instruction:  {}
+{[3 4 7 10 5 0 0 0 0 0] 4}
+Unwind
+GmStack:  {[3 4 7 10 5 0 0 0 0 0] 4}
+Address: 5
+
+Reading node from:  5
+Node: 32
+Heap:  {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10}
+Inside NewState
+Stack:  {[3 4 7 10 5 0 0 0 0 0] 4}
+Inide NNum
+UnwindDump: Pushing  5  inside stack
+Dump GmCode:  []
+GmCode Len:  0 Stack:  {[3 5 0 0 0 0 0 0 0 0] 1}
+Got it Final GmCode
+[{[] [main {}] {[0 0 0 0 0 0 0 0 0 0] -1} [{[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 3} [{main 3} {numadd 2} {- 1} {+ 0}] 0} {[] [{}] {[3 0 0 0 0 0 0 0 0 0] 0} [{[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 3} [{main 3} {numadd 2} {- 1} {+ 0}] 1} {[] [{}] {[3 0 0 0 0 0 0 0 0 0] 0} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 3} [{main 3} {numadd 2} {- 1} {+ 0}] 2} {[] [24 32 1 numadd {} {} {} 0 0 {}] {[3 0 0 0 0 0 0 0 0 0] 0} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 3} [{main 3} {numadd 2} {- 1} {+ 0}] 3} {[] [32 1 numadd {} {} {} 0 0 {}] {[3 4 0 0 0 0 0 0 0 0] 1} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 4} [{24 4} {main 3} {numadd 2} {- 1} {+ 0}] 4} {[] [1 numadd {} {} {} 0 0 {}] {[3 4 5 0 0 0 0 0 0 0] 2} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 5} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 5} {[] [numadd {} {} {} 0 0 {}] {[3 4 5 4 0 0 0 0 0 0] 3} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 5} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 6} {[] [{} {} {} 0 0 {}] {[3 4 5 4 2 0 0 0 0 0] 4} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 5} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 7} {[] [{} {} 0 0 {}] {[3 4 5 6 2 0 0 0 0 0] 3} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 6} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 8} {[] [{} 0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 9} {[] [{}] {[7 0 0 0 0 0 0 0 0 0] 0} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 10} {[] [{}] {[7 6 0 0 0 0 0 0 0 0] 1} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 11} {[] [{}] {[7 6 2 0 0 0 0 0 0 0] 2} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 12} {[] [1 {} {} 0 {} {} {} {} 2 2 {}] {[4 5 7 6 0 0 0 0 0 0] 3} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 13} {[] [{} {} 0 {} {} {} {} 2 2 {}] {[4 5 7 6 5 0 0 0 0 0] 4} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 14} {[] [{}] {[5 0 0 0 0 0 0 0 0 0] 0} [{[{} 0 {} {} {} {} 2 2 {}] {[4 5 7 6 5 0 0 0 0 0] 4} []} {[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 15} {[] [{} 0 {} {} {} {} 2 2 {}] {[4 5 7 6 5 5 0 0 0 0] 5} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 16} {[] [0 {} {} {} {} 2 2 {}] {[4 5 7 6 5 5 0 0 0 0] 4} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [32] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 17} {[] [{} {} {} {} 2 2 {}] {[4 5 7 6 5 4 0 0 0 0] 5} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [32] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 18} {[] [{}] {[4 0 0 0 0 0 0 0 0 0] 0} [{[{} {} {} 2 2 {}] {[4 5 7 6 5 4 0 0 0 0] 5} [32]} {[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [32] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 19} {[] [{} {} {} 2 2 {}] {[4 5 7 6 5 4 4 0 0 0] 6} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [32] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 20} {[] [{} {} 2 2 {}] {[4 5 7 6 5 4 4 0 0 0] 5} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [32 24] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 21} {[] [{} 2 2 {}] {[4 5 7 6 5 4 4 0 0 0] 5} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [56] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 7} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 22} {[] [2 2 {}] {[4 5 7 6 5 4 8 0 0 0] 6} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 8} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 23} {[] [2 {}] {[4 5 7 6 5 4 9 0 0 0] 6} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 9} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 24} {[] [{}] {[4 5 7 6 5 4 9 0 0 0] 4} [{[0 0 {}] {[3 4 7 6 2 0 0 0 0 0] 2} []} {[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 9} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 25} {[] [0 0 {}] {[3 4 7 5 2 0 0 0 0 0] 3} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 9} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 26} {[] [0 {}] {[3 4 7 10 2 0 0 0 0 0] 3} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 27} {[] [{}] {[3 4 7 10 2 0 0 0 0 0] 3} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 28} {[] [{}] {[3 4 7 10 5 0 0 0 0 0] 4} [{[] {[3 0 0 0 0 0 0 0 0 0] 0} []} {[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 29} {[] [] {[3 5 0 0 0 0 0 0 0 0] 1} [{[] {[0 0 0 0 0 0 0 0 0 0] -1} []}] [] {[{2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} 1 {} {} 2 2 {}]} {2 [1 {} {} 0 {} {} {} {} 2 2 {}]} {0 [24 32 1 numadd {} {} {} 0 0 {}]} 24 32 {2 4} {6 5} 56 8 5 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>] 0 [] 10} [{32 5} {24 4} {main 3} {numadd 2} {- 1} {+ 0}] 30}]

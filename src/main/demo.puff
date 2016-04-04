@@ -1,1 +1,2 @@
-let x = 101 in x -2
+fn numadd(x, y) => x + y 
+fn main => let a = 24 in numadd(a, 32)

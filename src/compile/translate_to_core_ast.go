@@ -47,6 +47,18 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 	return core.EAp{core.EAp{core.EVar(oper), left}, right} // TODO: Incomplete fn require support of prelude in core-ast
 }
 
+func translateApExpr(node *ast.ApNode) core.CoreExpr {
+	left := translateExpr(node.Left)
+
+	fmt.Println("AP Left, ", left)
+	ap := left
+	for _, arg := range node.Args {
+		ap = core.EAp{ap, translateExpr(arg)}
+	}
+
+	return ap
+}
+
 func translateDefnNode(node *ast.DefnNode) core.Defn {
 	expr := translateExpr(node.Expr)
 	return core.Defn{core.Name(node.Var), expr}
@@ -75,17 +87,19 @@ func translateExpr(node interface{}) (core.CoreExpr) {
 			return translateVariable(n)
 		case *ast.FnExprNode:
 			return translateFnExpr(n)
+		case *ast.ApNode:
+			return translateApExpr(n)
 		default:
 			return core.ENum{true, false, false, 4, 4, 4, "4"}
 	}
 }
 
-func translateFnStatement(node *ast.FnExprNode)  (core.ScDefn) {
+func translateFnStatement(node *ast.FnNode)  (core.ScDefn) {
 	params := []core.Name{}
 	for _, param := range node.Params{
 		params = append(params, core.Name(param))
 	}
-	return core.ScDefn{core.Name("f1"), params, translateExpr(node.Body)}
+	return core.ScDefn{core.Name(node.Name), params, translateExpr(node.Body)}
 }
 
 func translateFnExpr(node *ast.FnExprNode) (core.CoreExpr) {
@@ -96,14 +110,19 @@ func translateFnExpr(node *ast.FnExprNode) (core.CoreExpr) {
 	return core.ELam{params, translateExpr(node.Body)}
 }
 
-func translateNode(node interface{}) (core.CoreExpr) {
+func translateNode(node interface{}) (core.ScDefn) {
 	switch n := node.(type) {
+		/*
 		case *ast.LetNode:
 			return translateLet(n)
 		case *ast.FnExprNode:
 			return translateFnExpr(n)
+		*/
+		case *ast.FnNode:
+			return translateFnStatement(n)
 		default:
-			return translateExpr(n)
+			return translateFnStatement(n.(*ast.FnNode))
+			// return translateExpr(n)
 	}
 }
 

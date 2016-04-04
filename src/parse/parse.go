@@ -298,10 +298,12 @@ func (t *Tree) parseStatement() ast.Node {
 		return nil
 	case token.COMMENT:
 		return ast.NewCommentNode(tok.Pos(),tok.Val())
+	case token.FN:
+		return t.parseFunc(tok.Pos())
+	/*	
 	case token.LET:
 		return t.parseLetExpr(tok.Pos())
-	case token.FN:
-		return t.parseFuncExpr(tok.Pos())
+	*/
 	default:
 		fmt.Println("returning expression node")
 		t.backup()
@@ -311,7 +313,7 @@ func (t *Tree) parseStatement() ast.Node {
 	return nil
 }
 
-func (t *Tree) parseLetExpr(pos int) ast.Node {
+func (t *Tree) parseLetExpr(pos int) ast.ExprNode {
 	fmt.Println("parse let")
 	const context = "let statement"
 
@@ -352,6 +354,80 @@ func (t *Tree) parseDefn() *ast.DefnNode {
 	return ast.NewDefinition(iden.Pos(), iden.Val(), exprNode)
 }
 
+func (t *Tree) parseFunc(pos int) ast.ExprNode {
+	const context = "function statement"
+	name := t.expect(token.IDENT, context)
+
+	/*
+	scope := t.topScope
+
+	for {
+		if scope.Lookup(name.Val()) != nil {
+			t.errorf("Function already declared in upper scope", context)
+		}
+
+		scope = t.topScope.Outer
+
+		if scope == nil {
+			break
+		}
+	}
+	*/
+
+	fmt.Println("Parsing function definition")
+	obj := ast.NewObj(name.Val())
+	t.topScope.Insert(obj)
+
+	t.openScope()
+	var params []string
+	tok := t.nextNonSpace()
+
+	switch tok.Type() {
+	case token.LPAREN:
+		next := t.peekNonSpace()
+		if next.Type() != token.RPAREN {
+			for {
+				param := t.expect(token.IDENT, context)
+				//if found nil then create new Object in scope else it is already in the scope
+				if t.topScope.Lookup(param.Val()) == nil { 
+					obj := ast.NewObj(param.Val())
+					t.topScope.Insert(obj)
+				}
+				fmt.Println(param.Val())
+				params = append(params, param.Val())
+				
+				if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+					break
+				}
+				t.nextNonSpace()
+			}
+			t.expect(token.RPAREN, context)
+		} else {
+			t.expect(token.RPAREN, context)
+		}
+	case token.IDENT:
+		if t.topScope.Lookup(tok.Val()) == nil {
+			obj := ast.NewObj(tok.Val())
+			t.topScope.Insert(obj)
+		}
+		fmt.Println(tok.Val())
+		params = append(params, tok.Val())		
+	case token.ARROW:
+		body := t.parseExpr()
+		tmpNode := ast.NewFunction(pos, name.Val(), params, body)
+		t.closeScope()
+		return tmpNode
+	default:
+		t.unexpected(tok, context)
+	}
+
+	t.expect(token.ARROW, context)
+	body := t.parseExpr()
+	tmpNode := ast.NewFunction(pos, name.Val(), params, body)
+	t.closeScope()
+
+	return tmpNode
+}
 
 func (t *Tree) parseFuncExpr(pos int) ast.ExprNode {
 	const context = "function expression"
@@ -360,25 +436,30 @@ func (t *Tree) parseFuncExpr(pos int) ast.ExprNode {
 
 	var params []string
 	if tok.Type() == token.LPAREN {
-		for {
-			param := t.expect(token.IDENT, context)
-			//if found nil then create new Object in scope else it is already in the scope
-			if t.topScope.Lookup(param.Val()) == nil { 
-				obj := ast.NewObj(param.Val())
-				t.topScope.Insert(obj)
+		next := t.peekNonSpace()
+		if next.Type() != token.RPAREN {
+			for {
+				param := t.expect(token.IDENT, context)
+				//if found nil then create new Object in scope else it is already in the scope
+				if t.topScope.Lookup(param.Val()) == nil { 
+					obj := ast.NewObj(param.Val())
+					t.topScope.Insert(obj)
+				}
+				fmt.Println(param.Val())
+				params = append(params, param.Val())
+				
+				if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+					break
+				}
+				t.nextNonSpace()
 			}
-			fmt.Println(param.Val())
-			params = append(params, param.Val())
-			
-			if  next := t.peekNonSpace(); next.Type() != token.COMMA {
-				break
-			}
-			t.nextNonSpace()
+			t.expect(token.RPAREN, context)
+		} else {
+			t.expect(token.RPAREN, context)
 		}
-		t.expect(token.RPAREN, context)
 
 	} else {
-		if t.topScope.Lookup(tok.Val()) == nil { 
+		if t.topScope.Lookup(tok.Val()) == nil {
 			obj := ast.NewObj(tok.Val())
 			t.topScope.Insert(obj)
 		}
@@ -429,6 +510,8 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		retNode = ident
 	case token.IF:
 		retNode = t.parseIfStmt(tok.Pos())
+	case token.LET:
+		return t.parseLetExpr(tok.Pos())
 	case token.FN:
 		retNode = t.parseFuncExpr(tok.Pos())
 	case token.LPAREN:
@@ -441,11 +524,15 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		return nil
 	}
 
+	applicationNode := t.parseApplication(retNode)
+
+	if applicationNode != nil {
+		retNode = applicationNode
+	}
+
 	// Testing for infix expression
-	fmt.Println("testing for infix")
 	infixNode := t.parseInfixExpr(retNode)
 
-	fmt.Println("not a infix expr")
 	if infixNode == nil {
 		return retNode
 	} else {
@@ -475,11 +562,37 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 		if right ==  nil {
 			t.errorf("expected expression after binary operator %s in %s", tok.Val(), context)
 		}
-		fmt.Println("returning binary expression")
 		return ast.NewBinaryExpr(tok.Pos(), left, tok.Type(), right)
 	}
 
-	fmt.Println("No binary operator present")
+	t.backup()
+	return nil
+}
+
+func (t *Tree) parseApplication(left ast.ExprNode) ast.ExprNode {
+	context := "function application"
+	tok := t.nextNonSpace()
+
+	var args []ast.ExprNode
+	if tok.Type() == token.LPAREN {
+		for {
+			arg := t.parseExpr()
+			if arg == nil {
+				break
+			}
+			args = append(args, arg)
+			fmt.Println("Arg: " + arg.String())	
+			if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+				break
+			}
+			t.nextNonSpace()
+		}
+		t.expect(token.RPAREN, context)
+
+		fmt.Println("No. of args ", args)
+
+		return ast.NewApplication(tok.Pos(), left, args)
+	}
 
 	t.backup()
 	return nil
@@ -519,8 +632,6 @@ func (t *Tree) popVars(n int) {
 // useVar returns a node for a variable reference. It errors if the
 // variable is not defined.
 func (t *Tree) useVar(pos int, name string) ast.ExprNode {
-	
-
 	for s := t.topScope; s != nil; s = s.Outer {
 		if obj := s.Lookup(name); obj != nil {
 			v := ast.NewVariable(pos, name)

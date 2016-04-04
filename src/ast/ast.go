@@ -58,6 +58,8 @@ const (
 	NodeDefn
 	NodeExpr
 	NodeFnExpr
+	NodeFn
+	NodeAp
 	NodeBinaryExpr
 	NodeIf
 	NodeComment
@@ -424,8 +426,80 @@ func (v *FnExprNode) Copy() Node {
 
 func (*FnExprNode) exprNode() {}
 
+type FnNode struct {
+	NodeType
+	Pos int
+	// tr     *Tree
+	Name   string
+	Params []string
+	Body   ExprNode
+}
 
+func NewFunction(pos int, name string, params []string, body ExprNode) *FnNode {
+	return &FnNode{NodeType: NodeFn, Name: name, Params: params, Body: body}
+}
 
+func (v *FnNode) String() string {
+	s := "fn ("
+	for i, d := range v.Params {
+		s += d
+		if i >= 0 && i < len(v.Params) -1 {
+			s += ", "
+		}
+	}
+	s += ") -> "
+	s += v.Body.String()
+	return s
+}
+
+// func (v *FnExprNode) tree() *Tree {
+// 	return v.tr
+// }
+
+func (l *FnNode) Position() int {
+	return l.Pos
+}
+
+func (v *FnNode) Copy() Node {
+	return &FnNode{NodeType: NodeFn, Name: v.Name, Params: v.Params, Body: v.Body}
+}
+
+func (*FnNode) exprNode() {}
+
+type ApNode struct {
+	NodeType
+	Pos int
+	// tr     *Tree
+	Left  ExprNode
+	Args  []ExprNode
+}
+
+func NewApplication(pos int, left ExprNode, args []ExprNode) *ApNode {
+	return &ApNode{NodeType: NodeAp, Left: left, Args: args}
+}
+
+func (v *ApNode) String() string {
+	fmt.Println("No. of args: ", len(v.Args))
+	s := v.Left.String() + "("
+	for i, d := range v.Args {
+		s += d.String()
+		if i >= 0 && i < len(v.Args) - 1 {
+			s += ", "
+		}
+	}
+	s += ")"
+	return s
+}
+
+func (l *ApNode) Position() int {
+	return l.Pos
+}
+
+func (v *ApNode) Copy() Node {
+	return &ApNode{NodeType: NodeAp, Left: v.Left, Args: v.Args}
+}
+
+func (*ApNode) exprNode() {}
 
 // Infix Binary expression
 type BinaryExprNode struct {

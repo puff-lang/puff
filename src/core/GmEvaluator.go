@@ -131,6 +131,7 @@ func unwind(gmState GmState) GmState { //Done
 	addr := gmState.gms.TopOfStack()
 	fmt.Println("Address:", addr)
 	node := heap.HLookup(addr)
+	fmt.Println("Reading node from: ", addr)
 	// gmState.gms.PushStack(Addr(node.(NInd)))
 	fmt.Println("Node:", node)
 	fmt.Println("Heap: ", heap)
@@ -205,6 +206,9 @@ func newState(node Node, gmState GmState) GmState { //Error
 
 //=============================================================================
 func rearrange(n int, gmh GmHeap, gms GmStack) GmStack { //DOne Inefficiently
+	if n == 0 {
+		return gms
+	} 
 	fmt.Println("Stack Before TailStack: ", gms)
 	tail := gms.TailStack()
 	fmt.Println("TailStack: ", tail, "\n n: ", n)
@@ -240,7 +244,7 @@ func rearrange(n int, gmh GmHeap, gms GmStack) GmStack { //DOne Inefficiently
 }
 
 func getArg(node Node) Addr{ //Done
-	fmt.Println(node.(NAp))
+	fmt.Println("get arg: ", node.(NAp))
 	return Addr(node.(NAp).Body)
 }
 //========================================================================================

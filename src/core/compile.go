@@ -46,7 +46,7 @@ type allocates func(GmHeap, GmCompiledSC) (GmHeap, Object)
 // allocateSc implements allocates, returning GmHeap & Object
 func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object) {
 	addr := gmh.HAlloc(NGlobal{gCSC.Length, gCSC.body})
-	// fmt.Println("Allocated Heap: ",gmh, "GM Addresses: ",addr)
+	fmt.Println("SC: ", gCSC.Name, "stored at: ", addr)
 	return gmh, Object{gCSC.Name, addr}
 }
 
@@ -80,7 +80,8 @@ func compileSc(sc ScDefn) GmCompiledSC {
 		gmE = append(gmE, Environment{eString, i})
 	}
 	l := len(sc.Args)
-	fmt.Println("hello",l)
+	fmt.Println("SC Name: ", sc.Name)
+	fmt.Println("SC Args length: ", l)
 	return GmCompiledSC{sc.Name, l, compilerRX(l, sc.Expr, gmE)}
 }
 
@@ -206,7 +207,7 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 							}
 							
 						default:
-							fmt.Println("CompileE expression syntax")
+							fmt.Println("210 CompileE expression syntax")
 							return append(compileC(expr, env), Eval{})
 					}
 
@@ -215,17 +216,18 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 					if expr1 == "negate" {
 						return append(compileB(expr.Body, env), GmCode{MkInt{}}...)
 					} else {
-						return GmCode{} //Don't no what is right condition
+						// return GmCode{} //Don't no what is right condition
+						return append(compileC(expr, env), Eval{})		
 					}
 
 				default:
-					fmt.Println("CompileE expression syntax")
+					fmt.Println("223 CompileE expression syntax")
 					return append(compileC(expr, env), Eval{})
 			}
 
 		default:
 			expr := cexp
-			fmt.Println("CompileE expression syntax")
+			fmt.Println("229 CompileE expression syntax")
 			return append(compileC(expr, env), Eval{})		
 	}
 	return GmCode{}
