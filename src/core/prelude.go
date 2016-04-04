@@ -18,9 +18,9 @@ type compiledPrimitives []GmCompiledSC
 var compPrim = compiledPrimitives{
 	GmCompiledSC{"+", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Add{}, Update(2), Pop(2), Unwind{}}},
 	GmCompiledSC{"-", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Sub{}, Update(2), Pop(2), Unwind{}}},
-	GmCompiledSC{"*", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Mul{}, Update(2), Pop(2), Unwind{}}},
-	GmCompiledSC{"/", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Div{}, Update(2), Pop(2), Unwind{}}},
-	// GmCompiledSC{"negate", 2, GmCode{Push(0), Eval{}, Neg{}, Update(1), Pop(1), Unwind{}}},
+	// GmCompiledSC{"*", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Mul{}, Update(2), Pop(2), Unwind{}}},
+	// GmCompiledSC{"/", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Div{}, Update(2), Pop(2), Unwind{}}},
+	// // GmCompiledSC{"negate", 2, GmCode{Push(0), Eval{}, Neg{}, Update(1), Pop(1), Unwind{}}},
 	// GmCompiledSC{"==", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Eq{}, Update(2), Pop(2), Unwind{}}},
 	// GmCompiledSC{"~=", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Ne{}, Update(2), Pop(2), Unwind{}}},
 	// GmCompiledSC{"<", 2, GmCode{Push(1), Eval{}, Push(1), Eval{}, Lt{}, Update(2), Pop(2), Unwind{}}},
