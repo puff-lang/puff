@@ -38,6 +38,8 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 			oper = "/"
 		case token.REM:
 			oper = "%"
+		case token.EQL:
+			oper = "=="
 		default:
 			oper = ""
 	}

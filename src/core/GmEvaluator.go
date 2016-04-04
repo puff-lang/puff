@@ -464,6 +464,8 @@ func calculate(op string, v1 int, v2 int) int{ //Done
 			return v1 * v2
 		case "/":
 			return v1 / v2
+		case "==":
+			if v1 == v2 { return 0} else { return 1}
 		default:
 			return v1 % v2
 	

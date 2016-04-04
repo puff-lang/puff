@@ -33,6 +33,9 @@ func (e Pushglobal) isInstruction() {}
 type Pushint int
 func (e Pushint) isInstruction() {}
 
+type Pushchar int
+func (e Pushchar) isInstruction() {}
+
 type Push int
 func (e Push) isInstruction() {}
 
@@ -116,6 +119,33 @@ func (e Pushbasic) isInstruction() {}
 
 type Get struct{}
 func (e Get) isInstruction() {}
+
+type Pack struct{
+	I int
+	R int
+}
+func (e Pack) isInstruction() {}
+
+type CasejumpSimpleObj struct{
+	Int int
+	gmC GmCode
+}
+type CasejumpSimple []CasejumpSimpleObj
+func (e CasejumpSimple) isInstruction() {}
+
+type CasejumpConstrObj struct{
+	Int Tag
+	gmC GmCode
+}
+type CasejumpConstr []CasejumpConstrObj
+func (e CasejumpConstr) isInstruction() {}
+
+
+type Pushconstr struct{
+	I int
+	R int
+}
+func (e Pushconstr) isInstruction() {}
 
 type GmCode []Instruction
 
@@ -296,6 +326,11 @@ type NConstr struct {
 }
 func (e NConstr) isNode() {}
 
+type NMarked struct{
+	node Node
+}
+func (e NMarked) isNode() {}
+
 const HEAP_SIZE int = 100
 
 type GmHeap struct {
@@ -318,8 +353,8 @@ func (h *GmHeap) HNull() Addr{
 
 func (h *GmHeap) HAlloc(node Node) Addr {
 	h.index = h.index + 1
-	h.hNode[h.index] = node;
-	h.instn = []Instruction{};
+	h.hNode[h.index] = node
+	h.instn = []Instruction{}
 	return h.index
 }
 
