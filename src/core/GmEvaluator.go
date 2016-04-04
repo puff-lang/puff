@@ -83,24 +83,46 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 			fmt.Println("Sub")
 			return sub(gmState)
 		case Div:
+			fmt.Println("Div")
 			return div(gmState)
 		case Mul:
+			fmt.Println("Mul")
 			return mul(gmState)
 		case Get:
 			fmt.Println("Get")
 			return get(gmState)
 		case MkInt:
 			fmt.Println("MkInt")
-			return GmState{}
+			return mkInt(gmState)
 		case MkBool:
 			fmt.Println("MkBool")
-			return GmState{}
+			return mkBool(gmState)
+		case Mod:
+			fmt.Println("Mod")
+			return mod(gmState)
 		default:
 			fmt.Println("Default")
 			// fmt.Println(instr.(type))
 			return mod(gmState)
 
 	}
+}
+
+func mkInt(gmState GmState) GmState {
+	n := int(gmState.gmvstack[0])
+	return mkObj(n, NNum(n), gmState)
+}
+
+func mkBool(gmState GmState) GmState {
+	n := int(gmState.gmvstack[0])
+	return mkObj(n, NConstr{n, [10]Addr{}, -1}, gmState)
+}
+
+func mkObj(n int, node Node, gmState GmState) GmState {
+	addr := gmState.gmh.HAlloc(node)
+	gmState.gms.PushStack(addr)
+	gmState.gmvstack = gmState.gmvstack[1:] //Doubt about Direction to retrive Data
+	return gmState
 }
 
 func unwind(gmState GmState) GmState { //Done

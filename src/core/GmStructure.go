@@ -400,7 +400,7 @@ func initialDump() GmDump {
 //Part of GmState implementation is over.
 //--------------------------------------------------------------------------
 
-var binaryOperators []string = []string{"+", "-"}//, "*", "/", "%", "==", "!=", "<", "<=", ">", ">="}
+var binaryOperators []string = []string{"+", "-", "*", "/"}//, "%", "==", "!=", "<", "<=", ">", ">="}
 var unaryOperators []string = []string{"negate"}
 
 func createBinaryOp(name string) ScDefn {
