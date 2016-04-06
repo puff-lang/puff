@@ -48,7 +48,7 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 			fmt.Println("Update")
 			return update(int(instr.(Update)), gmState)
 		case Push:
-			fmt.Println("Push")
+			fmt.Println("Push ", int(instr.(Push)))
 			return push(int(instr.(Push)), gmState)
 		case Pop:
 			fmt.Println("Pop")
@@ -115,7 +115,7 @@ func mkInt(gmState GmState) GmState {
 
 func mkBool(gmState GmState) GmState {
 	n := int(gmState.gmvstack[0])
-	return mkObj(n, NConstr{n, [10]Addr{}, -1}, gmState)
+	return mkObj(n, NConstr{n, []Addr{}, -1}, gmState)
 }
 
 func mkObj(n int, node Node, gmState GmState) GmState {
@@ -168,9 +168,9 @@ func newState(node Node, gmState GmState) GmState { //Error
 			fmt.Println("Node")
 			fmt.Println(node)
 
-			fmt.Println(node.(NGlobal).Nargs, ">", stack.Index)
+			fmt.Println(node.(NGlobal).Nargs, ">", len(stack.Addrs) - 1/* stack.index */)
 												
-			if node.(NGlobal).Nargs > (stack.Index) {
+			if node.(NGlobal).Nargs > len(stack.Addrs) {
 				fmt.Println("Inside if of NGlobal")
 				fmt.Println("Dump:",dump)
 				if len(dump) == 0 {
@@ -214,31 +214,43 @@ func rearrange(n int, gmh GmHeap, gms GmStack) GmStack { //DOne Inefficiently
 	fmt.Println("TailStack: ", tail, "\n n: ", n)
 	take := tail.TakeNStack(n)
 	fmt.Println("TakeNStack: ",take)
-	var addrss [10]Addr
+	var addrss []Addr
 	i := -1
 
-	for addr := range take.Addrs {
+	for _, addr := range take.Addrs {
+		fmt.Println("Checking value at, ", addr)
 		node := gmh.HLookup(Addr(addr))
 
 		if node != nil {
 			switch node.(type) {
 				case NAp:
-						i = i + 1
-						addrss[i] = getArg(node)
-						fmt.Println("Heap Node: ",node,"\nHeap Addr: ", addrss[i])
+					i = i + 1
+					addrss = append(addrss, getArg(node))
+					fmt.Println("Heap Node: ",node,"\nHeap Addr: ", addrss[i])
 				default:
-					fmt.Println("Heap Node: ",node)
+					fmt.Println("Heap Node: ", node)
 			}
 		}
 	}
-	fmt.Println("Hello")
-	for j := gms.Index -n ; j < gms.Index; j++ {
-		i = i + 1
-		addrss[i] = gms.Addrs[j]
-		fmt.Println("i: ",i," j: ",j)
-	}
+	fmt.Println("Hello n, ", n)
+	fmt.Println("len(gms.Addrs), ", len(gms.Addrs))
+	fmt.Println(addrss, gms.Addrs)
+	addrss = append(addrss, gms.Addrs[n:]...)
 
-	st := GmStack{addrss, i}
+	fmt.Println("addresses after rearrange, ",  addrss)
+	// for j := gms.Index -n ; j < gms.Index; j++ {
+	// 	i = i + 1
+	// 	addrss[i] = gms.Addrs[j]
+	// 	fmt.Println("i: ",i," j: ",j)
+	// }
+	// for j := n; j < len(gms.Addrs); j++ {
+	// 	i = i + 1
+	// 	// addrss[i] = gms.Addrs[j]
+	// 	addrss = append(addrss, gms.Addrs[j])
+	// 	fmt.Println("i: ",i," j: ",j)
+	// }
+
+	st := GmStack{addrss}
 	fmt.Println("rearrange returns stack: ", st)
 	return st
 }
@@ -313,8 +325,10 @@ func mkap(gmState GmState) GmState { //Done
 }
 
 func push(n int, gmState GmState) GmState { //Done: Doubt addr taken from stack and pushed in it.
+	fmt.Println("stack before push ", n, " ", gmState.gms)
 	argAddr := gmState.gms.AddrsByIndexOf(n)
 	gmState.gms.PushStack(argAddr)
+	fmt.Println("stack after push ", n, " ", gmState.gms)
 	return gmState
 }
 
@@ -345,12 +359,13 @@ func slide(n int, gmState GmState) GmState { //Done
 func alloc(n int, gmState GmState) GmState { //Done
 	heapDash, as := allocNodes(n, gmState.gmh)
 	stackDash := InitStack()
-	for i := 0; i <=as.Index; i++ {
-		stackDash.PushStack(as.Addrs[i])
-	}
-	for i := 0; i <= gmState.gms.Index; i++ {
-		stackDash.PushStack(gmState.gms.Addrs[i])
-	}
+	// for i := 0; i <=as.Index; i++ {
+	// 	stackDash.PushStack(as.Addrs[i])
+	// }
+	// for i := 0; i <= gmState.gms.Index; i++ {
+	// 	stackDash.PushStack(gmState.gms.Addrs[i])
+	// }
+	stackDash.Addrs = append(stackDash.Addrs, as.Addrs...)
 	gmState.gms = stackDash
 	gmState.gmh = heapDash
 	return gmState
@@ -358,7 +373,7 @@ func alloc(n int, gmState GmState) GmState { //Done
 
 func allocNodes(n int, gmh GmHeap) (GmHeap, GmStack){ //Done
 	if n == 0 {
-		return gmh, GmStack{[10]Addr{},-1}
+		return gmh, GmStack{[]Addr{}}
 	}
 	heap0, as := allocNodes(n-1, gmh)
 	a := heap0.HAlloc(NInd(Addr(0)))
@@ -368,12 +383,12 @@ func allocNodes(n int, gmh GmHeap) (GmHeap, GmStack){ //Done
 
 func eval2(gmState GmState) GmState { //DOne
 	vstack := gmState.gmvstack
-	stack := gmState.gms
 	a := gmState.gms.PopStack()
+	stack := gmState.gms
 	code := gmState.gmc
 	fmt.Println("Inside Eval2(GmCode): ", gmState.gmc)
 	dumpDash := GmDump{GmDumpItem{code, stack, vstack}}
-	fmt.Println("Here Dump is added in GmDump: ",dumpDash)
+	fmt.Println("Here Dump is added in GmDump: ", dumpDash)
 	dumpDash = append(dumpDash, gmState.gmd...)
 	gmState.gmd = dumpDash
 	gmState.gmc = GmCode{Unwind{}}
@@ -481,7 +496,7 @@ func calculate(op string, v1 int, v2 int) int{ //Done
 
 func pack(t int, n int, gmState GmState) GmState {
 	take := gmState.gms.TakeNStack(n)
-	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs, take.Index})
+	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs, len(take.Addrs)})
 	gmState.gms.DropStack(n)
 	gmState.gms.PushStack(addr)
 	return gmState

@@ -163,8 +163,7 @@ func putCode(gmc GmCode, gState GmState) GmState {
 const STACK_SIZE int = 10
 type Addr int
 type GmStack struct {
-	Addrs [STACK_SIZE]Addr
-	Index int
+	Addrs []Addr
 }
 
 func getStack(gState GmState) GmStack {
@@ -176,27 +175,46 @@ func putStack(gms GmStack, gState GmState) GmState {
 }
 
 func InitStack() GmStack {
-	return GmStack{[STACK_SIZE]Addr{}, -1} 
+	// return GmStack{[STACK_SIZE]Addr{}, -1} 
+	Addrs := []Addr{}
+
+	return GmStack{Addrs}
 }
 
 func InitStackWithAddr(addr Addr) GmStack {
-	return GmStack{[STACK_SIZE]Addr{addr}, 0}
+	// return GmStack{[STACK_SIZE]Addr{addr}, 0}
+	Addrs := []Addr{addr}
+
+	return GmStack{Addrs}
 }
 
 func (s *GmStack) PushStack(addr Addr) {
-	s.Index = s.Index + 1
-	s.Addrs[s.Index] = addr
+	// s.Index = s.Index + 1
+	// s.Addrs[s.Index] = addr
+	if len(s.Addrs) == 999 {
+		panic(fmt.Errorf("Stack overflow"))
+	}
+	s.Addrs = append([]Addr{addr}, s.Addrs...)
 }
 
 func (s *GmStack) PopStack() Addr {
-	s.Index = s.Index -1
-	return s.Addrs[s.Index + 1]
+	// s.Index = s.Index -1
+	// return s.Addrs[s.Index + 1]
+	top := s.Addrs[0]
+	s.Addrs = s.Addrs[1:]
+	return top
 }
 
 func (s *GmStack) AddrsByIndexOf(n int) (Addr) {
-	if n > s.Index {
+	// if n > s.Index {
+	// 	return -1
+	// }
+	// return s.Addrs[n]
+
+	if n < 0 {
 		return -1
 	}
+
 	return s.Addrs[n]
 }
 
@@ -211,44 +229,62 @@ func (s *GmStack) StackLookup(addr Addr) bool{
 
 
 func (s *GmStack) TopOfStack() Addr { //Done
-	if s.Index < 0 {
+	// if s.Index < 0 {
+	// 	return -1
+	// }
+	// return s.Addrs[s.Index]
+	if len(s.Addrs) < 1 {
 		return -1
 	}
-	return s.Addrs[s.Index]
+
+	return s.Addrs[0]
 } 
 
 func (s *GmStack) BottomOfStack() Addr { //Done
-	return s.Addrs[0]
+	return s.Addrs[len(s.Addrs) - 1]
 } 
 
 
 func (s *GmStack) TailStack() GmStack { 
-	if s.Index < 0 {
+	// if s.Index < 0 {
+	// 	return GmStack{}
+	// }
+	// var argaddrs [STACK_SIZE]Addr
+	// for i, addr := range s.Addrs {
+	// 	if i != 0 {
+	// 		argaddrs[i-1] = addr
+	// 	}
+	// }
+	// return GmStack{argaddrs, s.Index-1}
+
+	if len(s.Addrs) < 1 {
 		return GmStack{}
 	}
-	var argaddrs [STACK_SIZE]Addr
-	for i, addr := range s.Addrs {
-		if i != 0 {
-			argaddrs[i-1] = addr
-		}
-	}
-	return GmStack{argaddrs, s.Index-1}
+
+	return GmStack{s.Addrs[1:]}
 }
 
 func(s *GmStack) TakeNStack(n int) GmStack{ //Done
-	if s.Index < n {
+	// if s.Index < n {
+	// 	return *s
+	// }
+ // 	var argaddrs [STACK_SIZE]Addr
+ // 	for i := s.Index; i > (s.Index - n - 1); i-- {
+	// 		argaddrs[i] = s.Addrs[i]
+ // 	}	
+	// return GmStack{argaddrs, n - 1}
+
+	if len(s.Addrs) < 1 {
 		return *s
 	}
- 	var argaddrs [STACK_SIZE]Addr
- 	for i := s.Index; i > (s.Index - n - 1); i-- {
-			argaddrs[i] = s.Addrs[i]
- 	}	
-	return GmStack{argaddrs, n - 1}
+
+	return GmStack{s.Addrs[0:n]}
  }
 
 // From which side stack should be removed from top or bottom(Here, Assuming top)
 func (s *GmStack) DropStack(n int) {  
-	s.Index = s.Index -n
+	// s.Index = s.Index -n
+	s.Addrs = s.Addrs[n:]
 }
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
@@ -321,7 +357,7 @@ func (e NInd) isNode() {}
 
 type NConstr struct {
 	Nargs int
-	Addrs [10]Addr
+	Addrs []Addr
 	Index int
 }
 func (e NConstr) isNode() {}
@@ -363,7 +399,7 @@ func (h *GmHeap) HLookup(addr Addr) Node{
 		return nil	
 	}
 	if h.index >= addr {
-		 fmt.Println("")//Heap Structure: ",h.hNode[addr])
+		fmt.Println("Node at, ", addr, " is ", h.hNode[addr])
 		return h.hNode[addr]
 	}	
 	return nil
