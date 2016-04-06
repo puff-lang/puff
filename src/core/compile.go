@@ -82,19 +82,21 @@ func compileSc(sc ScDefn) GmCompiledSC {
 	l := len(sc.Args)
 	fmt.Println("SC Name: ", sc.Name)
 	fmt.Println("SC Args length: ", l)
-	return GmCompiledSC{sc.Name, l, compilerRX(l, sc.Expr, gmE)}
+	compileR := createCompileR(l)
+	return GmCompiledSC{sc.Name, l, compileR(sc.Expr, gmE)}
 }
 
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
 func CompileSc(sc ScDefn) GmCompiledSC {
 	var gmE = GmEnvironment{}
 
-	for i,eString := range sc.Args {
+	for i, eString := range sc.Args {
 		gmE = append(gmE, Environment{eString, i})
 	}
 	l := len(sc.Args)
 	fmt.Println("hello: ", l)
-	return GmCompiledSC{sc.Name, l, compilerRX(l, sc.Expr, gmE)}
+	compileR := createCompileR(l)
+	return GmCompiledSC{sc.Name, l, compileR(sc.Expr, gmE)}
 }
 
 func elem(name Name, assoc GmEnvironment) int {
@@ -106,14 +108,16 @@ func elem(name Name, assoc GmEnvironment) int {
 	return -1 //Default Value: null string
 }
 
-func compilerRX(d int, cexp CoreExpr, env GmEnvironment) GmCode {
-	switch cexp.(type) {
+func createCompileR(d int) GmCompiler {
+	return func(cexp CoreExpr, env GmEnvironment) GmCode {
+		switch cexp.(type) {
 		case ELet:
+			fmt.Println("Compiling Let in compileR")
 			expr := cexp.(ELet)
 			if expr.IsRec {
-				return compileLetrec(GmCode{}, compilerR, expr.Defns, expr.Body, env)
+				return compileLetrec(GmCode{}, createCompileR(d + len(expr.Defns)), expr.Defns, expr.Body, env)
 			} else {
-				return compileLet(GmCode{}, compilerR, expr.Defns, expr.Body, env)
+				return compileLet(GmCode{}, createCompileR(d + len(expr.Defns)), expr.Defns, expr.Body, env)
 			}
 		// case ECaseSimple:
 		// 	expr := cexp.(ECaseSimple)
@@ -122,6 +126,7 @@ func compilerRX(d int, cexp CoreExpr, env GmEnvironment) GmCode {
 		// 	expr := cexp.(ECaseConstr)
 
 		default:
+			fmt.Println("Default in compileR with d, ", d)
 			inst := []Instruction{}
 			cC := compileE(cexp,env)
 			for _,obj := range cC {
@@ -131,25 +136,54 @@ func compilerRX(d int, cexp CoreExpr, env GmEnvironment) GmCode {
 			inst = append(inst, Pop(d))
 			inst = append(inst, Unwind{})
 			return inst	
-	}
+		}
+	} 
 }
+
+// func compilerRX(d int, cexp CoreExpr, env GmEnvironment) GmCode {
+// 	switch cexp.(type) {
+// 		case ELet:
+// 			expr := cexp.(ELet)
+// 			if expr.IsRec {
+// 				return compileLetrec(GmCode{}, createCompileR(d + len(expr.Defns)), expr.Defns, expr.Body, env)
+// 			} else {
+// 				return compileLet(GmCode{}, createCompileR(d + len(expr.Defns)), expr.Defns, expr.Body, env)
+// 			}
+// 		// case ECaseSimple:
+// 		// 	expr := cexp.(ECaseSimple)
+
+// 		// case ECaseConstr:
+// 		// 	expr := cexp.(ECaseConstr)
+
+// 		default:
+// 			inst := []Instruction{}
+// 			cC := compileE(cexp,env)
+// 			for _,obj := range cC {
+// 				inst = append(inst, obj)
+// 			}
+// 			inst = append(inst, Update(d))
+// 			inst = append(inst, Pop(d))
+// 			inst = append(inst, Unwind{})
+// 			return inst	
+// 	}
+// }
 
 type GmCompiler func(CoreExpr, GmEnvironment) (GmCode)
 
-func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
-	switch cexp.(type) {
-		case ELet:
-			expr := cexp.(ELet)
-			if expr.IsRec {
-				return compileLetrec(GmCode{}, compilerR, expr.Defns, expr.Body, env)
-			} else {
-				return compileLet(GmCode{}, compilerR, expr.Defns, expr.Body, env)
-			}
+// func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
+// 	switch cexp.(type) {
+// 		case ELet:
+// 			expr := cexp.(ELet)
+// 			if expr.IsRec {
+// 				return compileLetrec(GmCode{}, compilerR, expr.Defns, expr.Body, env)
+// 			} else {
+// 				return compileLet(GmCode{}, compilerR, expr.Defns, expr.Body, env)
+// 			}
 
-		default:
-			return compilerRX(0, cexp, env)	
-	}
-}
+// 		default:
+// 			return compilerRX(0, cexp, env)	
+// 	}
+// }
 
 func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 	switch cexp.(type) {
@@ -312,6 +346,7 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
         case EVar:
         	expr := cexp.(EVar)
         	n := elem(Name(expr), env)
+        	fmt.Println("Env during EVar ", expr, " in compileC, ", env, "n, ", n)
         	if n != -1 {
         		return GmCode{Push(n)}
         	} else {
@@ -361,12 +396,16 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
 func compileLet(finalInst GmCode, comp GmCompiler, defs []Defn, expr CoreExpr, env GmEnvironment) GmCode {
 	envdash := compileArgs(defs, env) // Creating New Environment
 	gmC := GmCode{}
-	gmC = append(gmC, compileDefs(defs, envdash)...)
+	gmC = append(gmC, compileDefs(defs, env)...)
 	gmC = append(gmC,  comp(expr, envdash)...)
 	return append(gmC, finalInst...)
 }
 
 func compileDefs(defns []Defn, env GmEnvironment) GmCode {
+	if len(defns) == 0 {
+		return GmCode{}
+	}
+	
 	envdash := env
 	gmC := GmCode{}
 	for _, defn := range defns {
@@ -403,7 +442,7 @@ func compileArgs(defns []Defn, env GmEnvironment) (GmEnvironment) {
 	n := len(defns)
 	var gmE GmEnvironment
 	for _, defn := range defns {
-		tmpEnv := Environment{defn.Var, n-1}
+		tmpEnv := Environment{defn.Var, n - 1}
 		gmE = append(gmE, tmpEnv)
 		n = n - 1
 	}
