@@ -645,27 +645,123 @@ define i64 @main() {
 }
 
 define void @_main() {
-    ; *************** Update 0 ***************
-%top0 = call i64*()* @pop()
+    ; *************** Pushint 27 ***************
+; create the num node on the heap
+%ptag1 = call i64*(i64)* @hAllocNum(i64 27)
+
+; push node address onto the stack
+call void(i64*)* @push(i64* %ptag1)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
+
+; *************** Pushint 32 ***************
+; create the num node on the heap
+%ptag2 = call i64*(i64)* @hAllocNum(i64 32)
+
+; push node address onto the stack
+call void(i64*)* @push(i64* %ptag2)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushintmsg, i32 0, i32 0))
+
+; *************** Push 3***************
+%vsp3 = load i64* @sp
+%tmp3 = add i64 0, 1
+%n13 = sub i64 %vsp3, %tmp3
+%paddr3 = getelementptr [1000 x i64*]* @stack, i64 0, i64 %n13
+%addr3 = load i64** %paddr3
+
+call void(i64*)* @push(i64* %addr3)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
+call void()* @eval()
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
+
+; *************** Get ***************
+%top.5 = call i64*()* @pop()
+%tag.5 = call i64(i64*)* @getTag(i64* %top.5)
+
+switch i64 %tag.5, label %NOT_FOUND.5 [ i64 1, label %NUM.5 ]
+
+NUM.5:
+    %pnum.5 = call i64*(i64*)* @getNumPtr(i64* %top.5)
+    %num.5 = load i64* %pnum.5
+
+    call void(i64)* @pushV(i64 %num.5)
+    br label %DONE_GET.5
+
+NOT_FOUND.5:
+    %ps.5 = getelementptr [63 x i8]* @getErrStr, i64 0, i64 0
+    call i64 (i8 *, ...)* @printf(i8* %ps.5)
+    br label %DONE_GET.5
+
+DONE_GET.5:
+
+
+; *************** Push 6***************
+%vsp6 = load i64* @sp
+%tmp6 = add i64 1, 1
+%n16 = sub i64 %vsp6, %tmp6
+%paddr6 = getelementptr [1000 x i64*]* @stack, i64 0, i64 %n16
+%addr6 = load i64** %paddr6
+
+call void(i64*)* @push(i64* %addr6)
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
+call void()* @eval()
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
+
+; *************** Get ***************
+%top.8 = call i64*()* @pop()
+%tag.8 = call i64(i64*)* @getTag(i64* %top.8)
+
+switch i64 %tag.8, label %NOT_FOUND.8 [ i64 1, label %NUM.8 ]
+
+NUM.8:
+    %pnum.8 = call i64*(i64*)* @getNumPtr(i64* %top.8)
+    %num.8 = load i64* %pnum.8
+
+    call void(i64)* @pushV(i64 %num.8)
+    br label %DONE_GET.8
+
+NOT_FOUND.8:
+    %ps.8 = getelementptr [63 x i8]* @getErrStr, i64 0, i64 0
+    call i64 (i8 *, ...)* @printf(i8* %ps.8)
+    br label %DONE_GET.8
+
+DONE_GET.8:
+
+
+; *************** add ***************
+%a.9 = call i64()* @popV()
+%b.9 = call i64()* @popV()
+%res.9 = add i64 %a.9, %b.9
+call void(i64)* @pushV(i64 %res.9)
+
+; *************** MkInt ***************
+%n.10 = call i64()* @popV()
+
+; alloc num node on the heap
+%num.10 = call i64*(i64)* @hAllocNum(i64 %n.10)
+
+; push address onto the stack
+call void(i64*)* @push(i64* %num.10)
+; *************** Update 2 ***************
+%top11 = call i64*()* @pop()
 
 ; update the nth node on the stack to hold the same value as the top node
-%vsp0 = load i64* @sp
-%n10 = add i64 0, 1
-%rootIndex0 = sub i64 %vsp0, %n10
-%toUpdate0 = call i64**(i64)* @getItemPtr(i64 %rootIndex0)
+%vsp11 = load i64* @sp
+%n111 = add i64 2, 1
+%rootIndex11 = sub i64 %vsp11, %n111
+%toUpdate11 = call i64**(i64)* @getItemPtr(i64 %rootIndex11)
 
 ; create ind node on the heap
-%ind0 = call i64*(i64*)* @hAllocInd(i64* %top0)
+%ind11 = call i64*(i64*)* @hAllocInd(i64* %top11)
 
-store i64* %ind0, i64** %toUpdate0
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 0 ***************
-%vsp1 = load i64* @sp
+store i64* %ind11, i64** %toUpdate11
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @updatemsg, i32 0, i32 0)); *************** Pop 2 ***************
+%vsp12 = load i64* @sp
 
 ; update the stack pointer
-%vsp11 = sub i64 %vsp1, 0
-store i64 %vsp11, i64* @sp
+%vsp112 = sub i64 %vsp12, 2
+store i64 %vsp112, i64* @sp
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @popmsg, i32 0, i32 0))
-; *************** Unwind 2***************
+; *************** Unwind 13***************
 call void()* @unwind()
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
 
@@ -673,7 +769,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
     ret void
 }
 
-define void @_-() {
+define void @_sub() {
     ; *************** Push 1***************
 %vsp1 = load i64* @sp
 %tmp1 = add i64 1, 1
@@ -684,7 +780,7 @@ define void @_-() {
 call void(i64*)* @push(i64* %addr1)
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
 call void()* @eval()
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
 
 ; *************** Push 3***************
 %vsp3 = load i64* @sp
@@ -696,7 +792,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
 call void(i64*)* @push(i64* %addr3)
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
 call void()* @eval()
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
 
 ; *************** sub ***************
 %a.5 = call i64()* @popV()
@@ -743,7 +839,7 @@ define void @_add() {
 call void(i64*)* @push(i64* %addr1)
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
 call void()* @eval()
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
 
 ; *************** Push 3***************
 %vsp3 = load i64* @sp
@@ -755,7 +851,7 @@ call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
 call void(i64*)* @push(i64* %addr3)
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0)); *************** Eval ***************
 call void()* @eval()
-call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @unwindmsg, i32 0, i32 0))
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @evalmsg, i32 0, i32 0))
 
 ; *************** add ***************
 %a.5 = call i64()* @popV()

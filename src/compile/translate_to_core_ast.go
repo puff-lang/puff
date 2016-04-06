@@ -89,6 +89,8 @@ func translateExpr(node interface{}) (core.CoreExpr) {
 			return translateFnExpr(n)
 		case *ast.ApNode:
 			return translateApExpr(n)
+		case *ast.CommentNode:
+			return nil
 		default:
 			return core.ENum{true, false, false, 4, 4, 4, "4"}
 	}
@@ -120,6 +122,10 @@ func translateNode(node interface{}) (core.ScDefn) {
 		*/
 		case *ast.FnNode:
 			return translateFnStatement(n)
+
+		case *ast.CommentNode:
+			return core.ScDefn{core.Name("comment"), []core.Name{}, core.ENum{true, false, false, 0, 0, 0, "0"}}
+
 		default:
 			return translateFnStatement(n.(*ast.FnNode))
 			// return translateExpr(n)

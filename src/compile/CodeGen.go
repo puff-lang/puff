@@ -74,16 +74,16 @@ func SaveLLVMIR(ir LLVMIR) { //Done
     check(err)
 }
 
-func gettemplates() [24]string { //Done
+func gettemplates() [26]string { //Done
 	files, _ := ioutil.ReadDir(templatesPath)
-	var templates [24]string
+	var templates [26]string
     for i, f := range files {
     		templates[i] = f.Name()[:len(f.Name())-3]
     }
     return templates
 }
 
-func getStringTemplate(nm string, templates [24]string) string { //Done
+func getStringTemplate(nm string, templates [26]string) string { //Done
 	for _, temp := range templates {
     		if nm == temp {
                 b, err := ioutil.ReadFile(templatesPath + temp + ".st")
@@ -114,7 +114,7 @@ func setProgramAttrib(b string, inv ProgramAttr) string { //Done
     return doc.String()
 }
 
-func genProgramLLVMIR(templates [24]string, gmc core.GmState) (LLVMIR) { //Done ( p core.Program/)
+func genProgramLLVMIR(templates [26]string, gmc core.GmState) (LLVMIR) { //Done ( p core.Program/)
 	state := gmc
 	globals := core.GetGlobals(state)
 	heap := core.GetHeap(state)
@@ -128,7 +128,7 @@ func genProgramLLVMIR(templates [24]string, gmc core.GmState) (LLVMIR) { //Done 
 	return LLVMIR(setProgramAttrib(temp, ProgramAttr{string(scsTemplates), constrsDash}))
 }
 
-func genScsLLVMIR(mapping []NameArityCodeMapping, templates [24]string, gmg core.GmGlobals) LLVMIR { //Done
+func genScsLLVMIR(mapping []NameArityCodeMapping, templates [26]string, gmg core.GmGlobals) LLVMIR { //Done
 	temp := getStringTemplate("sc", templates)
 	tmp := LLVMIR("") 
 	for _, obj := range gmg {
@@ -138,7 +138,7 @@ func genScsLLVMIR(mapping []NameArityCodeMapping, templates [24]string, gmg core
 }
 
 //Done
-func mapScDefn(mapping []NameArityCodeMapping, temp LLVMIR, templates [24]string, gmg core.Object) LLVMIR {
+func mapScDefn(mapping []NameArityCodeMapping, temp LLVMIR, templates [26]string, gmg core.Object) LLVMIR {
 	for _, nacm := range mapping{
 		if gmg.Name == nacm.name  {
 			body := genScLLVMIR(nacm, templates, nacm.obj.gmc)
@@ -171,7 +171,7 @@ func createNameArityCodeMapping(gmh core.GmHeap, gmg core.GmGlobals) []NameArity
 	return globalMapping
 }
 
-func genScLLVMIR(mapping NameArityCodeMapping, templates [24]string, gmc core.GmCode) string {
+func genScLLVMIR(mapping NameArityCodeMapping, templates [26]string, gmc core.GmCode) string {
 	state := UseIR{initialReg, LLVMStack{}, LLVMIR(""), initialInstructionNum}
 	for _,instr := range gmc {
 		state = translateToLLVMIR(mapping, templates, state, instr)
@@ -190,7 +190,7 @@ type UseIR struct{ //Done
 }
 
 //Done
-func translateToLLVMIR(mapping NameArityCodeMapping, templates [24]string, useir UseIR, instr core.Instruction) (UseIR){
+func translateToLLVMIR(mapping NameArityCodeMapping, templates [26]string, useir UseIR, instr core.Instruction) (UseIR){
 	switch instr.(type) {
 		case core.Update:
 			fmt.Println("update: ",useir.ninstr)
@@ -240,46 +240,130 @@ func translateToLLVMIR(mapping NameArityCodeMapping, templates [24]string, useir
 			templateDash := setManyAttrib(temp, Inventory{core.Unwind{}, useir.ninstr})
 			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
+		case core.Pushbasic:
+			fmt.Println("Pushbasic: ",useir.ninstr)
+			temp := getStringTemplate("pushbasic", templates)
+			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
+			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
+
+		case core.MkInt:
+			fmt.Println("MkInt: ",useir.ninstr)
+			temp := getStringTemplate("mkint", templates)
+			templateDash := setManyAttrib(temp, Inventory{core.Unwind{}, useir.ninstr})
+			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
+
+		case core.Get:
+			fmt.Println("get: ",useir.ninstr)
+			temp := getStringTemplate("get", templates)
+			templateDash := setManyAttrib(temp, Inventory{core.Unwind{}, useir.ninstr})
+			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
+
 		case core.Alloc:
 			fmt.Println("alloc: ",useir.ninstr)
 			temp := getStringTemplate("alloc", templates)
 			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
 			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
+
+
+
 		case core.Add:
 			fmt.Println("add: ",useir.ninstr)
-			return translateBinOp(templates, "add", useir)
+			llir := mkArithTmpl(templates, "add", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
 
 		case core.Sub:
 			fmt.Println("sub: ",useir.ninstr)
-			return translateBinOp(templates, "sub", useir)
+			llir := mkArithTmpl(templates, "sub", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
 
 		case core.Mul:
 			fmt.Println("mul: ",useir.ninstr)
-			return translateBinOp(templates, "mul", useir)
+			llir := mkArithTmpl(templates, "mul", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
 
 		case core.Div:
 			fmt.Println("div: ",useir.ninstr)
-			return translateBinOp(templates, "div", useir)
+			llir := mkArithTmpl(templates, "udiv", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Mod:
+			fmt.Println("mod: ",useir.ninstr)
+			llir := mkArithTmpl(templates, "urem", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Eq:
+			fmt.Println("eq", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "eq", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Ne:
+			fmt.Println("ne", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "ne", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Lt:
+			fmt.Println("lt", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "ult", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Le:
+			fmt.Println("le", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "ule", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Gt:
+			fmt.Println("gt", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "uge", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
+
+		case core.Ge:
+			fmt.Println("ge", useir.ninstr)
+			llir := mkRelationalTmpl(templates, "uge", useir.ninstr)
+			return translateBinOp(templates, useir, llir)
 
 	}
 	return UseIR{}
 }
 
-func translateBinOp(templates [24]string, instr string, useir UseIR) UseIR{ //Done
-	mktmpl := mkArithTmpl(templates, instr, useir.ninstr)
-	return UseIR{useir.reg, useir.stack, useir.ir + mktmpl, (useir.ninstr + 1)}
+func translateBinOp(templates [26]string, useir UseIR, llir LLVMIR) UseIR{ //Done
+	return UseIR{useir.reg, useir.stack, useir.ir + llir, (useir.ninstr + 1)}
 }
 
-func mkArithTmpl(templates [24]string, instr string, ninstr int) LLVMIR { //Done
+func mkArithTmpl(templates [26]string, instr string, ninstr int) LLVMIR { //Done
 	llvmName := instr
 	temp := getStringTemplate("arith", templates) 
 	return LLVMIR(setArithAttrib(temp, Arithmatic{ninstr, llvmName}))
 }
 
+func mkRelationalTmpl(templates [26]string, instr string, ninstr int) LLVMIR { // Remaining: with true & false Tags 
+	llvmName := instr
+	temp := getStringTemplate("relational", templates)
+	return LLVMIR(setRelationalAttrib(temp, Relational{ninstr, llvmName, 1, 0}))
+}
+
+
 func mkFunName(name string) string { //Done
 	return funPrefix + name
 }
+
+
+
+
+type Relational struct {
+	Ninstr int
+	Instr string
+	TrueTag int 
+	FalseTag int
+}
+func setRelationalAttrib(temp string, rel Relational) string {
+	tmpl, err := template.New("test").Parse(string(temp))
+    if err != nil { panic(err) }
+    var doc bytes.Buffer
+    err = tmpl.Execute(&doc, rel)
+    return doc.String()
+}
+
 
 type Arithmatic struct { //Done
     Ninstr int

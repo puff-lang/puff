@@ -6,4 +6,3 @@
 
 ; push address onto the stack
 call void(i64*)* @push(i64* %num.{{.Ninstr}})
-

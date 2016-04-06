@@ -57,6 +57,11 @@ type ECaseSimple struct{
 }
 func (e ECaseSimple) isExpr() {}
 
+type Alter struct {
+	Num  int
+	Vars []Name
+	Expr CoreExpr
+}
 
 type ECaseConstr struct{
 	Body CoreExpr
@@ -88,12 +93,6 @@ type ScDefn struct {
 func (e ScDefn) isExpr() {}
 //----------------------------End Of CoreExpr's--------------------------------------
 
-
-type Alter struct {
-	Num  int
-	Vars []Name
-	Expr CoreExpr
-}
 type Program []ScDefn
 
 

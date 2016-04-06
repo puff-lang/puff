@@ -170,20 +170,6 @@ func createCompileR(d int) GmCompiler {
 
 type GmCompiler func(CoreExpr, GmEnvironment) (GmCode)
 
-// func compilerR(cexp CoreExpr, env GmEnvironment) GmCode {
-// 	switch cexp.(type) {
-// 		case ELet:
-// 			expr := cexp.(ELet)
-// 			if expr.IsRec {
-// 				return compileLetrec(GmCode{}, compilerR, expr.Defns, expr.Body, env)
-// 			} else {
-// 				return compileLet(GmCode{}, compilerR, expr.Defns, expr.Body, env)
-// 			}
-
-// 		default:
-// 			return compilerRX(0, cexp, env)	
-// 	}
-// }
 
 func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 	switch cexp.(type) {
@@ -237,7 +223,14 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 										result = append(result, compileE(ifApExpr.Body, env)...)
 										instn := CasejumpConstr{{trueTag, compileE(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
 										result = append(result, GmCode{instn}...)
+										return result
+									} else {
+										fmt.Println(" 227 Special Case CompileE ")
+										return append(compileC(expr,env), Eval{})
 									}
+								default:
+									fmt.Println(" 231 Default CompileE ")
+									return append(compileC(expr,env), Eval{})
 							}
 							
 						default:
@@ -264,7 +257,6 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 			fmt.Println("229 CompileE expression syntax")
 			return append(compileC(expr, env), Eval{})		
 	}
-	return GmCode{}
 }
 
 
@@ -305,8 +297,14 @@ func compileB(cexp CoreExpr, env GmEnvironment) GmCode { //All Cases Covered for
 										result := GmCode{}
 										result = append(result, compileB(ifApExpr.Body, env)...)
 										instn := CasejumpConstr{{trueTag, compileB(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
-										result = append(result, GmCode{instn}...)
+										return append(result, GmCode{instn}...)
+									} else {
+										fmt.Println(" 299 Special Case CompileB")
+										return append(compileC(expr,env), Eval{})
 									}
+								default:
+									fmt.Println(" 303 Default CompileB")
+									return append(compileC(expr,env), Eval{})
 							}
 
 						default:
@@ -337,7 +335,6 @@ func compileB(cexp CoreExpr, env GmEnvironment) GmCode { //All Cases Covered for
 			expr := cexp
 			return append(compileE(expr, env), Get{})
 	}
-	return GmCode{}
 }
 
 //generates code which creates the graph of e in env ρ,leaving a pointer to it on top of the stack
@@ -395,6 +392,7 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
 
 func compileLet(finalInst GmCode, comp GmCompiler, defs []Defn, expr CoreExpr, env GmEnvironment) GmCode {
 	envdash := compileArgs(defs, env) // Creating New Environment
+	fmt.Println("New Env: ", envdash)
 	gmC := GmCode{}
 	gmC = append(gmC, compileDefs(defs, env)...)
 	gmC = append(gmC,  comp(expr, envdash)...)
@@ -402,7 +400,7 @@ func compileLet(finalInst GmCode, comp GmCompiler, defs []Defn, expr CoreExpr, e
 }
 
 func compileDefs(defns []Defn, env GmEnvironment) GmCode {
-	if len(defns) == 0 {
+	if len(defns) <= 0 {
 		return GmCode{}
 	}
 	
@@ -439,6 +437,7 @@ func compileRecDefs(n int, defns []Defn, env GmEnvironment) GmCode {
 
 
 func compileArgs(defns []Defn, env GmEnvironment) (GmEnvironment) {
+	fmt.Println("compileArgs: env:", env)
 	n := len(defns)
 	var gmE GmEnvironment
 	for _, defn := range defns {
@@ -475,19 +474,3 @@ func intOrBool(nm Name) Instruction{
 		return Error(tp)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

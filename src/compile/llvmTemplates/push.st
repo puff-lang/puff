@@ -6,4 +6,6 @@
 %addr{{.Ninstr}} = load i64** %paddr{{.Ninstr}}
 
 call void(i64*)* @push(i64* %addr{{.Ninstr}})
+
+
 call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @pushmsg, i32 0, i32 0))

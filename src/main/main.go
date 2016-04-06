@@ -37,8 +37,8 @@ func main() {
 
     contentProgram := core.Compile(program)
 
-    // compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
-    result := core.EvalState(contentProgram)
-    fmt.Println(result)
+    compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
+    // result := core.EvalState(contentProgram)
+    // fmt.Println(result)
 }
 
