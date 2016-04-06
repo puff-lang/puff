@@ -221,7 +221,7 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 									if name == "if" {
 										result := GmCode{}
 										result = append(result, compileE(ifApExpr.Body, env)...)
-										instn := CasejumpConstr{{trueTag, compileE(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
+										instn := CasejumpSimple{{trueTag, compileE(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
 										result = append(result, GmCode{instn}...)
 										return result
 									} else {
@@ -296,7 +296,7 @@ func compileB(cexp CoreExpr, env GmEnvironment) GmCode { //All Cases Covered for
 									if name == "if" {
 										result := GmCode{}
 										result = append(result, compileB(ifApExpr.Body, env)...)
-										instn := CasejumpConstr{{trueTag, compileB(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
+										instn := CasejumpSimple{{trueTag, compileB(expr1.Body, env)}, {falseTag, compileE(expr.Body, env)}}
 										return append(result, GmCode{instn}...)
 									} else {
 										fmt.Println(" 299 Special Case CompileB")

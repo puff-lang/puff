@@ -264,8 +264,17 @@ func translateToLLVMIR(mapping NameArityCodeMapping, templates [26]string, useir
 			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
 			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
+		case core.Pack:
+			fmt.Println("Pack: ", useir.ninstr)
+			temp := getStringTemplate("pack", templates)
+			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
+			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
-
+		case core.CasejumpSimple:
+			fmt.Println("CasejumpSimple: ", useir.ninstr)
+			temp := getStringTemplate("casejumpsimple", templates)
+			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
+			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
 		case core.Add:
 			fmt.Println("add: ",useir.ninstr)

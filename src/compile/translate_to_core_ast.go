@@ -16,11 +16,11 @@ func translateVariable(node *ast.VariableNode) (core.CoreExpr) {
 }
 
 func translateIf(node *ast.IfNode) (core.CoreExpr) {
-	// cond := translateExpr(node.Cond)
-	// then := translateExpr(node.Then)
-	// els := translateExpr(node.Else)
+	cond := translateExpr(node.Cond)
+	then := translateExpr(node.Then)
+	els := translateExpr(node.Else)
 
-	return core.ScDefn{} //TODO: Incomplete fn require support of prelude in core-ast 
+	return core.EAp{core.EAp{core.EAp{core.EVar("if"), cond}, then}, els} 
 }
 
 func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {

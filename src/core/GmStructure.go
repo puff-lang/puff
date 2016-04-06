@@ -121,8 +121,8 @@ type Get struct{}
 func (e Get) isInstruction() {}
 
 type Pack struct{
-	I int
-	R int
+	tag int
+	arity int
 }
 func (e Pack) isInstruction() {}
 
@@ -356,9 +356,8 @@ type NInd Addr
 func (e NInd) isNode() {}
 
 type NConstr struct {
-	Nargs int
-	Addrs []Addr
-	Index int
+	Tag int
+	Arity []Addr
 }
 func (e NConstr) isNode() {}
 
