@@ -124,8 +124,24 @@ func genProgramLLVMIR(templates [26]string, gmc core.GmState) (LLVMIR) { //Done 
 	mapping := createNameArityCodeMapping(heap, globals) //Problem Comes Here
 	fmt.Println("mapping: ",mapping)
 	scsTemplates := genScsLLVMIR(mapping, templates, globals)
+	// constrs := 
+	// constrsDash := createConstr(templates,LLVMIR(""), constrs)
 	constrsDash := ""
 	return LLVMIR(setProgramAttrib(temp, ProgramAttr{string(scsTemplates), constrsDash}))
+}
+
+
+func createConstr(templates [26]string, llir LLVMIR, name string, tag int, arity int) LLVMIR { //Done
+	packTmpl := getStringTemplate("pack", templates)
+	packTmplDash := packAttrib(packTmpl, PackStruct{0, tag, arity})
+
+	updatTmpl := getStringTemplate("update", templates)
+	updatTmplDash := setManyAttrib(updatTmpl, Inventory{ core.Push(0), 1})
+
+	constrTmpl := getStringTemplate("constr", templates)
+	constrTmplDash := setConstrAttrib(constrTmpl, ConstrAttrib{tag, arity, updatTmplDash, packTmplDash})
+
+	return LLVMIR(constrTmplDash) + llir
 }
 
 func genScsLLVMIR(mapping []NameArityCodeMapping, templates [26]string, gmg core.GmGlobals) LLVMIR { //Done
@@ -264,18 +280,6 @@ func translateToLLVMIR(mapping NameArityCodeMapping, templates [26]string, useir
 			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
 			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
 
-		case core.Pack:
-			fmt.Println("Pack: ", useir.ninstr)
-			temp := getStringTemplate("pack", templates)
-			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
-			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
-
-		case core.CasejumpSimple:
-			fmt.Println("CasejumpSimple: ", useir.ninstr)
-			temp := getStringTemplate("casejumpsimple", templates)
-			templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
-			return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
-
 		case core.Add:
 			fmt.Println("add: ",useir.ninstr)
 			llir := mkArithTmpl(templates, "add", useir.ninstr)
@@ -331,6 +335,18 @@ func translateToLLVMIR(mapping NameArityCodeMapping, templates [26]string, useir
 			llir := mkRelationalTmpl(templates, "uge", useir.ninstr)
 			return translateBinOp(templates, useir, llir)
 
+		// case core.Pack:
+		// 	fmt.Println("Pack: ", useir.ninstr)
+		// 	temp := getStringTemplate("pack", templates)
+		// 	templateDash := setManyAttrib(temp, Inventory{instr, useir.ninstr})
+		// 	return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), useir.ninstr + 1}
+
+		// case core.CasejumpSimple:
+		// 	fmt.Println("CasejumpSimple: ", useir.ninstr)
+		// 	temp := getStringTemplate("casejumpsimple", templates)
+		// 	templateDash, ninstrDash := translateCase(mapping, templates, instr.(type).)
+		// 	return UseIR{useir.reg, useir.stack, useir.ir + LLVMIR(templateDash), ninstrDash}
+
 	}
 	return UseIR{}
 }
@@ -356,8 +372,63 @@ func mkFunName(name string) string { //Done
 	return funPrefix + name
 }
 
+ 
+
+// func translateCase() (LLVMIR, int){
+
+// }
+
+// func translateBranch() (LLVMIR) {
+
+// }
+
+// func translateAlts() (LLVMIR) {
+
+// }
+
+// func translateAlt() () {
+
+// }
 
 
+
+// type Casejump struct {
+// 	Ninstr int
+// 	Branches
+// 	Alts 
+// }
+// func setCaseJumpAttrib(temp string, casejump Casejump) string, int{
+
+// }
+
+
+type ConstrAttrib struct {
+	Tag int 
+	Arity int 
+	Update string
+	Pack string
+}
+
+func setConstrAttrib(temp string, cons ConstrAttrib) string {
+	tmpl, err := template.New("test").Parse(string(temp))
+    if err != nil { panic(err) }
+    var doc bytes.Buffer
+    err = tmpl.Execute(&doc, cons)
+    return doc.String()
+}
+
+type PackStruct struct {
+	Ninstr int 
+	Tag int
+	Arity int
+}
+func packAttrib(temp string, pck PackStruct) string {
+	tmpl, err := template.New("test").Parse(string(temp))
+    if err != nil { panic(err) }
+    var doc bytes.Buffer
+    err = tmpl.Execute(&doc, pck)
+    return doc.String()
+}
 
 type Relational struct {
 	Ninstr int

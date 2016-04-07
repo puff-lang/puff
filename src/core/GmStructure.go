@@ -134,7 +134,7 @@ type CasejumpSimple []CasejumpSimpleObj
 func (e CasejumpSimple) isInstruction() {}
 
 type CasejumpConstrObj struct{
-	Int Tag
+	Int int
 	gmC GmCode
 }
 type CasejumpConstr []CasejumpConstrObj
@@ -286,28 +286,7 @@ func (s *GmStack) DropStack(n int) {
 	// s.Index = s.Index -n
 	s.Addrs = s.Addrs[n:]
 }
-//--------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------
-// func (s *GmStack) TailStack() GmStack {
-// 	if s.Index >= 0 {
-// 		addr := s.PopStack()
-// 		fmt.Println("TailStack removed: ", addr)
-// 	}
-// 	return *s
-// }
 
-// func (s *GmStack) DropStack(n int) {  
-// 	var argaddrs [STACK_SIZE]Addr
-//  	for i, addr := range s.Addrs {
-// 		if i >= n {
-// 			argaddrs[i] = addr
-// 		}
-// 	}
-// 	*s = GmStack{argaddrs, n}
-// }
-
-
-//--------------------------------------------------------------------------
 //GmDump Implementation required for the GmState
 type GmDumpItem struct {
 	gmc GmCode
@@ -470,7 +449,7 @@ func initialDump() GmDump {
 //Part of GmState implementation is over.
 //--------------------------------------------------------------------------
 
-var binaryOperators []string = []string{"+", "-", "*", "/"}//, "%", "==", "!=", "<", "<=", ">", ">="}
+var binaryOperators []string = []string{"+", "-", "*", "/", "==", "<", ">", "%"}//,  "!=", "<=", ">="}
 var unaryOperators []string = []string{"negate"}
 
 func createBinaryOp(name string) ScDefn {
@@ -502,6 +481,7 @@ var builtinDyadicInt []builDyadic = []builDyadic {
 	builDyadic{"-", Sub{}},
 	builDyadic{"*", Mul{}},
 	builDyadic{"/", Div{}},
+	builDyadic{"%", Mod{}},
 }
 
 var builtinDyadicBool []builDyadic = []builDyadic {

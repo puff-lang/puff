@@ -157,13 +157,3 @@ type PDefault struct{}
 func (p PDefault) isPattern() {}
 //---------------------------------------------------------------------------------------
 
-//-----------------------------Abstract Data Types----------------------------------
-
-type Tag int
-
-var trueTag int = int(1)
-var falseTag int = int(0)
-var consTag Tag = Tag(3)
-var nilTag Tag = Tag(2)
-var initialTag Tag = Tag(4)
-var undefinedTag Tag = Tag(-1)

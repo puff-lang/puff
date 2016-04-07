@@ -37,8 +37,11 @@ func main() {
 
     contentProgram := core.Compile(program)
 
-    compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
-    // result := core.EvalState(contentProgram)
-    // fmt.Println(result)
+    // compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
+    result := core.EvalState(contentProgram)
+    fmt.Println(result)
 }
 
+// fn add(x, y) => x + y
+// fn addOne(x) => add(x, 2)
+// fn main() => let addOne = add(1) in addOne(10)

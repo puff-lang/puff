@@ -40,6 +40,10 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 			oper = "%"
 		case token.EQL:
 			oper = "=="
+		case token.LSS:
+			oper = "<"
+		case token.GTR:
+			oper = ">"
 		default:
 			oper = ""
 	}
@@ -55,7 +59,6 @@ func translateApExpr(node *ast.ApNode) core.CoreExpr {
 	for _, arg := range node.Args {
 		ap = core.EAp{ap, translateExpr(arg)}
 	}
-
 	return ap
 }
 
