@@ -147,15 +147,23 @@ func lexStatement(l *lexer) LexFn {
 		l.backup()
 		return lexSpace
 	case ch == '=':
-		return lexEqual
+		n := l.next()
+		if n == '>' {
+			l.emit(token.ARROW)
+			return lexStatement
+		} else {
+			l.backup()
+			return lexEqual
+		}
 	case ch == '/':
 		nextChar := l.peek()
 		if nextChar == '/' {
 			return lexLineComment
-		}else if  nextChar == '*' {
+		} else if  nextChar == '*' {
 			return lexBlockComment	
 		} 
-		fallthrough
+		l.backup()
+		return lexExpr
 	case ch == eof:
 		l.emit(token.EOF)
 		return nil
@@ -180,7 +188,7 @@ func lexLineComment(l *lexer) LexFn {
 	return lexStatement
 }
 
-func  lexBlockComment(l *lexer) LexFn {
+func lexBlockComment(l *lexer) LexFn {
 	r := l.next()
 	Loop:
 	for {
@@ -188,7 +196,7 @@ func  lexBlockComment(l *lexer) LexFn {
 	 		if l.next() == '/' {
 	 			l.emit(token.COMMENT)
 	 			break Loop
-	 		}	 		
+	 		}		
 	 	}
 	 	fmt.Printf("%c", r)
 	 	r = l.next()
@@ -246,17 +254,26 @@ func lexExpr(l *lexer) LexFn {
 	case r == '+':
 		l.emit(token.ADD)
 		return lexStatement
+	case r == '*':
+		l.emit(token.MUL)
+		return lexStatement
+	case r == '/':
+		l.emit(token.QUO)
+		return lexStatement
+	case r == '%':
+		l.emit(token.REM)
+		return lexStatement
+	case r == '<':
+		l.emit(token.LSS)
+		return lexStatement
+	case r == '>':
+		l.emit(token.GTR)
+		return lexStatement
 	case r == ',':
 		l.emit(token.COMMA)
 		return lexStatement
 	case r == '-':
-		n := l.next()
-		if n == '>' {
-			l.emit(token.ARROW)
-		} else {
-			l.backup()
-			l.emit(token.SUB)
-		}
+		l.emit(token.SUB)
 		return lexStatement
 	case r == '"':
 		return lexQuote

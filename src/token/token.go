@@ -118,6 +118,8 @@ var Tokens = [...]string{
 	SEMICOLON: ";",
 	COLON:     ":",
 
+	ARROW: "=>",
+
 	FN:   "fn",
 	LET:  "let",
 	IN:   "in",

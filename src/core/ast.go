@@ -1,7 +1,7 @@
 package core
 
 type Name string
-
+//---------------Start of CoreExpr's---------------------------------------
 type CoreExpr interface {
 	isExpr()
 }
@@ -19,6 +19,12 @@ type ENum struct {
 	Text    string  // The original textual representation from the input.
 }
 func (e ENum) isExpr() {}
+
+type EChar int
+func (e EChar) isExpr() {}
+
+type EConstrName Name
+func (e EConstrName) isExpr() {}
 
 type EConstr struct {
 	Tag   int
@@ -45,24 +51,51 @@ type ELam struct {
 }
 func (e ELam) isExpr() {}
 
+type ECaseSimple struct{
+	Body CoreExpr
+	Alt []Alter 
+}
+func (e ECaseSimple) isExpr() {}
+
 type Alter struct {
 	Num  int
 	Vars []Name
 	Expr CoreExpr
 }
 
+type ECaseConstr struct{
+	Body CoreExpr
+	Alt []Alter
+}
+func (e ECaseConstr) isExpr() {}
+
+type EError string
+func (e EError) isExpr() {}
+
+type ESelect struct{
+	I int
+	R int
+	Name string
+}
+func (e ESelect) isExpr() {}
+
 type Defn struct {
 	Var  Name
 	Expr CoreExpr
 }
+func (e Defn) isExpr() {}
 
 type ScDefn struct {
 	Name Name
 	Args []Name
 	Expr CoreExpr
 }
+func (e ScDefn) isExpr() {}
+//----------------------------End Of CoreExpr's--------------------------------------
 
 type Program []ScDefn
+
+
 
 func BindersOf(defns []Defn) []Name {
 	var names []Name 
@@ -92,4 +125,35 @@ func IsAtomicExpr(expr interface{}) bool {
 		return false
 	}
 }
+
+//-----------------------------Definition of Pattern-----------------------------------
+type Pattern interface {
+	isPattern()
+}
+
+type PNum int
+func (p PNum) isPattern() {}
+
+type PVar string
+func (p PVar) isPattern() {}
+
+type PChar int
+func (p PChar) isPattern() {}
+
+type PConstrName struct{
+	Name string
+	Patt []Pattern
+}
+func (p PConstrName) isPattern() {}
+
+type PConstr struct{
+	I int
+	R int
+	Patt []Pattern
+}
+func (p PConstr) isPattern() {}
+
+type PDefault struct{}
+func (p PDefault) isPattern() {}
+//---------------------------------------------------------------------------------------
 
