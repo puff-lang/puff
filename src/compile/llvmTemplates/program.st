@@ -17,6 +17,8 @@ declare i8* @memcpy(i8*, i8*, i64)
 @pushglobalmsg = internal constant [12 x i8] c" pushGlobal\00"
 @pushintmsg = internal constant [12 x i8] c"Ins pushInt\00"
 @unwindmsg = internal constant [12 x i8] c"Insi unwind\00"
+@getmsg = internal constant [12 x i8] c"Insi ---Get\00"
+@arithmsg = internal constant [12 x i8] c"Insi Arithm\00"
 declare i32 @puts(i8*)
 
 ; constants

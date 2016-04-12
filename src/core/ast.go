@@ -57,6 +57,11 @@ type ECaseSimple struct{
 }
 func (e ECaseSimple) isExpr() {}
 
+type Alter struct {
+	Num  int
+	Vars []Name
+	Expr CoreExpr
+}
 
 type ECaseConstr struct{
 	Body CoreExpr
@@ -88,12 +93,6 @@ type ScDefn struct {
 func (e ScDefn) isExpr() {}
 //----------------------------End Of CoreExpr's--------------------------------------
 
-
-type Alter struct {
-	Num  int
-	Vars []Name
-	Expr CoreExpr
-}
 type Program []ScDefn
 
 
@@ -158,13 +157,3 @@ type PDefault struct{}
 func (p PDefault) isPattern() {}
 //---------------------------------------------------------------------------------------
 
-//-----------------------------Abstract Data Types----------------------------------
-
-type Tag int
-
-var trueTag Tag = Tag(1)
-var falseTag Tag = Tag(0)
-var consTag Tag = Tag(3)
-var nilTag Tag = Tag(2)
-var initialTag Tag = Tag(4)
-var undefinedTag Tag = Tag(-1)

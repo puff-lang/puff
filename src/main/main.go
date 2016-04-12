@@ -42,3 +42,6 @@ func main() {
     fmt.Println(result)
 }
 
+// fn add(x, y) => x + y
+// fn addOne(x) => add(x, 2)
+// fn main() => let addOne = add(1) in addOne(10)

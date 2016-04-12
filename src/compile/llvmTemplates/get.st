@@ -1,4 +1,5 @@
 ; *************** Get ***************
+call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @getmsg, i32 0, i32 0))
 %top.{{.Ninstr}} = call i64*()* @pop()
 %tag.{{.Ninstr}} = call i64(i64*)* @getTag(i64* %top.{{.Ninstr}})
 

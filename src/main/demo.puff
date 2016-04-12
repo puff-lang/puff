@@ -1,2 +1,1 @@
-fn numadd(x, y) => x + y 
-fn main => let a = 24 in numadd(a, 32)
+fn main() =>  let x = 27, y = 32  in x + y

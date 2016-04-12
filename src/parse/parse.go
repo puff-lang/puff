@@ -557,6 +557,12 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 		fallthrough
 	case token.QUO:
 		fallthrough
+	case token.EQL:
+		fallthrough
+	case token.LSS:
+		fallthrough
+	case token.GTR:
+		fallthrough
 	case token.REM:
 		right := t.parseExpr()
 		if right ==  nil {

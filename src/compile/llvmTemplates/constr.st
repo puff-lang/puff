@@ -6,4 +6,6 @@ define void @_constr_$tag$_$arity$() {
     ret void
 }
 
+; let f = fn(x) => f(x - 1) + x in   
+
 

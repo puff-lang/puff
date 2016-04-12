@@ -16,11 +16,11 @@ func translateVariable(node *ast.VariableNode) (core.CoreExpr) {
 }
 
 func translateIf(node *ast.IfNode) (core.CoreExpr) {
-	// cond := translateExpr(node.Cond)
-	// then := translateExpr(node.Then)
-	// els := translateExpr(node.Else)
+	cond := translateExpr(node.Cond)
+	then := translateExpr(node.Then)
+	els := translateExpr(node.Else)
 
-	return core.ScDefn{} //TODO: Incomplete fn require support of prelude in core-ast 
+	return core.EAp{core.EAp{core.EAp{core.EVar("if"), cond}, then}, els} 
 }
 
 func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
@@ -40,6 +40,10 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 			oper = "%"
 		case token.EQL:
 			oper = "=="
+		case token.LSS:
+			oper = "<"
+		case token.GTR:
+			oper = ">"
 		default:
 			oper = ""
 	}
@@ -55,7 +59,6 @@ func translateApExpr(node *ast.ApNode) core.CoreExpr {
 	for _, arg := range node.Args {
 		ap = core.EAp{ap, translateExpr(arg)}
 	}
-
 	return ap
 }
 
@@ -89,6 +92,8 @@ func translateExpr(node interface{}) (core.CoreExpr) {
 			return translateFnExpr(n)
 		case *ast.ApNode:
 			return translateApExpr(n)
+		case *ast.CommentNode:
+			return nil
 		default:
 			return core.ENum{true, false, false, 4, 4, 4, "4"}
 	}
@@ -120,6 +125,10 @@ func translateNode(node interface{}) (core.ScDefn) {
 		*/
 		case *ast.FnNode:
 			return translateFnStatement(n)
+
+		case *ast.CommentNode:
+			return core.ScDefn{core.Name("comment"), []core.Name{}, core.ENum{true, false, false, 0, 0, 0, "0"}}
+
 		default:
 			return translateFnStatement(n.(*ast.FnNode))
 			// return translateExpr(n)

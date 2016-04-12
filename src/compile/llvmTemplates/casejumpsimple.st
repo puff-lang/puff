@@ -12,4 +12,3 @@ DEFAULT.{{.Ninstr}}:
     br label %END_CASE.{{.Ninstr}}
 
 END_CASE.{{.Ninstr}}:
-

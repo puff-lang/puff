@@ -1,4 +1,4 @@
-package core
+package core	
 
 import (
 	"fmt"
@@ -88,6 +88,18 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 		case Mul:
 			fmt.Println("Mul")
 			return mul(gmState)
+		case Mod:
+			fmt.Println("Mod")
+			return mod(gmState)
+		case Eq:
+			fmt.Println("==")
+			return eq(gmState)
+		case Lt:
+			fmt.Println("Less than <")
+			return lt(gmState)
+		case Gt:
+			fmt.Println("Greater >")
+			return gt(gmState)
 		case Get:
 			fmt.Println("Get")
 			return get(gmState)
@@ -97,14 +109,82 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 		case MkBool:
 			fmt.Println("MkBool")
 			return mkBool(gmState)
-		case Mod:
-			fmt.Println("Mod")
-			return mod(gmState)
+
+		case CasejumpSimple:
+			fmt.Println("CasejumpSimple")
+			return casejump(CasejumpSimple(instr.(CasejumpSimple)), gmState)
+
 		default:
 			fmt.Println("Default")
 			// fmt.Println(instr.(type))
 			return mod(gmState)
 
+	}
+}
+
+func casejump(objs []CasejumpSimpleObj, gmState GmState) GmState {
+	fmt.Println("Inside CasejumpSimple")
+	heap := gmState.gmh
+	node := heap.HLookup(gmState.gms.TopOfStack())
+	fmt.Println("Before findMatchingBranch GMC: ", gmState.gmc)
+	gmState.gmc = append(findMatchingBranch(objs, node), gmState.gmc...)
+	fmt.Println("After findMatchingBranch GMC: ", gmState.gmc)
+	return gmState
+}
+
+func findMatchingBranch(objs []CasejumpSimpleObj, node Node) GmCode {
+	if len(objs) <= 0 {
+		return GmCode{}
+	} 
+	obj := objs[0]
+	fmt.Println()
+	if obj.Int == -1 {
+		return obj.gmC
+	}
+	switch node.(type) {
+		case NNum:
+			fmt.Println("findMatchingBranch NNum: ", obj.Int, " == ", int(node.(NNum)))
+			if int(node.(NNum)) == obj.Int {
+				fmt.Println("Return GmCode: ", obj.gmC)
+				return obj.gmC
+			} else {
+				return findMatchingBranch(objs[1:], node)
+			}
+
+		case NChar:
+			fmt.Println("findMatchingBranch NChar", obj.Int, " == ", int(node.(NChar)))
+			if int(node.(NChar)) == obj.Int {
+				return obj.gmC
+			} else {
+				return findMatchingBranch(objs[1:], node)
+			}
+
+		case NConstr:
+			fmt.Println("findMatchingBranch NConstr", obj.Int, " == ", int(node.(NConstr).Tag))
+			if int(node.(NConstr).Tag) == obj.Int {
+				return obj.gmC
+			} else {
+				return findMatchingBranch(objs[1:], node)
+			}
+
+		case NGlobal:
+			tmp := (node.(NGlobal)).GmC[0]
+			fmt.Println("findMatchingBranch NGlobal", obj.Int)
+			switch tmp.(type) {
+				case Pack:
+					if tmp.(Pack).tag == obj.Int {
+						return obj.gmC
+					} else {
+						return findMatchingBranch(objs[1:], node)
+					}
+
+				default:
+					return findMatchingBranch(objs[1:], node)
+			}
+
+		default:
+			fmt.Println("Not possible inside findMatchingBranch Default")
+			return GmCode{}
 	}
 }
 
@@ -115,7 +195,7 @@ func mkInt(gmState GmState) GmState {
 
 func mkBool(gmState GmState) GmState {
 	n := int(gmState.gmvstack[0])
-	return mkObj(n, NConstr{n, []Addr{}, -1}, gmState)
+	return mkObj(n, NConstr{n, []Addr{} }, gmState)
 }
 
 func mkObj(n int, node Node, gmState GmState) GmState {
@@ -142,7 +222,7 @@ func unwind(gmState GmState) GmState { //Done
 	return newState(node, gmState)
 }
 
-func newState(node Node, gmState GmState) GmState { //Error
+func newState(node Node, gmState GmState) GmState { 
 	fmt.Println("Inside NewState")
 	fmt.Println("Stack: ", gmState.gms)
 	switch node.(type) {
@@ -196,6 +276,7 @@ func newState(node Node, gmState GmState) GmState { //Error
 			fmt.Println("Inside NInd")
 			stack := gmState.gms
 			stack.TopOfStack()
+			// xyz := stack.PopStack()
 			fmt.Println("NInd Addr: ",(node.(NInd)))
 			fmt.Println("Heap item: ",gmState.gmh.HLookup(Addr(node.(NInd))))
 			stack.PushStack(Addr(node.(NInd)))
@@ -204,9 +285,9 @@ func newState(node Node, gmState GmState) GmState { //Error
 	return GmState{}
 }
 
-//=============================================================================
+
 func rearrange(n int, gmh GmHeap, gms GmStack) GmStack { //DOne Inefficiently
-	if n == 0 {
+	if n < 0 {
 		return gms
 	} 
 	fmt.Println("Stack Before TailStack: ", gms)
@@ -259,7 +340,6 @@ func getArg(node Node) Addr{ //Done
 	fmt.Println("get arg: ", node.(NAp))
 	return Addr(node.(NAp).Body)
 }
-//========================================================================================
 
 func unwindDump(gmState GmState)  GmState { //DONE:
 	addr := gmState.gms.TopOfStack()
@@ -318,7 +398,7 @@ func mkap(gmState GmState) GmState { //Done
 	a1 := gmState.gms.PopStack()
 	a2 := gmState.gms.PopStack()
 	addrDash := gmState.gmh.HAlloc(NAp{a1, a2}) //Doubt About Passing type ENum or EVar
-	fmt.Println("Address of NAp: ", addrDash)
+	fmt.Println("Address of NAp: ", addrDash, a1, a2)
 	fmt.Println("Node: ", NAp{a1, a2})
 	gmState.gms.PushStack(addrDash)
 	return gmState
@@ -398,18 +478,17 @@ func eval2(gmState GmState) GmState { //DOne
 
 func get(gmState GmState) GmState { // Done 
 	vstack :=  gmState.gmvstack
+	fmt.Println("Before Get vstack: ", vstack)
 	a := gmState.gms.PopStack()	
 	node := gmState.gmh.HLookup(a)
 	switch  node.(type) {
 		case NNum:
 			vstack = append(vstack, int(node.(NNum)))
 		case NConstr:
-			length := node.(NConstr).Index
-			for i := 0; i <= length ; i++ {
-				vstack[len(vstack) + i] = int(node.(NConstr).Addrs[i])
-			}
+			vstack = append(vstack, int(node.(NConstr).Tag))
 	}
 	gmState.gmvstack = vstack
+	fmt.Println("AFter Get vstack: ", gmState.gmvstack)
 	return gmState
 }
 
@@ -483,10 +562,16 @@ func calculate(op string, v1 int, v2 int) int{ //Done
 			return v1 * v2
 		case "/":
 			return v1 / v2
-		case "==":
-			if v1 == v2 { return 0} else { return 1}
-		default:
+		case "%":
 			return v1 % v2
+		case "==":
+			if v1 == v2 { return 1 } else { return 0 }
+		case "<":
+			if v1 < v2 { return 1 } else { return 0	}
+		case ">":
+			if v1 > v2 { return 1 } else { return 0	}
+		default:
+			return 0
 	
 	}
 }
@@ -494,11 +579,13 @@ func calculate(op string, v1 int, v2 int) int{ //Done
 //------------------------------------Extra PArt----------------------------------------
 //--------------------------------------------------------------------------------------
 
-func pack(t int, n int, gmState GmState) GmState {
+func pack(t int, n int, gmState GmState) GmState { // Adding Data to Constructors
+	stack := gmState.gms
 	take := gmState.gms.TakeNStack(n)
-	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs, len(take.Addrs)})
-	gmState.gms.DropStack(n)
-	gmState.gms.PushStack(addr)
+	addr := gmState.gmh.HAlloc(NConstr{t, take.Addrs})
+	stack.DropStack(n)
+	stack.PushStack(addr)
+	gmState.gms = stack
 	return gmState
 }
 
@@ -506,7 +593,7 @@ func select2(r int, i int, gmState GmState) GmState { //Done with Confusion
 	heap := gmState.gmh
 	a := gmState.gms.PopStack()
 	node := heap.HLookup(a)
-	stackElem := node.(NConstr).Addrs[i]
+	stackElem := node.(NConstr).Arity[i]
 	gmState.gms.PushStack(stackElem)
 	return gmState
 }
@@ -515,7 +602,7 @@ func split2(n int, gmState GmState) GmState { //Some Mistakes but Complete
 	heap := gmState.gmh
 	a := gmState.gms.PopStack()
 	node := heap.HLookup(a)
-	if n == len(node.(NConstr).Addrs) {
+	if n == len(node.(NConstr).Arity) {
 		// stackDash := GmStack{[10]Addr{node.(NConstr).Addrs, gmState.gms.Addrs}, len(node.(NConstr).Addrs) + len(gmState.gms)}
 		// gmState.gms = stackDash
 		return gmState
@@ -525,6 +612,3 @@ func split2(n int, gmState GmState) GmState { //Some Mistakes but Complete
 	}
 }
 
-// func error2(msg string, gmState GmState) GmState {
-
-// }
