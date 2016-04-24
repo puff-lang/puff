@@ -20,7 +20,8 @@ func translateIf(node *ast.IfNode) (core.CoreExpr) {
 	then := translateExpr(node.Then)
 	els := translateExpr(node.Else)
 
-	return core.EAp{core.EAp{core.EAp{core.EVar("if"), cond}, then}, els} 
+	// return core.EAp{core.EAp{core.EAp{core.EVar("if"), cond}, then}, els} 
+	return core.ECaseConstr{cond, []core.CoreAlt{core.CoreAlt{1, then}, core.CoreAlt{0, els}}}
 }
 
 func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
@@ -47,7 +48,7 @@ func translateBinaryExpr(node *ast.BinaryExprNode) (core.CoreExpr) {
 		default:
 			oper = ""
 	}
-	fmt.Println(oper)
+	fmt.Println("BinaryExpr: ", left, oper, right)
 	return core.EAp{core.EAp{core.EVar(oper), left}, right} // TODO: Incomplete fn require support of prelude in core-ast
 }
 

@@ -595,7 +595,7 @@ func (t *Tree) parseApplication(left ast.ExprNode) ast.ExprNode {
 		}
 		t.expect(token.RPAREN, context)
 
-		fmt.Println("No. of args ", args)
+		fmt.Println("No. of args ", len(args))
 
 		return ast.NewApplication(tok.Pos(), left, args)
 	}

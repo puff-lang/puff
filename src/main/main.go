@@ -38,8 +38,9 @@ func main() {
     contentProgram := core.Compile(program)
 
     // compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
-    result := core.EvalState(contentProgram)
-    fmt.Println(result)
+    // result := core.EvalState(contentProgram)
+    // fmt.Println(result)
+    core.ShowStates(contentProgram)
 }
 
 // fn add(x, y) => x + y

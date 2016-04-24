@@ -126,18 +126,15 @@ type Pack struct{
 }
 func (e Pack) isInstruction() {}
 
-type CasejumpSimpleObj struct{
+type CasejumpObj struct{
 	Int int
 	gmC GmCode
 }
-type CasejumpSimple []CasejumpSimpleObj
+
+type CasejumpSimple []CasejumpObj
 func (e CasejumpSimple) isInstruction() {}
 
-type CasejumpConstrObj struct{
-	Int int
-	gmC GmCode
-}
-type CasejumpConstr []CasejumpConstrObj
+type CasejumpConstr []CasejumpObj
 func (e CasejumpConstr) isInstruction() {}
 
 
@@ -367,6 +364,11 @@ func (h *GmHeap) HNull() Addr{
 
 func (h *GmHeap) HAlloc(node Node) Addr {
 	h.index = h.index + 1
+
+	if h.index > 99 {
+		panic("No space left on heap")
+	}
+
 	h.hNode[h.index] = node
 	h.instn = []Instruction{}
 	return h.index
@@ -377,7 +379,6 @@ func (h *GmHeap) HLookup(addr Addr) Node{
 		return nil	
 	}
 	if h.index >= addr {
-		fmt.Println("Node at, ", addr, " is ", h.hNode[addr])
 		return h.hNode[addr]
 	}	
 	return nil
@@ -461,10 +462,15 @@ func createUnaryOp(name string) ScDefn {
 
 func primitiveScs() []ScDefn {
 	scdefn := []ScDefn{}
+
 	for _, name := range binaryOperators{
 		scdefn = append(scdefn, createBinaryOp(name))
 	}
-	scdefn = append(scdefn, createUnaryOp("negate"))
+
+	for _, sc := range unaryOperators {
+		scdefn = append(scdefn, createUnaryOp(sc))
+	}
+
 	return scdefn
 }
 func selFunName(i int, r int) Name {

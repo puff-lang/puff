@@ -1,1 +1,2 @@
-fn main() =>  let x = 27, y = 32  in x + y
+fn fact(n) => if n == 0 then 1 else n * fact(n - 1)
+fn main() => fact(5)

@@ -24,18 +24,19 @@ func Compile(p Program) GmState {
 	var stats GmStats = 0
 	fmt.Println(preCompiledScs())
 	heap, globals := buildInitialHeap(p)
+	fmt.Println("Globals", globals)
+	fmt.Println("Heap at 0", heap.hNode[0])
 	return GmState{GmOutput{}, initialCode(), InitStack(), initialDump(), GmVStack{}, heap, globals, stats}
 }
-
 
 func buildInitialHeap(p Program) (GmHeap, GmGlobals) {
 	var compiled []GmCompiledSC
 	gmHeap := HInitial()
-	// p = append(p, primitiveScs()...)
+	p = append(p, primitiveScs()...)
 	for _, sc := range p {
 		compiled = append(compiled, compileSc(sc))
 	}
-	compiled = append(compPrim, compiled...)
+	// compiled = append(compPrim, compiled...)
 	return mapAccuml(allocateSc, gmHeap, compiled)
 }
 
@@ -45,6 +46,7 @@ type allocates func(GmHeap, GmCompiledSC) (GmHeap, Object)
 
 // allocateSc implements allocates, returning GmHeap & Object
 func allocateSc(gmh GmHeap, gCSC GmCompiledSC) (GmHeap, Object) {
+	fmt.Println("No. of Args for", gCSC.Name, gCSC.Length)
 	addr := gmh.HAlloc(NGlobal{gCSC.Length, gCSC.body})
 	fmt.Println("SC: ", gCSC.Name, "stored at: ", addr)
 	return gmh, Object{gCSC.Name, addr}
@@ -63,7 +65,6 @@ func mapAccuml(f allocates, acc GmHeap, list []GmCompiledSC) (GmHeap, GmGlobals)
 }
 
 func initialCode() GmCode {
-	fmt.Println("Got Eval")
 	return GmCode{Pushglobal("main"), Eval{}}
 }
 
@@ -74,14 +75,13 @@ func (sc GmCompiledSC) Body() GmCode {
 
 //Each SuperCombinator is compiled using compileSc which implements SC scheme
 func compileSc(sc ScDefn) GmCompiledSC {
+	fmt.Println("Compiling SC", sc.Name)
 	var gmE = GmEnvironment{}
 
 	for i,eString := range sc.Args {
 		gmE = append(gmE, Environment{eString, i})
 	}
 	l := len(sc.Args)
-	fmt.Println("SC Name: ", sc.Name)
-	fmt.Println("SC Args length: ", l)
 	compileR := createCompileR(l)
 	return GmCompiledSC{sc.Name, l, compileR(sc.Expr, gmE)}
 }
@@ -94,7 +94,6 @@ func CompileSc(sc ScDefn) GmCompiledSC {
 		gmE = append(gmE, Environment{eString, i})
 	}
 	l := len(sc.Args)
-	fmt.Println("hello: ", l)
 	compileR := createCompileR(l)
 	return GmCompiledSC{sc.Name, l, compileR(sc.Expr, gmE)}
 }
@@ -119,24 +118,21 @@ func createCompileR(d int) GmCompiler {
 			} else {
 				return compileLet(GmCode{}, createCompileR(d + len(expr.Defns)), expr.Defns, expr.Body, env)
 			}
-		// case ECaseSimple:
-		// 	expr := cexp.(ECaseSimple)
 
-		// case ECaseConstr:
-		// 	expr := cexp.(ECaseConstr)
+		case ECaseSimple:
+			expr := cexp.(ECaseSimple)
+			i := compileD(createCompileR(d + 1), expr.Alts, argOffset(1, env))
+			return append(compileE(expr.Body, env), CasejumpSimple(i))
+
+		case ECaseConstr:
+			expr := cexp.(ECaseConstr)
+			i := compileD(createCompileR(d + 1), expr.Alts, argOffset(1, env))
+			return append(compileE(expr.Body, env), CasejumpConstr(i)	)
 
 		default:
 			fmt.Println("Default in compileR with d, ", d)
 			fmt.Println("Env ", env)
-			inst := []Instruction{}
-			cC := compileE(cexp, env)
-			for _,obj := range cC {
-				inst = append(inst, obj)
-			}
-			inst = append(inst, Update(d))
-			inst = append(inst, Pop(d))
-			inst = append(inst, Unwind{})
-			return inst	
+			return append(compileE(cexp, env), []Instruction{Update(d), Pop(d), Unwind{}}...)
 		}
 	} 
 }
@@ -195,6 +191,17 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 			} else {
 				return compileLet(GmCode{Slide(len(expr.Defns))}, compileE, expr.Defns, expr.Body, env)
 			}
+
+		case ECaseSimple:
+			expr := cexp.(ECaseSimple)
+			i := compileD(compileE, expr.Alts, argOffset(1, env))
+			return append(compileE(expr.Body, env), CasejumpSimple(i))
+
+		case ECaseConstr:
+			expr := cexp.(ECaseConstr)
+			i := compileD(compileE, expr.Alts, argOffset(1, env))
+			fmt.Println("CompileD Done")
+			return append(compileE(expr.Body, env), CasejumpConstr(i))
 		
 		case EAp:
 			expr := cexp.(EAp)
@@ -205,9 +212,9 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 					expr1 := expr.Left.(EAp)
 					switch expr1.Left.(type) {
 						case EVar:
-							fmt.Println("EVar 1")
+							fmt.Println("Compiling EVar 1")
 							expr2 := expr1.Left.(EVar)
-							fmt.Println(aHasKey(built, string(expr2)), " Buildyadic:  ",built)
+							fmt.Println(aHasKey(built, string(expr2)), expr2, " Buildyadic:  ",built)
 							if aHasKey(built, string(expr2)) {
 								fmt.Println("Going for CompileB")
 								return append(compileB(expr, env), intOrBool(Name(expr2)))
@@ -220,11 +227,11 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 								case EVar:
 									name := ifApExpr.Left.(EVar)
 									if name == "if" {
-										fmt.Println(" Inside if else")
+										fmt.Println("Inside if else")
 										result := GmCode{}
 										result = append(result, compileE(ifApExpr.Body, env)...)
 										fmt.Println("Compiling then and else body")
-										instn := CasejumpSimple{CasejumpSimpleObj{trueTag, compileE(expr1.Body, env)}, CasejumpSimpleObj{falseTag, compileE(expr.Body, env)}}
+										instn := CasejumpConstr{CasejumpObj{trueTag, compileE(expr1.Body, env)}, CasejumpObj{falseTag, compileE(expr.Body, env)}}
 										result = append(result, GmCode{instn}...)
 										return result
 									} else {
@@ -246,6 +253,7 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 					if expr1 == "negate" {
 						return append(compileB(expr.Body, env), GmCode{MkInt{}}...)
 					} else {
+						fmt.Println("EAp -> EVar ", expr1)
 						// return GmCode{} //Don't no what is right condition
 						return append(compileC(expr, env), Eval{})		
 					}
@@ -257,7 +265,7 @@ func compileE(cexp CoreExpr, env GmEnvironment) GmCode { // 2 Conditions :TODO
 
 		default:
 			expr := cexp
-			fmt.Println("229 CompileE expression syntax")
+			fmt.Println("229 CompileE expression syntax", expr)
 			return append(compileC(expr, env), Eval{})		
 	}
 }
@@ -299,7 +307,7 @@ func compileB(cexp CoreExpr, env GmEnvironment) GmCode { //All Cases Covered for
 									if name == "if" {
 										fmt.Println(" Inside if else")
 										result := compileE(ifApExpr.Body, env)
-										instn := CasejumpSimple{CasejumpSimpleObj{trueTag, compileB(expr1.Body, env)}, CasejumpSimpleObj{falseTag, compileB(expr.Body, env)}}
+										instn := CasejumpConstr{CasejumpObj{trueTag, compileB(expr1.Body, env)}, CasejumpObj{falseTag, compileB(expr.Body, env)}}
 										return append(result, GmCode{instn}...)
 									} else {
 										fmt.Println(" 299 Special Case CompileB")
@@ -374,6 +382,7 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
 			fmt.Println("In EAp for compileC")
 			expr := cexp.(EAp)
 			var gmC = GmCode{}
+			fmt.Println("Compiling Body: ", expr.Body)
 			gmC = append(gmC, compileC(expr.Body, env)...)
 			fmt.Println("Compiling left of EAp")
 			gmC = append(gmC, compileC(expr.Left, argOffset(1, env))...)
@@ -388,10 +397,35 @@ func compileC(cexp CoreExpr, env GmEnvironment) GmCode {
 				return compileLet(GmCode{Slide(len(expr.Defns))}, compileC, expr.Defns, expr.Body, env)
 			}
 
+		case ECaseSimple:
+			expr := cexp.(ECaseSimple)
+			i := compileD(compileE, expr.Alts, argOffset(1, env))
+			return append(compileE(expr.Body, env), CasejumpSimple(i))
+
+		case ECaseConstr:
+			expr := cexp.(ECaseConstr)
+			i := compileD(compileE, expr.Alts, argOffset(1, env))
+			return append(compileE(expr.Body, env), CasejumpConstr(i))
+		
 		default:
 			fmt.Println("Compilation scheme for the following expression does not exist.")
 			return GmCode{}
     }
+}
+
+func compileD(comp GmCompiler, alts []CoreAlt, env GmEnvironment) []CasejumpObj {
+	fmt.Println("In compileD")
+	var list []CasejumpObj
+	for _, alt := range alts {
+		fmt.Println("Compiling Alt", alt)
+		list = append(list, compileA(comp, alt, env))
+	} 
+
+	return list
+} 
+
+func compileA(comp GmCompiler, alt CoreAlt, env GmEnvironment) CasejumpObj {
+	return CasejumpObj{alt.Num, comp(alt.Expr, env)}
 }
 
 
@@ -470,7 +504,8 @@ func PrintBody(body GmCode) {
 	fmt.Println()
 }
 
-func intOrBool(nm Name) Instruction{
+func intOrBool(name Name) Instruction {
+	/*
 	if nm == "+" || nm == "-" || nm == "*" || nm == "/" || nm == "%" {
 		return MkInt{}
 	}  else if nm == "==" || nm ==">=" || nm == ">" || nm =="<" || nm =="<=" || nm == "!=" {
@@ -479,4 +514,19 @@ func intOrBool(nm Name) Instruction{
 		tp := "Name: " + nm + " is not a built-in operator"
 		return Error(tp)
 	}
+	*/
+
+	for _, bd := range builtinDyadicInt {
+		if bd.Name == string(name) {
+			return MkInt{}
+		}
+	}
+
+	for _, bd := range builtinDyadicBool {
+		if bd.Name == string(name) {
+			return MkBool{}
+		}
+	}
+
+	panic("Name: " + name + " is not a built-in operator")
 }

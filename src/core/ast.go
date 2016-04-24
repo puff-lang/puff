@@ -53,7 +53,7 @@ func (e ELam) isExpr() {}
 
 type ECaseSimple struct{
 	Body CoreExpr
-	Alt []Alter 
+	Alts []CoreAlt
 }
 func (e ECaseSimple) isExpr() {}
 
@@ -63,9 +63,14 @@ type Alter struct {
 	Expr CoreExpr
 }
 
+type CoreAlt struct {
+	Num  int
+	Expr CoreExpr
+}
+
 type ECaseConstr struct{
 	Body CoreExpr
-	Alt []Alter
+	Alts []CoreAlt
 }
 func (e ECaseConstr) isExpr() {}
 
