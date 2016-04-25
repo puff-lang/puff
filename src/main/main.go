@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+    "os"
 	"io/ioutil"
     "core"
     "compile"
 )
 
 func main() {
-     b, err := ioutil.ReadFile("demo.puff")
+    action := os.Args[1]
+    fileName := os.Args[2]
+
+    b, err := ioutil.ReadFile(fileName)
 
     fmt.Println(string(b))
     if err != nil {
@@ -37,10 +41,12 @@ func main() {
 
     contentProgram := core.Compile(program)
 
-    // compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
-    // result := core.EvalState(contentProgram)
-    // fmt.Println(result)
-    core.ShowStates(contentProgram)
+    switch action {
+    case "run":
+        core.ShowStates(contentProgram)
+    default:
+        compile.SaveLLVMIR(compile.GenLLVMIR(contentProgram))
+    }
 }
 
 // fn add(x, y) => x + y
