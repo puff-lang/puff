@@ -70,7 +70,6 @@ func (l *lexer) accept(valid string) bool {
 	return false
 }
 
-
 func (l *lexer) skipWhitespace() {
 	r := l.peek()
 	for r == ' ' || r == '\t' || r == '\n' || r == '\r' {
@@ -159,9 +158,9 @@ func lexStatement(l *lexer) LexFn {
 		nextChar := l.peek()
 		if nextChar == '/' {
 			return lexLineComment
-		} else if  nextChar == '*' {
-			return lexBlockComment	
-		} 
+		} else if nextChar == '*' {
+			return lexBlockComment
+		}
 		l.backup()
 		return lexExpr
 	case ch == eof:
@@ -175,31 +174,31 @@ func lexStatement(l *lexer) LexFn {
 
 func lexLineComment(l *lexer) LexFn {
 	r := l.next()
-	Loop:
+Loop:
 	for {
 		r = l.peek()
-	 	if r == '\n' {
-	 		l.emit(token.COMMENT)
-	 		break Loop
-	 	} else {
-	 		l.next()
-	 	}
+		if r == '\n' {
+			l.emit(token.COMMENT)
+			break Loop
+		} else {
+			l.next()
+		}
 	}
 	return lexStatement
 }
 
 func lexBlockComment(l *lexer) LexFn {
 	r := l.next()
-	Loop:
+Loop:
 	for {
-	 	if r == '*' {
-	 		if l.next() == '/' {
-	 			l.emit(token.COMMENT)
-	 			break Loop
-	 		}		
-	 	}
-	 	fmt.Printf("%c", r)
-	 	r = l.next()
+		if r == '*' {
+			if l.next() == '/' {
+				l.emit(token.COMMENT)
+				break Loop
+			}
+		}
+		fmt.Printf("%c", r)
+		r = l.next()
 	}
 	return lexStatement
 }

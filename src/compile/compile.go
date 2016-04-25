@@ -1,7 +1,8 @@
-package compile	
+package compile
+
 import (
-	"fmt"
 	"core"
+	"fmt"
 	// "llvm.org/llvm/bindings/go/llvm"
 	"parse"
 )
@@ -26,7 +27,6 @@ var builtins = map[string]interface{}{
 // 	return compileNode(node, TheModule)
 // }
 
-
 func Translate(src string) core.Program {
 	tree, err := parse.New("Program").Parse(src, "", "", make(map[string]*parse.Tree), builtins)
 
@@ -43,8 +43,8 @@ func Translate(src string) core.Program {
 
 func run(str string) string { //Almost Done
 	// contentProgram := core.Compile(core.Program{
- //            core.ScDefn{"main", []core.Name{}, Translate(string(str))},
- //    	})
+	//            core.ScDefn{"main", []core.Name{}, Translate(string(str))},
+	//    	})
 
 	program := Translate(string(str))
 
@@ -67,5 +67,3 @@ func run(str string) string { //Almost Done
 	fmt.Println(result)
 	return string("result")
 }
-
-

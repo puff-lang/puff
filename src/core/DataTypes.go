@@ -1,15 +1,15 @@
 package core
 
 import (
-	// "strconv"
-	// "fmt"
+// "strconv"
+// "fmt"
 )
 
 //-----------------------------Abstract Data Types----------------------------------
 // type Tag int
 // type  Arity int
 type NameConstrMapping struct {
-	Name string
+	Name  string
 	Const Constructor
 }
 
@@ -22,13 +22,13 @@ var undefinedTag int = int(-1)
 
 //-----------------------------Primitive ADT's------------------------------------------
 type Constructor struct {
-	Name string
-	Tag int
+	Name  string
+	Tag   int
 	Arity int
 }
 
 type DataType struct {
-	Name string
+	Name   string
 	Consts Constructors
 }
 
@@ -41,8 +41,3 @@ var primitiveADTs = DataTypes{
 	DataType{"List", Constructors{Constructor{"Nil", nilTag, 0}, Constructor{"Cons", consTag, 2}}},
 	DataType{"Tuple0", Constructors{Constructor{"Tuple0", undefinedTag, 0}}},
 }
-
-
-
-
-

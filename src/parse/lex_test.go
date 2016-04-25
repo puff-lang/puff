@@ -1,8 +1,8 @@
 package parse
 
 import (
-	"token"
 	"testing"
+	"token"
 )
 
 var tokenName = [...]string{
@@ -57,9 +57,9 @@ var tokenName = [...]string{
 	token.TYPE: "type",
 	token.DATA: "data",
 
-	token.IF:	"if",
+	token.IF:   "if",
 	token.THEN: "then",
-	token.ELSE:	"else",
+	token.ELSE: "else",
 
 	token.WHITESPACE: " \t\r\n",
 }

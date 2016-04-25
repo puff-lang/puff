@@ -1,12 +1,14 @@
 package core
 
 type Name string
+
 //---------------Start of CoreExpr's---------------------------------------
 type CoreExpr interface {
 	isExpr()
 }
 
 type EVar Name
+
 func (e EVar) isExpr() {}
 
 type ENum struct {
@@ -18,24 +20,29 @@ type ENum struct {
 	Float64 float64 // The floating-point value.
 	Text    string  // The original textual representation from the input.
 }
+
 func (e ENum) isExpr() {}
 
 type EChar int
+
 func (e EChar) isExpr() {}
 
 type EConstrName Name
+
 func (e EConstrName) isExpr() {}
 
 type EConstr struct {
 	Tag   int
 	Arity int
 }
+
 func (e EConstr) isExpr() {}
 
 type EAp struct {
 	Left CoreExpr
 	Body CoreExpr
 }
+
 func (e EAp) isExpr() {}
 
 type ELet struct {
@@ -43,18 +50,21 @@ type ELet struct {
 	Defns []Defn
 	Body  CoreExpr
 }
+
 func (e ELet) isExpr() {}
 
 type ELam struct {
 	Params []Name
 	Body   CoreExpr
 }
+
 func (e ELam) isExpr() {}
 
-type ECaseSimple struct{
+type ECaseSimple struct {
 	Body CoreExpr
 	Alts []CoreAlt
 }
+
 func (e ECaseSimple) isExpr() {}
 
 type Alter struct {
@@ -68,26 +78,30 @@ type CoreAlt struct {
 	Expr CoreExpr
 }
 
-type ECaseConstr struct{
+type ECaseConstr struct {
 	Body CoreExpr
 	Alts []CoreAlt
 }
+
 func (e ECaseConstr) isExpr() {}
 
 type EError string
+
 func (e EError) isExpr() {}
 
-type ESelect struct{
-	I int
-	R int
+type ESelect struct {
+	I    int
+	R    int
 	Name string
 }
+
 func (e ESelect) isExpr() {}
 
 type Defn struct {
 	Var  Name
 	Expr CoreExpr
 }
+
 func (e Defn) isExpr() {}
 
 type ScDefn struct {
@@ -95,15 +109,15 @@ type ScDefn struct {
 	Args []Name
 	Expr CoreExpr
 }
+
 func (e ScDefn) isExpr() {}
+
 //----------------------------End Of CoreExpr's--------------------------------------
 
 type Program []ScDefn
 
-
-
 func BindersOf(defns []Defn) []Name {
-	var names []Name 
+	var names []Name
 	for _, defn := range defns {
 		names = append(names, defn.Var)
 	}
@@ -112,7 +126,7 @@ func BindersOf(defns []Defn) []Name {
 }
 
 func RhssOf(defns []Defn) []CoreExpr {
-	var rhss []CoreExpr 
+	var rhss []CoreExpr
 	for _, defn := range defns {
 		rhss = append(rhss, defn.Expr)
 	}
@@ -137,28 +151,34 @@ type Pattern interface {
 }
 
 type PNum int
+
 func (p PNum) isPattern() {}
 
 type PVar string
+
 func (p PVar) isPattern() {}
 
 type PChar int
+
 func (p PChar) isPattern() {}
 
-type PConstrName struct{
+type PConstrName struct {
 	Name string
 	Patt []Pattern
 }
+
 func (p PConstrName) isPattern() {}
 
-type PConstr struct{
-	I int
-	R int
+type PConstr struct {
+	I    int
+	R    int
 	Patt []Pattern
 }
+
 func (p PConstr) isPattern() {}
 
 type PDefault struct{}
-func (p PDefault) isPattern() {}
-//---------------------------------------------------------------------------------------
 
+func (p PDefault) isPattern() {}
+
+//---------------------------------------------------------------------------------------

@@ -1,22 +1,22 @@
 package core
+
 import (
 	"fmt"
 	"reflect"
 	"testing"
 )
 
-
 type compileScTest struct {
-	input ScDefn
+	input  ScDefn
 	output GmCompiledSC
 }
 
 var compileScTests = []compileScTest{
 	// {ScDefn{"compose", []Name{"f","g","x"}, EAp{EVar("f"), EAp{EVar("g"), EVar("x")}}}, GmCompiledSC{"compose", 3, GmCode{Push(2), Push(1), Mkap{}, Push(0), Mkap{}, Update(2), Pop(2), Unwind{}}}},
-// 	{ScDefn{"twice", []Name{"f"}, EAp{EAp{EVar("compose"), EVar("f")}, EVar("f")}},GmCompiledSC{"twice", 1, GmCode{Push(0), Push(0), Pushglobal("compose"), Mkap{}, Mkap{} , Update(2), Pop(2), Unwind{}}}},    
-// 	{ScDefn{"S", []Name{"f","g","x"}, EAp{ EAp {EVar("f"), EVar("x")},EAp {EVar("g"), EVar("x")}}}, GmCompiledSC{"S", 3, GmCode{Push(2), Push(1),Mkap{}, Push(2), Push(0), Mkap{}, Mkap{},
-// Update(2), Pop(2), Unwind{}}}},
-	{ScDefn{"K", []Name{"x", "y"}, EVar("x")}, GmCompiledSC{"K", 2, GmCode{Push(0), Update(2), Pop(2), Unwind{}}}},	
+	// 	{ScDefn{"twice", []Name{"f"}, EAp{EAp{EVar("compose"), EVar("f")}, EVar("f")}},GmCompiledSC{"twice", 1, GmCode{Push(0), Push(0), Pushglobal("compose"), Mkap{}, Mkap{} , Update(2), Pop(2), Unwind{}}}},
+	// 	{ScDefn{"S", []Name{"f","g","x"}, EAp{ EAp {EVar("f"), EVar("x")},EAp {EVar("g"), EVar("x")}}}, GmCompiledSC{"S", 3, GmCode{Push(2), Push(1),Mkap{}, Push(2), Push(0), Mkap{}, Mkap{},
+	// Update(2), Pop(2), Unwind{}}}},
+	{ScDefn{"K", []Name{"x", "y"}, EVar("x")}, GmCompiledSC{"K", 2, GmCode{Push(0), Update(2), Pop(2), Unwind{}}}},
 	// {ScDefn{
 	// 	"Let", []Name{"f"},
 	// 	ELet{true, []Defn{{Name("x"), EAp{EVar("f"), EVar("x")}}}, EVar("x")}}, GmCompiledSC{"Let", 1, GmCode{},
@@ -34,10 +34,10 @@ func printBody(body GmCode) {
 }
 
 func TestCompile(t *testing.T) {
-	for _, cScTest := range compileScTests{
+	for _, cScTest := range compileScTests {
 		result := compileSc(cScTest.input)
-		if (result.Name == cScTest.input.Name) && (len(cScTest.input.Args)==result.Length) {
-			
+		if (result.Name == cScTest.input.Name) && (len(cScTest.input.Args) == result.Length) {
+
 			if cScTest.output.Name != result.Name {
 				fmt.Println("Error while executing", cScTest.output.Name)
 				return

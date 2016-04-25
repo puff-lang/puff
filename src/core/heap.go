@@ -1,19 +1,19 @@
 package core
 
-type Map struct{
+type Map struct {
 	object int
-	addr Addr
+	addr   Addr
 }
 
 type hItem struct {
-	NumObj Object 		// Numbers of objects in Heap
+	NumObj  Object // Numbers of objects in Heap
 	lUnAddr []Addr // List of unused Addresses
-	listMap  []Map	// an association list mapping addresses to objects.
+	listMap []Map  // an association list mapping addresses to objects.
 }
 
-type  Heap struct{
+type Heap struct {
 	hItems [10]hItem
-	index int
+	index  int
 }
 
 // func HInitial() Heap{

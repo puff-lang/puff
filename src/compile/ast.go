@@ -51,7 +51,6 @@ package compile
 // 	return llvm.ConstFloat(llvm.FloatType(), node.Float64)
 // }
 
-
 // func compileBinaryExpr(node *ast.BinaryExprNode, module llvm.Module) llvm.Value {
 // 	left := compileExpr(node.Left, module)
 // 	right := compileExpr(node.Right, module)

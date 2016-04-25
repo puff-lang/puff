@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"strconv"
 )
-type GmState struct{
-	gmo GmOutput
-	gmc GmCode 			//Current instruction stream
-	gms GmStack			//Current stack
-	gmd GmDump			//current Dump
+
+type GmState struct {
+	gmo      GmOutput
+	gmc      GmCode  //Current instruction stream
+	gms      GmStack //Current stack
+	gmd      GmDump  //current Dump
 	gmvstack GmVStack
-	gmh GmHeap			//Heap of Nodes
-	gmg GmGlobals		//Global Addresses in heap
-	gmst GmStats		//Statitics
+	gmh      GmHeap    //Heap of Nodes
+	gmg      GmGlobals //Global Addresses in heap
+	gmst     GmStats   //Statitics
 }
 
 type GmOutput []string
@@ -20,144 +21,177 @@ type GmOutput []string
 type GmVStack []int
 
 // type GmCode and is simply a list of instructions.
-type Instruction interface{
+type Instruction interface {
 	isInstruction()
 }
 
 type Unwind struct{}
+
 func (e Unwind) isInstruction() {}
 
 type Pushglobal string
+
 func (e Pushglobal) isInstruction() {}
 
 type Pushint int
+
 func (e Pushint) isInstruction() {}
 
 type Pushchar int
+
 func (e Pushchar) isInstruction() {}
 
 type Push int
+
 func (e Push) isInstruction() {}
 
 type Mkap struct{}
+
 func (e Mkap) isInstruction() {}
 
 type Eval struct{}
+
 func (e Eval) isInstruction() {}
 
 type Update int
+
 func (e Update) isInstruction() {}
 
 type Pop int
+
 func (e Pop) isInstruction() {}
 
 type Alloc int
+
 func (e Alloc) isInstruction() {}
 
 type Slide int
+
 func (e Slide) isInstruction() {}
 
 type Add struct{}
+
 func (e Add) isInstruction() {}
 
 type Sub struct{}
+
 func (e Sub) isInstruction() {}
 
 type Mul struct{}
+
 func (e Mul) isInstruction() {}
 
 type Div struct{}
+
 func (e Div) isInstruction() {}
 
 type Mod struct{}
+
 func (e Mod) isInstruction() {}
 
 type Neg struct{}
+
 func (e Neg) isInstruction() {}
 
 type Eq struct{}
+
 func (e Eq) isInstruction() {}
 
 type Ne struct{}
+
 func (e Ne) isInstruction() {}
 
 type Lt struct{}
+
 func (e Lt) isInstruction() {}
 
 type Le struct{}
+
 func (e Le) isInstruction() {}
 
 type Gt struct{}
+
 func (e Gt) isInstruction() {}
 
 type Ge struct{}
+
 func (e Ge) isInstruction() {}
 
-type Cond struct{
+type Cond struct {
 	gm1 GmCode
 	gm2 GmCode
 }
+
 func (e Cond) isInstruction() {}
 
 type Error string
-func ( e Error) isInstruction() {}
+
+func (e Error) isInstruction() {}
 
 type MkBool struct{}
-func ( e MkBool) isInstruction() {}
+
+func (e MkBool) isInstruction() {}
 
 type MkInt struct{}
-func ( e MkInt) isInstruction() {}
 
-type Select struct{
+func (e MkInt) isInstruction() {}
+
+type Select struct {
 	I int
 	R int
 }
+
 func (e Select) isInstruction() {}
 
 type Pushbasic int
+
 func (e Pushbasic) isInstruction() {}
 
 type Get struct{}
+
 func (e Get) isInstruction() {}
 
-type Pack struct{
-	tag int
+type Pack struct {
+	tag   int
 	arity int
 }
+
 func (e Pack) isInstruction() {}
 
-type CasejumpObj struct{
+type CasejumpObj struct {
 	Int int
 	gmC GmCode
 }
 
 type CasejumpSimple []CasejumpObj
+
 func (e CasejumpSimple) isInstruction() {}
 
 type CasejumpConstr []CasejumpObj
+
 func (e CasejumpConstr) isInstruction() {}
 
-
-type Pushconstr struct{
+type Pushconstr struct {
 	I int
 	R int
 }
+
 func (e Pushconstr) isInstruction() {}
 
 type GmCode []Instruction
 
-func GetCode(gState GmState) GmCode{
+func GetCode(gState GmState) GmCode {
 	return gState.gmc
 }
 
 func putCode(gmc GmCode, gState GmState) GmState {
 	gState.gmc = gmc
 	return gState
-} 
-
+}
 
 //GmStack Implementation required for the GmState
 const STACK_SIZE int = 10
+
 type Addr int
 type GmStack struct {
 	Addrs []Addr
@@ -172,7 +206,7 @@ func putStack(gms GmStack, gState GmState) GmState {
 }
 
 func InitStack() GmStack {
-	// return GmStack{[STACK_SIZE]Addr{}, -1} 
+	// return GmStack{[STACK_SIZE]Addr{}, -1}
 	Addrs := []Addr{}
 
 	return GmStack{Addrs}
@@ -202,7 +236,7 @@ func (s *GmStack) PopStack() Addr {
 	return top
 }
 
-func (s *GmStack) AddrsByIndexOf(n int) (Addr) {
+func (s *GmStack) AddrsByIndexOf(n int) Addr {
 	// if n > s.Index {
 	// 	return -1
 	// }
@@ -215,15 +249,14 @@ func (s *GmStack) AddrsByIndexOf(n int) (Addr) {
 	return s.Addrs[n]
 }
 
-func (s *GmStack) StackLookup(addr Addr) bool{
+func (s *GmStack) StackLookup(addr Addr) bool {
 	for _, as := range s.Addrs {
-		if as == addr{
+		if as == addr {
 			return true
 		}
 	}
 	return false
 }
-
 
 func (s *GmStack) TopOfStack() Addr { //Done
 	// if s.Index < 0 {
@@ -235,14 +268,13 @@ func (s *GmStack) TopOfStack() Addr { //Done
 	}
 
 	return s.Addrs[0]
-} 
+}
 
 func (s *GmStack) BottomOfStack() Addr { //Done
-	return s.Addrs[len(s.Addrs) - 1]
-} 
+	return s.Addrs[len(s.Addrs)-1]
+}
 
-
-func (s *GmStack) TailStack() GmStack { 
+func (s *GmStack) TailStack() GmStack {
 	// if s.Index < 0 {
 	// 	return GmStack{}
 	// }
@@ -261,14 +293,14 @@ func (s *GmStack) TailStack() GmStack {
 	return GmStack{s.Addrs[1:]}
 }
 
-func(s *GmStack) TakeNStack(n int) GmStack{ //Done
+func (s *GmStack) TakeNStack(n int) GmStack { //Done
 	// if s.Index < n {
 	// 	return *s
 	// }
- // 	var argaddrs [STACK_SIZE]Addr
- // 	for i := s.Index; i > (s.Index - n - 1); i-- {
+	// 	var argaddrs [STACK_SIZE]Addr
+	// 	for i := s.Index; i > (s.Index - n - 1); i-- {
 	// 		argaddrs[i] = s.Addrs[i]
- // 	}	
+	// 	}
 	// return GmStack{argaddrs, n - 1}
 
 	if len(s.Addrs) < 1 {
@@ -276,18 +308,18 @@ func(s *GmStack) TakeNStack(n int) GmStack{ //Done
 	}
 
 	return GmStack{s.Addrs[0:n]}
- }
+}
 
 // From which side stack should be removed from top or bottom(Here, Assuming top)
-func (s *GmStack) DropStack(n int) {  
+func (s *GmStack) DropStack(n int) {
 	// s.Index = s.Index -n
 	s.Addrs = s.Addrs[n:]
 }
 
 //GmDump Implementation required for the GmState
 type GmDumpItem struct {
-	gmc GmCode
-	gms GmStack
+	gmc      GmCode
+	gms      GmStack
 	gmvstack GmVStack
 }
 
@@ -297,12 +329,10 @@ func getDump(gState GmState) GmDump {
 	return gState.gmd
 }
 
-func putDump(gmd GmDump, gState GmState) GmState{
+func putDump(gmd GmDump, gState GmState) GmState {
 	gState.gmd = gmd
 	return gState
 }
-
-
 
 //--------------------------------------------------------------------------
 //GmHeap Implementation required for the GmState
@@ -310,43 +340,48 @@ func putDump(gmd GmDump, gState GmState) GmState{
 type Node interface {
 	isNode()
 }
-type NNum int //Numbers
+type NNum int          //Numbers
 func (e NNum) isNode() {}
 
-type NChar int //Character
+type NChar int          //Character
 func (e NChar) isNode() {}
 
 type NAp struct {
 	Left Addr
 	Body Addr
 }
+
 func (e NAp) isNode() {}
 
 type NGlobal struct { //Globals(contain no of arg that global expects & the code sequence to be exec when the global has enough argms)
-	Nargs  int
-	GmC GmCode
+	Nargs int
+	GmC   GmCode
 }
+
 func (e NGlobal) isNode() {}
 
 type NInd Addr
+
 func (e NInd) isNode() {}
 
 type NConstr struct {
-	Tag int
+	Tag   int
 	Arity []Addr
 }
+
 func (e NConstr) isNode() {}
 
-type NMarked struct{
+type NMarked struct {
 	node Node
 }
+
 func (e NMarked) isNode() {}
 
 const HEAP_SIZE int = 100
 
 type GmHeap struct {
 	hNode [HEAP_SIZE]Node
-	nargs  int
+	nargs int
 	instn []Instruction
 	index Addr
 }
@@ -357,7 +392,7 @@ func HInitial() GmHeap {
 	return h
 }
 
-func (h *GmHeap) HNull() Addr{
+func (h *GmHeap) HNull() Addr {
 	h.index = 0
 	return h.index
 }
@@ -374,13 +409,13 @@ func (h *GmHeap) HAlloc(node Node) Addr {
 	return h.index
 }
 
-func (h *GmHeap) HLookup(addr Addr) Node{
+func (h *GmHeap) HLookup(addr Addr) Node {
 	if addr < 0 {
-		return nil	
+		return nil
 	}
 	if h.index >= addr {
 		return h.hNode[addr]
-	}	
+	}
 	return nil
 }
 
@@ -406,16 +441,15 @@ func putHeap(gmh GmHeap, gState GmState) GmState {
 //{[        {0 [4 test {} 1 {}]} {1 [0 2 {}]}   ] 0 [] 1}
 
 //Implementation of GmGlobals for the GmState func PopStack()
-type Object struct{
+type Object struct {
 	Name Name
 	Addr Addr
 }
-type  GmGlobals []Object
+type GmGlobals []Object
 
-func GetGlobals(gState GmState) GmGlobals{
+func GetGlobals(gState GmState) GmGlobals {
 	return gState.gmg
 }
-
 
 func GlobalsLookup(gmg GmGlobals, name Name) Addr {
 	for _, obj := range gmg {
@@ -427,34 +461,30 @@ func GlobalsLookup(gmg GmGlobals, name Name) Addr {
 	return Addr(-1)
 }
 
-
-
-
 //Implementation of GmStats for GmState
 type GmStats int
-func getStats(gState GmState) GmStats{
+
+func getStats(gState GmState) GmStats {
 	return gState.gmst
 }
 
-func putStats(gmst GmStats, gState GmState) GmState{
+func putStats(gmst GmStats, gState GmState) GmState {
 	gState.gmst = gmst
 	return gState
 }
 
 func initialDump() GmDump {
-	return GmDump{GmDumpItem{GmCode{},InitStack(), GmVStack{}}}
+	return GmDump{GmDumpItem{GmCode{}, InitStack(), GmVStack{}}}
 }
-
-
 
 //Part of GmState implementation is over.
 //--------------------------------------------------------------------------
 
-var binaryOperators []string = []string{"+", "-", "*", "/", "==", "<", ">", "%"}//,  "!=", "<=", ">="}
+var binaryOperators []string = []string{"+", "-", "*", "/", "==", "<", ">", "%"} //,  "!=", "<=", ">="}
 var unaryOperators []string = []string{"negate"}
 
 func createBinaryOp(name string) ScDefn {
-	return ScDefn{Name(name), []Name{"x", "y"}, CoreExpr(EAp{EAp{(EVar(name)),(EVar("x"))},(EVar("y"))}) }
+	return ScDefn{Name(name), []Name{"x", "y"}, CoreExpr(EAp{EAp{(EVar(name)), (EVar("x"))}, (EVar("y"))})}
 }
 func createUnaryOp(name string) ScDefn {
 	return ScDefn{Name(name), []Name{"x"}, CoreExpr(EAp{EVar(name), EVar("x")})}
@@ -463,7 +493,7 @@ func createUnaryOp(name string) ScDefn {
 func primitiveScs() []ScDefn {
 	scdefn := []ScDefn{}
 
-	for _, name := range binaryOperators{
+	for _, name := range binaryOperators {
 		scdefn = append(scdefn, createBinaryOp(name))
 	}
 
@@ -478,11 +508,12 @@ func selFunName(i int, r int) Name {
 	return Name(str)
 }
 
-type builDyadic struct{
+type builDyadic struct {
 	Name string
 	Inst Instruction
-} 
-var builtinDyadicInt []builDyadic = []builDyadic {
+}
+
+var builtinDyadicInt []builDyadic = []builDyadic{
 	builDyadic{"+", Add{}},
 	builDyadic{"-", Sub{}},
 	builDyadic{"*", Mul{}},
@@ -490,7 +521,7 @@ var builtinDyadicInt []builDyadic = []builDyadic {
 	builDyadic{"%", Mod{}},
 }
 
-var builtinDyadicBool []builDyadic = []builDyadic {
+var builtinDyadicBool []builDyadic = []builDyadic{
 	builDyadic{"==", Eq{}},
 	builDyadic{"!=", Ne{}},
 	builDyadic{"<", Lt{}},
@@ -499,11 +530,11 @@ var builtinDyadicBool []builDyadic = []builDyadic {
 	builDyadic{">=", Ge{}},
 }
 
-
-type builtinDyadic struct{
-	bd []builDyadic 
+type builtinDyadic struct {
+	bd []builDyadic
 }
-var built builtinDyadic= builtinDyadic{ addbuilDyadic() }
+
+var built builtinDyadic = builtinDyadic{addbuilDyadic()}
 
 func addbuilDyadic() []builDyadic { //Done
 	tmpbuiltinDyadic := []builDyadic{}
@@ -512,8 +543,8 @@ func addbuilDyadic() []builDyadic { //Done
 	return tmpbuiltinDyadic
 }
 
-func aHasKey(bUilt builtinDyadic, name string) bool{
-	for _,element := range built.bd {
+func aHasKey(bUilt builtinDyadic, name string) bool {
+	for _, element := range built.bd {
 		if element.Name == name {
 			return true
 		}
@@ -521,8 +552,8 @@ func aHasKey(bUilt builtinDyadic, name string) bool{
 	return false
 }
 
-func aLookup(bUilt builtinDyadic, name string) Instruction{
-	for _,element := range built.bd {
+func aLookup(bUilt builtinDyadic, name string) Instruction {
+	for _, element := range built.bd {
 		if element.Name == name {
 			return element.Inst
 		}
@@ -532,7 +563,7 @@ func aLookup(bUilt builtinDyadic, name string) Instruction{
 
 func preCompiledScs() []GmCompiledSC { //Done
 	acc := []GmCompiledSC{}
-	r := []int{1,2,3,4,5}
+	r := []int{1, 2, 3, 4, 5}
 	for _, i := range r {
 		acc = genSelFuncs(acc, i)
 	}
@@ -548,6 +579,6 @@ func genSelFuncs(acc []GmCompiledSC, r int) []GmCompiledSC { //Done
 }
 
 func genSelFunc(r int, acc []GmCompiledSC, i int) []GmCompiledSC {
-	sc := append(acc, GmCompiledSC{selFunName(r,i), 1, GmCode{Push(0), Eval{}, Select{r,i}, Update(1), Pop(1), Unwind{}}})
+	sc := append(acc, GmCompiledSC{selFunName(r, i), 1, GmCode{Push(0), Eval{}, Select{r, i}, Update(1), Pop(1), Unwind{}}})
 	return sc
 }

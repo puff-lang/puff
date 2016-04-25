@@ -9,8 +9,8 @@ import (
 var debug = flag.Bool("debug", false, "show the errors produced by the main tests")
 
 type parseTest struct {
-	name string
-	input string
+	name   string
+	input  string
 	ok     bool
 	result string // what the user would see in an error message.
 }
@@ -20,20 +20,20 @@ const (
 	hasError = false
 )
 
-var parseTests = [] parseTest{
-    {"empty", "", noError, ""},
-    {"number", "0", noError, "0"},
-	{"number", "-0", noError, ""}, 
-	{"number", "73", noError, "73"},     
-	{"comment", "//This is comment\n ", noError, ""}, 
-	{"LetExpr","let a = 10, b = 5 in a + b", noError, "let a = 10, b = 5 in a + b"},
-	{"FunExprs","fn (x, y, z) -> x + y + z", noError, "fn (x, y, z) -> x + y + z"},
-	{"FunExprs","fn x -> x + 1", noError, "fn (x) -> x + 1"}, 
-	{"If Statement", "if 10 then 0 else 1", noError, "if 10 then 0 else 1"}, 
+var parseTests = []parseTest{
+	{"empty", "", noError, ""},
+	{"number", "0", noError, "0"},
+	{"number", "-0", noError, ""},
+	{"number", "73", noError, "73"},
+	{"comment", "//This is comment\n ", noError, ""},
+	{"LetExpr", "let a = 10, b = 5 in a + b", noError, "let a = 10, b = 5 in a + b"},
+	{"FunExprs", "fn (x, y, z) -> x + y + z", noError, "fn (x, y, z) -> x + y + z"},
+	{"FunExprs", "fn x -> x + 1", noError, "fn (x) -> x + 1"},
+	{"If Statement", "if 10 then 0 else 1", noError, "if 10 then 0 else 1"},
 	{"Let with if", "let a = 2, b = 3 in if a then a + b else a -b", noError, "let a = 2, b = 3 in if a then a + b else a - b"},
- 	{"if without else", "if 10 then 3", noError, "if 10 then 3"},
- 	{"Nested if", "if 10 then if 2 then 3 else if 4 then 5", noError, "if 10 then if 2 then 3 else if 4 then 5"},
- }
+	{"if without else", "if 10 then 3", noError, "if 10 then 3"},
+	{"Nested if", "if 10 then if 2 then 3 else if 4 then 5", noError, "if 10 then if 2 then 3 else if 4 then 5"},
+}
 
 var builtins = map[string]interface{}{
 	"printf": fmt.Sprintf,
@@ -42,7 +42,7 @@ var builtins = map[string]interface{}{
 func testParse(doCopy bool, t *testing.T) {
 	textFormat := "%q"
 	defer func() { textFormat = "%s" }()
-	for _,test := range parseTests {
+	for _, test := range parseTests {
 		tmpl, err := New(test.name).Parse(test.input, "", "", make(map[string]*Tree), builtins)
 		switch {
 		case err == nil && !test.ok:
@@ -71,7 +71,7 @@ func testParse(doCopy bool, t *testing.T) {
 
 }
 
-func TestParse( t *testing.T) {
+func TestParse(t *testing.T) {
 	testParse(false, t)
 	fmt.Println("parsed")
 }

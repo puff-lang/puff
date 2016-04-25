@@ -297,12 +297,12 @@ func (t *Tree) parseStatement() ast.Node {
 	case token.ILLEGAL:
 		return nil
 	case token.COMMENT:
-		return ast.NewCommentNode(tok.Pos(),tok.Val())
+		return ast.NewCommentNode(tok.Pos(), tok.Val())
 	case token.FN:
 		return t.parseFunc(tok.Pos())
-	/*	
-	case token.LET:
-		return t.parseLetExpr(tok.Pos())
+	/*
+		case token.LET:
+			return t.parseLetExpr(tok.Pos())
 	*/
 	default:
 		fmt.Println("returning expression node")
@@ -324,7 +324,7 @@ func (t *Tree) parseLetExpr(pos int) ast.ExprNode {
 	for {
 		defnNode := t.parseDefn()
 		defns = append(defns, defnNode)
-		
+
 		next := t.peekNonSpace()
 		if next.Type() != token.COMMA {
 			break
@@ -344,7 +344,7 @@ func (t *Tree) parseDefn() *ast.DefnNode {
 
 	iden := t.expect(token.IDENT, context)
 	//if found nil then create new Object in scope else it is already in the scope
-	if t.topScope.Lookup(iden.Val()) == nil { 
+	if t.topScope.Lookup(iden.Val()) == nil {
 		obj := ast.NewObj(iden.Val())
 		t.topScope.Insert(obj)
 	}
@@ -359,19 +359,19 @@ func (t *Tree) parseFunc(pos int) ast.ExprNode {
 	name := t.expect(token.IDENT, context)
 
 	/*
-	scope := t.topScope
+		scope := t.topScope
 
-	for {
-		if scope.Lookup(name.Val()) != nil {
-			t.errorf("Function already declared in upper scope", context)
+		for {
+			if scope.Lookup(name.Val()) != nil {
+				t.errorf("Function already declared in upper scope", context)
+			}
+
+			scope = t.topScope.Outer
+
+			if scope == nil {
+				break
+			}
 		}
-
-		scope = t.topScope.Outer
-
-		if scope == nil {
-			break
-		}
-	}
 	*/
 
 	fmt.Println("Parsing function definition")
@@ -389,14 +389,14 @@ func (t *Tree) parseFunc(pos int) ast.ExprNode {
 			for {
 				param := t.expect(token.IDENT, context)
 				//if found nil then create new Object in scope else it is already in the scope
-				if t.topScope.Lookup(param.Val()) == nil { 
+				if t.topScope.Lookup(param.Val()) == nil {
 					obj := ast.NewObj(param.Val())
 					t.topScope.Insert(obj)
 				}
 				fmt.Println(param.Val())
 				params = append(params, param.Val())
-				
-				if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+
+				if next := t.peekNonSpace(); next.Type() != token.COMMA {
 					break
 				}
 				t.nextNonSpace()
@@ -411,7 +411,7 @@ func (t *Tree) parseFunc(pos int) ast.ExprNode {
 			t.topScope.Insert(obj)
 		}
 		fmt.Println(tok.Val())
-		params = append(params, tok.Val())		
+		params = append(params, tok.Val())
 	case token.ARROW:
 		body := t.parseExpr()
 		tmpNode := ast.NewFunction(pos, name.Val(), params, body)
@@ -441,14 +441,14 @@ func (t *Tree) parseFuncExpr(pos int) ast.ExprNode {
 			for {
 				param := t.expect(token.IDENT, context)
 				//if found nil then create new Object in scope else it is already in the scope
-				if t.topScope.Lookup(param.Val()) == nil { 
+				if t.topScope.Lookup(param.Val()) == nil {
 					obj := ast.NewObj(param.Val())
 					t.topScope.Insert(obj)
 				}
 				fmt.Println(param.Val())
 				params = append(params, param.Val())
-				
-				if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+
+				if next := t.peekNonSpace(); next.Type() != token.COMMA {
 					break
 				}
 				t.nextNonSpace()
@@ -464,7 +464,7 @@ func (t *Tree) parseFuncExpr(pos int) ast.ExprNode {
 			t.topScope.Insert(obj)
 		}
 		fmt.Println(tok.Val())
-		params = append(params, tok.Val())		
+		params = append(params, tok.Val())
 	}
 
 	t.expect(token.ARROW, context)
@@ -565,7 +565,7 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 		fallthrough
 	case token.REM:
 		right := t.parseExpr()
-		if right ==  nil {
+		if right == nil {
 			t.errorf("expected expression after binary operator %s in %s", tok.Val(), context)
 		}
 		return ast.NewBinaryExpr(tok.Pos(), left, tok.Type(), right)
@@ -587,8 +587,8 @@ func (t *Tree) parseApplication(left ast.ExprNode) ast.ExprNode {
 				break
 			}
 			args = append(args, arg)
-			fmt.Println("Arg: " + arg.String())	
-			if  next := t.peekNonSpace(); next.Type() != token.COMMA {
+			fmt.Println("Arg: " + arg.String())
+			if next := t.peekNonSpace(); next.Type() != token.COMMA {
 				break
 			}
 			t.nextNonSpace()
@@ -609,8 +609,8 @@ func (t *Tree) parseIfStmt(pos int) *ast.IfNode {
 	condNode := t.parseExpr()
 	t.expect(token.THEN, context)
 	thenNode := t.parseExpr()
-	tok := t.peek() 
-	if tok.Type() == token.ELSE{
+	tok := t.peek()
+	if tok.Type() == token.ELSE {
 		t.expect(token.ELSE, context)
 		return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
 	}
@@ -648,8 +648,9 @@ func (t *Tree) useVar(pos int, name string) ast.ExprNode {
 	t.errorf("undefined variable %q", name)
 	return nil
 }
+
 //Scoping Support
-func  (t *Tree) openScope() {
+func (t *Tree) openScope() {
 	t.topScope = ast.NewScope(t.topScope)
 }
 func (t *Tree) closeScope() {
