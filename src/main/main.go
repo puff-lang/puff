@@ -11,7 +11,32 @@ import (
     "strings"
 )
 
+var helpText = `
+puff - The puff source code manager
+
+Usage:
+
+    puff command [arguments]
+
+If no command is provided then the
+default action is to start the REPL.
+
+The commands are:
+
+    run    Run the puff program
+    build  Compile puff program and create executable
+    help   Show this help text
+`
+
 func replLoop() {
+    fmt.Println(`
+                      __  __
+         _ __  _   _ / _|/ _|
+        | '_ \| | | | |_| |_
+        | |_) | |_| |  _|  _|
+        | .__/ \__,_|_| |_|
+        |_|
+    `)
     reader := bufio.NewReader(os.Stdin)
     // H := jit.addModule(module)
     var globals string
@@ -63,19 +88,33 @@ func compileProgramFromFile(fileName string) core.GmState {
 }
 
 func main() {
-    action := os.Args[1]
+    var action string = ""
+
+    if len(os.Args) > 1 {
+        action = os.Args[1]
+    }
 
     switch action {
+    case "help":
+        fmt.Println(helpText)
     case "run":
+        if len(os.Args) < 3 {
+            fmt.Println("run command requires a filename as argument")
+            os.Exit(1)
+        }
         fileName := os.Args[2]
         core.ShowStates(compileProgramFromFile(fileName))
-    case "repl":
+    case "build":
+        if len(os.Args) < 3 {
+            fmt.Println("build command requires a filename as argument")
+            os.Exit(1)
+        }
+        fileName := os.Args[2]
+        compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
+    default:
         fmt.Println("Starting puff REPL")
         replLoop()
         fmt.Println("\nGoodbye! Thanks for using puff.")
-    default:
-        fileName := os.Args[2]
-        compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
     }
 }
 
