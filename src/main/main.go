@@ -1,12 +1,12 @@
 package main
 
 import (
+	"compile"
+	"core"
 	"fmt"
-    "os"
 	"io/ioutil"
-    "core"
-    "compile"
-    "repl"
+	"os"
+	"repl"
 )
 
 var helpText = `
@@ -27,60 +27,60 @@ The commands are:
 `
 
 func compileProgramFromFile(fileName string) core.GmState {
-    b, err := ioutil.ReadFile(fileName)
+	b, err := ioutil.ReadFile(fileName)
 
-    fmt.Println(string(b))
-    if err != nil {
-        panic(err)
-    }
-    // Generate the LLVM-IR code for Input file
-    /*
-    contentProgram := core.Compile(core.Program{
-            core.ScDefn{"main", []core.Name{}, compile.Translate(string(b))},
-        })
-    */
-    program := compile.Translate(string(b), fileName)
+	fmt.Println(string(b))
+	if err != nil {
+		panic(err)
+	}
+	// Generate the LLVM-IR code for Input file
+	/*
+	   contentProgram := core.Compile(core.Program{
+	           core.ScDefn{"main", []core.Name{}, compile.Translate(string(b))},
+	       })
+	*/
+	program := compile.Translate(string(b), fileName)
 
-    mainFound := false
-    for _, sc := range program {
-        if string(sc.Name) == "main" {
-            mainFound = true
-            break
-        }
-    }
+	mainFound := false
+	for _, sc := range program {
+		if string(sc.Name) == "main" {
+			mainFound = true
+			break
+		}
+	}
 
-    if mainFound == false {
-        panic("No main function found in program. Aborting.")
-    }
+	if mainFound == false {
+		panic("No main function found in program. Aborting.")
+	}
 
-    return core.Compile(program)
+	return core.Compile(program)
 }
 
 func main() {
-    var action string = ""
+	var action string = ""
 
-    if len(os.Args) > 1 {
-        action = os.Args[1]
-    }
+	if len(os.Args) > 1 {
+		action = os.Args[1]
+	}
 
-    switch action {
-    case "help":
-        fmt.Println(helpText)
-    case "run":
-        if len(os.Args) < 3 {
-            fmt.Println("run command requires a filename as argument")
-            os.Exit(1)
-        }
-        fileName := os.Args[2]
-        core.ShowStates(compileProgramFromFile(fileName))
-    case "build":
-        if len(os.Args) < 3 {
-            fmt.Println("build command requires a filename as argument")
-            os.Exit(1)
-        }
-        fileName := os.Args[2]
-        compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
-    default:
-        repl.Start()
-    }
+	switch action {
+	case "help":
+		fmt.Println(helpText)
+	case "run":
+		if len(os.Args) < 3 {
+			fmt.Println("run command requires a filename as argument")
+			os.Exit(1)
+		}
+		fileName := os.Args[2]
+		core.ShowStates(compileProgramFromFile(fileName))
+	case "build":
+		if len(os.Args) < 3 {
+			fmt.Println("build command requires a filename as argument")
+			os.Exit(1)
+		}
+		fileName := os.Args[2]
+		compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
+	default:
+		repl.Start()
+	}
 }
