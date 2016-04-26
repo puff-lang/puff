@@ -22,8 +22,12 @@ To compile a `.puff` file to an executable:
 
 ## Examples
 
+factorial.puff
+
     fn fact(n) => if n == 0 then 1 else n * fact(n - 1)
     fn main() => fact(5)
+
+gcd.puff
 
     fn gcd(a, b) => if b == 0 then a else gcd(b, (a % b))
     fn main() => gcd(49, 35)
