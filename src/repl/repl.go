@@ -1,50 +1,47 @@
-package main
+package repl
 
 import (
 	"bufio"
 	"compile"
 	"fmt"
 	"io"
-	// "llvm.org/llvm/bindings/go/llvm"
 	"os"
 	"core"
+    "strings"
 )
 
 // func MainLoop(module llvm.Module, jit llvm.ExecutionEngine) {
-func MainLoop() {
+func loop() {
+    fmt.Println(`
+                      __  __
+         _ __  _   _ / _|/ _|
+        | '_ \| | | | |_| |_
+        | |_) | |_| |  _|  _|
+        | .__/ \__,_|_| |_|
+        |_|
+    `)
+    reader := bufio.NewReader(os.Stdin)
+    // H := jit.addModule(module)
+    var globals string
+    for {
+        fmt.Print("puff> ")
+        text, err := reader.ReadString('\n')
 
-	reader := bufio.NewReader(os.Stdin)
-	// H := jit.addModule(module)
-	for {
-		fmt.Print("puff> ")
-		text, err := reader.ReadString('\n')
+        if err == io.EOF {
+            break
+        }
 
-		if err == io.EOF {
-			break
-		}
-
-		if text == "4" {
-			fmt.Print("4")
-			continue
-		}
-
-		// llvm.compile.Compile(text, module).Dump()
-		// compiledSc := core.CompileSc(core.ScDefn{"main", []core.Name{}, compile.Translate(text)})
-		// fmt.Println(compiledSc)
-		// core.PrintBody(compiledSc.Body())
-		fmt.Println(core.Compile(core.Program{
-			core.ScDefn{"main", []core.Name{}, compile.Translate(text)},
-		}))
-	}
+        if strings.HasPrefix(text, "fn ") {
+            globals = globals + "\n" + text
+        } else {
+            program := compile.Translate(globals + "\n" + "fn main() => " + text, "repl")
+            core.ShowStates(core.Compile(program))
+        }
+    }
 }
 
-func main() {
-
-	// TheModule := llvm.NewModule("Awesome JIT")
-	// TheJIT, _ := llvm.NewExecutionEngine(TheModule)
-
-	// MainLoop(TheModule, TheJIT)
-	MainLoop()
-
-	fmt.Println("\nGoodbye! Thanks for using puff.")
+func Start() {
+    fmt.Println("Starting puff REPL")
+    loop()
+    fmt.Println("\nGoodbye! Thanks for using puff.")
 }

@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
     "os"
-    "io"
 	"io/ioutil"
-    "bufio"
     "core"
     "compile"
-    "strings"
+    "repl"
 )
 
 var helpText = `
@@ -27,35 +25,6 @@ The commands are:
     build  Compile puff program and create executable
     help   Show this help text
 `
-
-func replLoop() {
-    fmt.Println(`
-                      __  __
-         _ __  _   _ / _|/ _|
-        | '_ \| | | | |_| |_
-        | |_) | |_| |  _|  _|
-        | .__/ \__,_|_| |_|
-        |_|
-    `)
-    reader := bufio.NewReader(os.Stdin)
-    // H := jit.addModule(module)
-    var globals string
-    for {
-        fmt.Print("puff> ")
-        text, err := reader.ReadString('\n')
-
-        if err == io.EOF {
-            break
-        }
-
-        if strings.HasPrefix(text, "fn ") {
-            globals = globals + "\n" + text
-        } else {
-            program := compile.Translate(globals + "\n" + "fn main() => " + text, "repl")
-            core.ShowStates(core.Compile(program))
-        }
-    }
-}
 
 func compileProgramFromFile(fileName string) core.GmState {
     b, err := ioutil.ReadFile(fileName)
@@ -112,12 +81,6 @@ func main() {
         fileName := os.Args[2]
         compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
     default:
-        fmt.Println("Starting puff REPL")
-        replLoop()
-        fmt.Println("\nGoodbye! Thanks for using puff.")
+        repl.Start()
     }
 }
-
-// fn add(x, y) => x + y
-// fn addOne(x) => add(x, 2)
-// fn main() => let addOne = add(1) in addOne(10)
