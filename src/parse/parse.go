@@ -117,7 +117,6 @@ func (t *Tree) peekNonSpace() (tok token.Token) {
 
 // New allocates a new parse tree with the given name.
 func New(name string, funcs ...map[string]interface{}) *Tree {
-	fmt.Println("returning new Tree ", name)
 	return &Tree{
 		Name:  name,
 		funcs: funcs,
@@ -227,7 +226,6 @@ func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tre
 	t.ParseName = t.Name
 	t.startParse(funcs, lex(t.Name, text, leftDelim, rightDelim), treeSet)
 	t.text = text
-	fmt.Println("Parsing src: ", text)
 	t.parse()
 	t.add()
 	t.stopParse()
@@ -272,13 +270,10 @@ func (t *Tree) parse() (next ast.Node) {
 	t.Root = ast.NewList(pTok.Pos())
 
 	for tok := t.peek(); tok.Type() != token.EOF; {
-		fmt.Println("loop iteration with token", token.Tokens[tok.Type()])
 		n := t.parseStatement()
-		fmt.Println("received", n)
 		if n == nil {
 			break
 		}
-		fmt.Println("appending", n)
 		t.Root.Append(n)
 	}
 	return nil
@@ -289,7 +284,6 @@ func (t *Tree) parseStatement() ast.Node {
 	const context = "statement"
 
 	tok := t.nextNonSpace()
-	fmt.Println(tok.Val())
 
 	switch tok.Type() {
 	case token.EOF:
@@ -305,7 +299,6 @@ func (t *Tree) parseStatement() ast.Node {
 			return t.parseLetExpr(tok.Pos())
 	*/
 	default:
-		fmt.Println("returning expression node")
 		t.backup()
 		return t.parseExpr()
 	}
@@ -503,7 +496,6 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		if err != nil {
 			t.error(err)
 		}
-		fmt.Println("returning float node")
 		retNode = number
 	case token.IDENT:
 		ident := t.useVar(tok.Pos(), tok.Val())
@@ -516,7 +508,7 @@ func (t *Tree) parseExpr() ast.ExprNode {
 		retNode = t.parseFuncExpr(tok.Pos())
 	case token.LPAREN:
 		retNode = t.parseExpr()
-		t.expect(token.RPAREN, "expression")
+		t.expect(token.RPAREN, context)
 	}
 
 	if retNode == nil {
@@ -563,6 +555,10 @@ func (t *Tree) parseInfixExpr(left ast.ExprNode) ast.ExprNode {
 		fallthrough
 	case token.GTR:
 		fallthrough
+	case token.LAND:
+		fallthrough
+	case token.LOR:
+		fallthrough
 	case token.REM:
 		right := t.parseExpr()
 		if right == nil {
@@ -587,15 +583,12 @@ func (t *Tree) parseApplication(left ast.ExprNode) ast.ExprNode {
 				break
 			}
 			args = append(args, arg)
-			fmt.Println("Arg: " + arg.String())
 			if next := t.peekNonSpace(); next.Type() != token.COMMA {
 				break
 			}
 			t.nextNonSpace()
 		}
 		t.expect(token.RPAREN, context)
-
-		fmt.Println("No. of args ", len(args))
 
 		return ast.NewApplication(tok.Pos(), left, args)
 	}

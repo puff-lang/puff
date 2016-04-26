@@ -51,7 +51,7 @@ func replLoop() {
         if strings.HasPrefix(text, "fn ") {
             globals = globals + "\n" + text
         } else {
-            program := compile.Translate(globals + "\n" + "fn main() => " + text)
+            program := compile.Translate(globals + "\n" + "fn main() => " + text, "repl")
             core.ShowStates(core.Compile(program))
         }
     }
@@ -70,7 +70,7 @@ func compileProgramFromFile(fileName string) core.GmState {
             core.ScDefn{"main", []core.Name{}, compile.Translate(string(b))},
         })
     */
-    program := compile.Translate(string(b))
+    program := compile.Translate(string(b), fileName)
 
     mainFound := false
     for _, sc := range program {

@@ -59,7 +59,7 @@ func nextReg(reg Reg) Reg {
 	return reg + 1
 }
 
-var templatesPath string = "../compile/llvmTemplates/"
+var templatesPath string = "src/compile/llvmTemplates/"
 
 var codegenPath string = "../compile/CodeGen/"
 
@@ -70,7 +70,7 @@ func check(e error) { //Done
 }
 
 func SaveLLVMIR(ir LLVMIR) { //Done
-	var filePath string = codegenPath + "test.ll"
+	var filePath string = "./out.ll"
 	d1 := []byte(ir)
 	err := ioutil.WriteFile(filePath, d1, 0644)
 	check(err)
@@ -370,7 +370,24 @@ func mkRelationalTmpl(templates [26]string, instr string, ninstr int) LLVMIR { /
 }
 
 func mkFunName(name string) string { //Done
-	return funPrefix + name
+	Names := map[string]string{
+		"+": "add",
+		"-": "sub",
+		"*": "mul",
+		"/": "udiv",
+		"%": "mod",
+		">": "gt",
+		"<": "lt",
+		"==": "eql",
+	}
+
+	value, ok := Names[name]
+
+	if ok {
+		return funPrefix + value
+	} else {
+		return funPrefix + name
+	}
 }
 
 // func translateCase() (LLVMIR, int){

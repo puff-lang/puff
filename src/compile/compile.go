@@ -27,8 +27,8 @@ var builtins = map[string]interface{}{
 // 	return compileNode(node, TheModule)
 // }
 
-func Translate(src string) core.Program {
-	tree, err := parse.New("Program").Parse(src, "", "", make(map[string]*parse.Tree), builtins)
+func Translate(src string, context string) core.Program {
+	tree, err := parse.New(context).Parse(src, "", "", make(map[string]*parse.Tree), builtins)
 
 	if err != nil {
 		fmt.Println(err)
@@ -46,7 +46,7 @@ func run(str string) string { //Almost Done
 	//            core.ScDefn{"main", []core.Name{}, Translate(string(str))},
 	//    	})
 
-	program := Translate(string(str))
+	program := Translate(string(str), "Program")
 
 	mainFound := false
 	for _, sc := range program {
