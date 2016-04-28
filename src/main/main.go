@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"repl"
+	"compile/llvmgen"
 )
 
 var helpText = `
@@ -80,6 +81,8 @@ func main() {
 		}
 		fileName := os.Args[2]
 		compile.SaveLLVMIR(compile.GenLLVMIR(compileProgramFromFile(fileName)))
+	case "fllvm":
+		llvmgen.GenerateLLVMCode().Dump()
 	default:
 		repl.Start()
 	}
