@@ -88,30 +88,28 @@ func createPop(module llvm.Module) llvm.Value {
 	IRBuilder.CreateRet(addr)
 	IRBuilder.ClearInsertionPoint()
 
+	SourceGlobals["pop"] = pop
 	return pop
 }
 
 func createPopn(module llvm.Module) llvm.Value {
 	sp := SourceGlobals["sp"]
 
-	popn := llvm.AddFunction(module, "popn", llvm.FunctionType(
+	bodyBuilder := func (Builder llvm.Builder, f llvm.Value) {
+		vsp := Builder.CreateLoad(sp, "vsp")
+		vsp1 := Builder.CreateSub(vsp, f.Param(0), "vsp1")
+		Builder.CreateStore(vsp1, sp)
+		Builder.CreateRetVoid()
+	}
+
+	return createFunction(
+		module,
+		"popn",
 		llvm.VoidType(),
 		[]llvm.Type{llvm.Int64Type()},
-		false,
-	))
-
-	n := popn.Param(0)
-	n.SetName("n")
-
-	popBody := llvm.AddBasicBlock(popn, "")
-	IRBuilder.SetInsertPointAtEnd(popBody)
-	vsp := IRBuilder.CreateLoad(sp, "vsp")
-	vsp1 := IRBuilder.CreateSub(vsp, n, "vsp1")
-	IRBuilder.CreateStore(vsp1, sp)
-	IRBuilder.CreateRetVoid()
-	IRBuilder.ClearInsertionPoint()
-
-	return popn
+		[]string{"n"},
+		bodyBuilder,
+	)
 }
 
 func createGetTopPtr(module llvm.Module) llvm.Value {

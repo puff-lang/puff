@@ -28,6 +28,36 @@ func createGlobals(module llvm.Module) {
 	SourceGlobals["sp"] = sp
 }
 
+type BodyBuilder func (llvm.Builder, llvm.Value)
+
+func createFunction(
+	module llvm.Module,
+	name string,
+	returnType llvm.Type,
+	paramTypes []llvm.Type,
+	paramNames []string,
+	createBody BodyBuilder) llvm.Value {
+
+	function := llvm.AddFunction(module, name, llvm.FunctionType(
+		returnType,
+		paramTypes,
+		false,
+	))
+
+	for i, paramName := range paramNames {
+		n := function.Param(i)
+		n.SetName(paramName)
+	}
+
+	funcBody := llvm.AddBasicBlock(function, "")
+	IRBuilder.SetInsertPointAtEnd(funcBody)
+	createBody(IRBuilder, function)
+	IRBuilder.ClearInsertionPoint()
+
+	SourceGlobals[name] = function
+	return function
+}
+
 func GenerateLLVMCode() llvm.Module {
 	TheModule := llvm.NewModule("main")
 

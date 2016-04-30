@@ -88,8 +88,40 @@ func createPopV(module llvm.Module) llvm.Value {
 	return popV
 }
 
+func createPushV(module llvm.Module) llvm.Value {
+	vsp := SourceGlobals["vsp"]
+	getItemVPtr := SourceGlobals["getItemVPtr"]
+	incSp := SourceGlobals["incSp"]
+
+	bodyBuilder := func (Builder llvm.Builder, f llvm.Value) {
+		n := Builder.CreateLoad(vsp, "n")
+		ptop := Builder.CreateCall(
+			getItemVPtr,
+			[]llvm.Value{n},
+			"ptop",
+		)
+		Builder.CreateStore(f.Param(0), ptop)
+		Builder.CreateCall(
+			incSp,
+			[]llvm.Value{vsp},
+			"",
+		)
+		Builder.CreateRetVoid()
+	}
+
+	return createFunction(
+		module,
+		"pushV",
+		llvm.VoidType(),
+		[]llvm.Type{llvm.Int64Type()},
+		[]string{"val"},
+		bodyBuilder,
+	)
+}
+
 func createRuntimeVStackOps(module llvm.Module) {
 	createGetItemVPtr(module)
 	createTopVPtr(module)
 	createPopV(module)
+	createPushV(module)
 }
