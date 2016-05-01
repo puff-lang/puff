@@ -371,13 +371,13 @@ func mkRelationalTmpl(templates [26]string, instr string, ninstr int) LLVMIR { /
 
 func mkFunName(name string) string { //Done
 	Names := map[string]string{
-		"+": "add",
-		"-": "sub",
-		"*": "mul",
-		"/": "udiv",
-		"%": "mod",
-		">": "gt",
-		"<": "lt",
+		"+":  "add",
+		"-":  "sub",
+		"*":  "mul",
+		"/":  "udiv",
+		"%":  "mod",
+		">":  "gt",
+		"<":  "lt",
 		"==": "eql",
 	}
 

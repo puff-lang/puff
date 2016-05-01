@@ -63,6 +63,8 @@ const (
 	NodeBinaryExpr
 	NodeIf
 	NodeComment
+	NodeData
+	NodeConstr
 )
 
 // Nodes.
@@ -311,10 +313,7 @@ func (v *VariableNode) Copy() Node {
 	return &VariableNode{NodeType: NodeVariable, Pos: v.Pos, Ident: v.Ident}
 }
 
-
 func (v *VariableNode) exprNode() {}
-
-
 
 // LetNode represents let defns in expr
 type LetNode struct {
@@ -333,7 +332,7 @@ func (v *LetNode) String() string {
 	s := "let "
 	for i, d := range v.Defns {
 		s += d.String()
-		if i >= 0 && i < len(v.Defns) - 1 {
+		if i >= 0 && i < len(v.Defns)-1 {
 			s += ", "
 		}
 	}
@@ -386,7 +385,6 @@ func (v *DefnNode) Copy() Node {
 	return &DefnNode{NodeType: NodeDefn, Pos: v.Pos, Var: v.Var, Expr: v.Expr}
 }
 
-
 type FnExprNode struct {
 	NodeType
 	Pos int
@@ -403,7 +401,7 @@ func (v *FnExprNode) String() string {
 	s := "fn ("
 	for i, d := range v.Params {
 		s += d
-		if i >= 0 && i < len(v.Params) -1 {
+		if i >= 0 && i < len(v.Params)-1 {
 			s += ", "
 		}
 	}
@@ -443,7 +441,7 @@ func (v *FnNode) String() string {
 	s := "fn ("
 	for i, d := range v.Params {
 		s += d
-		if i >= 0 && i < len(v.Params) -1 {
+		if i >= 0 && i < len(v.Params)-1 {
 			s += ", "
 		}
 	}
@@ -470,8 +468,8 @@ type ApNode struct {
 	NodeType
 	Pos int
 	// tr     *Tree
-	Left  ExprNode
-	Args  []ExprNode
+	Left ExprNode
+	Args []ExprNode
 }
 
 func NewApplication(pos int, left ExprNode, args []ExprNode) *ApNode {
@@ -483,7 +481,7 @@ func (v *ApNode) String() string {
 	s := v.Left.String() + "("
 	for i, d := range v.Args {
 		s += d.String()
-		if i >= 0 && i < len(v.Args) - 1 {
+		if i >= 0 && i < len(v.Args)-1 {
 			s += ", "
 		}
 	}
@@ -506,9 +504,9 @@ type BinaryExprNode struct {
 	NodeType
 	Pos int
 	// tr     *Tree
-	Left    ExprNode
-	Right   ExprNode
-	Op      token.TokenType
+	Left  ExprNode
+	Right ExprNode
+	Op    token.TokenType
 }
 
 func NewBinaryExpr(pos int, left ExprNode, tokenType token.TokenType, right ExprNode) *BinaryExprNode {
@@ -529,30 +527,29 @@ func (v *BinaryExprNode) Copy() Node {
 
 func (*BinaryExprNode) exprNode() {}
 
-
-
-type IfNode struct{
+type IfNode struct {
 	NodeType
-	Pos int
+	Pos  int
 	Cond ExprNode
 	Then ExprNode
 	Else ExprNode
 }
+
 func (v *IfNode) exprNode() {}
 
-func NewIfNode(pos int, condStmt ExprNode, thenStmt ExprNode, elseStmt ExprNode) *IfNode{
+func NewIfNode(pos int, condStmt ExprNode, thenStmt ExprNode, elseStmt ExprNode) *IfNode {
 	return &IfNode{NodeType: NodeIf, Cond: condStmt, Then: thenStmt, Else: elseStmt}
 }
 
 func (v *IfNode) String() string {
-	s:= "if " + v.Cond.String() + " then " + v.Then.String()
+	s := "if " + v.Cond.String() + " then " + v.Then.String()
 	if v.Else != nil {
-		s += " else " + v.Else.String()   	
-	}  
-	return s 
+		s += " else " + v.Else.String()
+	}
+	return s
 }
 
-func  (v *IfNode) Position() int  {
+func (v *IfNode) Position() int {
 	return v.Pos
 }
 
@@ -560,25 +557,23 @@ func (v *IfNode) Copy() Node {
 	return &IfNode{NodeType: NodeIf, Cond: v.Cond, Then: v.Then, Else: v.Then}
 }
 
-
-
-
 type CommentNode struct {
 	NodeType
-	Pos int
+	Pos  int
 	Text string
 }
-func NewCommentNode(pos int, text string ) *CommentNode {
-	return &CommentNode{NodeType: NodeComment, Pos: pos, Text: text}	
+
+func NewCommentNode(pos int, text string) *CommentNode {
+	return &CommentNode{NodeType: NodeComment, Pos: pos, Text: text}
 }
 func (c *CommentNode) Copy() Node {
 	return &CommentNode{NodeType: NodeComment, Pos: c.Pos, Text: c.Text}
 }
 func (c *CommentNode) Position() int {
-	 return c.Pos
+	return c.Pos
 }
 func (c *CommentNode) End() int {
-	 return (int(c.Position()) + len(c.Text)) 
+	return (int(c.Position()) + len(c.Text))
 }
 func (c *CommentNode) String() string {
 	// text := c.Text
@@ -587,27 +582,102 @@ func (c *CommentNode) String() string {
 	// } else {
 	// 	text = "Line COMMENT:" +text
 	// }
-	// return text 
+	// return text
 	return ""
+}
+
+type DataNode struct {
+	NodeType
+	Pos     int
+	Name    string
+	Params  []string
+	Constrs []ConstrNode
+}
+
+func NewDataNode(pos int, name string, params []string, constrs []ConstrNode) *DataNode {
+	return &DataNode{NodeType: NodeData, Name: name, Params: params, Constrs: constrs}
+}
+func (d *DataNode) Copy() Node {
+	return &DataNode{NodeType: NodeData, Name: d.Name, Params: d.Params, Constrs: d.Constrs}
+}
+func (d *DataNode) Position() int {
+	return d.Pos
+}
+func (d *DataNode) String() string {
+	constuctors := ""
+	params := ""
+	if len(d.Params) > 0 {
+		params += "<"
+		for i, param := range d.Params {
+			params += param
+			if i >= 0 && i < len(d.Params)-1 {
+				params += ", "
+			}
+		}
+		params += ">"
+	}
+	for _, constr := range d.Constrs {
+		if constuctors != "" {
+			constuctors = constuctors + " | " + constr.String()
+		} else {
+			constuctors = constuctors + constr.String()
+		}
+	}
+	return "data " + d.Name + params + " = " + constuctors
+}
+
+type ConstrNode struct {
+	NodeType
+	Pos    int
+	Name   string
+	Params []string
+}
+
+func NewConstructorNode(pos int, name string, params []string) *ConstrNode {
+	return &ConstrNode{NodeType: NodeConstr, Name: name, Params: params}
+}
+func (d *ConstrNode) Copy() Node {
+	return &DataNode{NodeType: NodeConstr, Name: d.Name, Params: d.Params}
+}
+func (d *ConstrNode) Position() int {
+	return d.Pos
+}
+func (d *ConstrNode) String() string {
+	params := ""
+
+	if len(d.Params) > 0 {
+		params += "("
+		for i, param := range d.Params {
+			params += param
+			if i >= 0 && i < len(d.Params)-1 {
+				params += ", "
+			}
+		}
+		params += ")"
+	}
+	return d.Name + params
 }
 
 // A Scope maintains the set of named language entities declared
 // in the scope and a link to the immediately surrounding (outer)
 // scope.
 type Scope struct {
-	Outer *Scope
+	Outer   *Scope
 	Objects map[string]*Object
 }
+
 // NewScope creates a new scope nested in the outer scope.
 func NewScope(outer *Scope) *Scope {
 	const num = 5 //Initial Scope Capacity
 	return &Scope{Outer: outer, Objects: make(map[string]*Object, num)}
 }
-// Lookup returns the object with the given name if it is found 
+
+// Lookup returns the object with the given name if it is found
 //in scope s, otherwise it returns nil. Outer scopes are ignored
 func (s *Scope) Lookup(name string) *Object {
 	return s.Objects[name]
 }
+
 // Insert attempts to insert a named object obj into the scope s.
 // If the scope already contains an object alt with the same name,
 // Insert leaves the scope unchanged and returns alt. Otherwise
@@ -633,31 +703,13 @@ func (s *Scope) String() string {
 
 // Objects
 // An Object describes a named language entity such as a package,
-type Object struct{
+type Object struct {
 	//Kind token.IDENT
 	Name string
 	//Value *NumberNode
 }
 
-func NewObj( name string ) *Object {
+func NewObj(name string) *Object {
 	// return &Object{Kind: kind, Name: name, Value: numNode}
 	return &Object{Name: name}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

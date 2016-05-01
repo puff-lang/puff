@@ -218,7 +218,7 @@ Loop:
 			switch {
 			case token.Keywords[word] > token.Keyword:
 				l.emit(token.Keywords[word])
-			case word == "True", word == "False":
+			case word == "true", word == "false":
 				l.emit(token.BOOLEAN)
 			default:
 				l.emit(token.IDENT)
@@ -421,7 +421,7 @@ func isAlphaNumeric(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
-var validIdentTerminators = map[string]struct{} {
+var validIdentTerminators = map[string]struct{}{
 	"=": {},
 
 	"+": {},
@@ -430,9 +430,9 @@ var validIdentTerminators = map[string]struct{} {
 	"/": {},
 	"%": {},
 
-	"&": {},
-	"|": {},
-	"^": {},
+	"&":  {},
+	"|":  {},
+	"^":  {},
 	"<<": {},
 	">>": {},
 
@@ -440,9 +440,9 @@ var validIdentTerminators = map[string]struct{} {
 	"||": {},
 
 	"==": {},
-	"<": {},
-	">": {},
-	"!": {},
+	"<":  {},
+	">":  {},
+	"!":  {},
 
 	"(": {},
 	"[": {},
@@ -458,6 +458,7 @@ var validIdentTerminators = map[string]struct{} {
 
 	"=>": {},
 }
+
 // atTerminator reports whether the input is at valid termination character to
 // appear after an identifier.
 func (l *lexer) atTerminator() bool {
@@ -467,7 +468,7 @@ func (l *lexer) atTerminator() bool {
 	}
 
 	_, ok := validIdentTerminators[string(r)]
-	if r == eof || ok  {
+	if r == eof || ok {
 		return true
 	}
 	return false

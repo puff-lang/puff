@@ -36,6 +36,33 @@ var parseTests = []parseTest{
 	{"Let with if", "let a = 2, b = 3 in if a then a + b else a -b", noError, "let a = 2, b = 3 in if a then a + b else a - b"},
 	{"if without else", "if 10 then 3", noError, "if 10 then 3"},
 	{"Nested if", "if 10 then if 2 then 3 else if 4 then 5", noError, "if 10 then if 2 then 3 else if 4 then 5"},
+	{"simple data definition with product type",
+		"data Point = Point(int, int, int)",
+		noError,
+		"data Point = Point(int, int, int)",
+	},
+	{"simple data definition with sum type",
+		"data Color = Red | Green | Blue",
+		noError,
+		"data Color = Red | Green | Blue",
+	},
+	{"parametrized data definition",
+		"data Maybe<int> = Just(int) | Nothing",
+		noError,
+		"data Maybe<int> = Just(int) | Nothing",
+	},
+	{"recursive data definition",
+		"data Tree = Empty | Leaf(int) | Node(Tree, Tree)",
+		noError,
+		"data Tree = Empty | Leaf(int) | Node(Tree, Tree)",
+	},
+	/*
+		{"recursive parameterized data definition",
+			"data List<a> = Nil | Cons(a, List<a>)",
+			noError,
+			"data List<a> = Nil | Cons(a, List<a>)",
+		},
+	*/
 }
 
 var builtins = map[string]interface{}{

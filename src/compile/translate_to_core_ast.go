@@ -116,7 +116,20 @@ func translateFnExpr(node *ast.FnExprNode) core.CoreExpr {
 	return core.ELam{params, translateExpr(node.Body)}
 }
 
-func translateNode(node interface{}) core.ScDefn {
+func translateDataStatement(node *ast.DataNode) []core.ScDefn {
+	constrs := node.Constrs
+	var scs []core.ScDefn
+	for i, constr := range constrs {
+		sc := core.ScDefn{
+			core.Name(constr.Name),
+			constr.Params,
+			core.EConstr{i, len(constr.Params)},
+		}
+		scs = append(scs, sc)
+	}
+}
+
+func translateNode(node interface{}) []core.ScDefn {
 	switch n := node.(type) {
 	/*
 		case *ast.LetNode:
@@ -125,10 +138,13 @@ func translateNode(node interface{}) core.ScDefn {
 			return translateFnExpr(n)
 	*/
 	case *ast.FnNode:
-		return translateFnStatement(n)
+		return []core.ScDefn{translateFnStatement(n)}
+
+	case *ast.DataNode:
+		return translateDataStatement(n)
 
 	case *ast.CommentNode:
-		return core.ScDefn{core.Name("comment"), []core.Name{}, core.ENum{true, false, false, 0, 0, 0, "0"}}
+		return []core.ScDefn{core.ScDefn{core.Name("comment"), []core.Name{}, core.ENum{true, false, false, 0, 0, 0, "0"}}}
 
 	default:
 		return translateFnStatement(n.(*ast.FnNode))

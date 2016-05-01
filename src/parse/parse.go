@@ -294,6 +294,8 @@ func (t *Tree) parseStatement() ast.Node {
 		return ast.NewCommentNode(tok.Pos(), tok.Val())
 	case token.FN:
 		return t.parseFunc(tok.Pos())
+	case token.DATA:
+		return t.parseDataStatement(tok.Pos())
 	/*
 		case token.LET:
 			return t.parseLetExpr(tok.Pos())
@@ -608,6 +610,79 @@ func (t *Tree) parseIfStmt(pos int) *ast.IfNode {
 		return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
 	}
 	return ast.NewIfNode(pos, condNode, thenNode, t.parseExpr())
+}
+
+func (t *Tree) parseDataStatement(pos int) *ast.DataNode {
+	const context = "type constructor definition"
+	nameNode := t.expect(token.IDENT, context)
+
+	var params []string
+	var constrs []ast.ConstrNode
+
+	next := t.peekNonSpace()
+	if next.Type() == token.LSS {
+		t.nextNonSpace()
+		for {
+			param := t.expect(token.IDENT, context)
+			params = append(params, param.Val())
+
+			if next := t.peekNonSpace(); next.Type() != token.COMMA {
+				break
+			}
+			t.nextNonSpace()
+		}
+		t.expect(token.GTR, context)
+	}
+
+	t.expect(token.ASSIGN, context)
+
+	next = t.peekNonSpace()
+	for {
+		constr := t.parseConstructor(params)
+		constrs = append(constrs, *constr)
+
+		if next := t.peekNonSpace(); next.Type() != token.OR {
+			break
+		}
+		t.nextNonSpace()
+	}
+
+	return ast.NewDataNode(pos, nameNode.Val(), params, constrs)
+}
+
+func (t *Tree) parseConstructor(typeParams []string) *ast.ConstrNode {
+	const context = "value constructor definition"
+
+	var params []string
+
+	nameNode := t.expect(token.IDENT, context)
+	next := t.peekNonSpace()
+	if next.Type() == token.LPAREN {
+		t.nextNonSpace()
+		for {
+			param := t.expect(token.IDENT, context)
+			// TODO: Check if param is present in typeParams
+			params = append(params, param.Val())
+
+			if next := t.peekNonSpace(); next.Type() != token.COMMA {
+				break
+			}
+			t.nextNonSpace()
+		}
+		t.expect(token.RPAREN, context)
+	}
+
+	return ast.NewConstructorNode(nameNode.Pos(), nameNode.Val(), params)
+}
+
+func (t *Tree) parseTypeValue() {
+	const context = "type value"
+
+	t.expect(token.IDENT, context)
+
+	next := t.peekNonSpace()
+	if next.Type() == token.LSS {
+	}
 }
 
 // hasFunction reports if a function name exists in the Tree's maps.

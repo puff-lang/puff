@@ -36,7 +36,7 @@ func Translate(src string, context string) core.Program {
 
 	prg := core.Program{}
 	for _, node := range tree.Root.Nodes {
-		prg = append(prg, translateNode(node))
+		prg = append(prg, translateNode(node)...)
 	}
 	return prg
 }
