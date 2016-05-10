@@ -120,13 +120,21 @@ func translateDataStatement(node *ast.DataNode) []core.ScDefn {
 	constrs := node.Constrs
 	var scs []core.ScDefn
 	for i, constr := range constrs {
+		var params []core.Name
+
+		for _, param := range constr.Params {
+			params = append(params, core.Name(param))
+		}
+
 		sc := core.ScDefn{
 			core.Name(constr.Name),
-			constr.Params,
+			params,
 			core.EConstr{i, len(constr.Params)},
 		}
 		scs = append(scs, sc)
 	}
+
+	return scs
 }
 
 func translateNode(node interface{}) []core.ScDefn {
@@ -147,7 +155,7 @@ func translateNode(node interface{}) []core.ScDefn {
 		return []core.ScDefn{core.ScDefn{core.Name("comment"), []core.Name{}, core.ENum{true, false, false, 0, 0, 0, "0"}}}
 
 	default:
-		return translateFnStatement(n.(*ast.FnNode))
+		return []core.ScDefn{translateFnStatement(n.(*ast.FnNode))}
 		// return translateExpr(n)
 	}
 }

@@ -152,8 +152,8 @@ type Get struct{}
 func (e Get) isInstruction() {}
 
 type Pack struct {
-	tag   int
-	arity int
+	Tag   int
+	Arity int
 }
 
 func (e Pack) isInstruction() {}
@@ -172,8 +172,8 @@ type CasejumpConstr []CasejumpObj
 func (e CasejumpConstr) isInstruction() {}
 
 type Pushconstr struct {
-	I int
-	R int
+	Tag   int
+	Arity int
 }
 
 func (e Pushconstr) isInstruction() {}

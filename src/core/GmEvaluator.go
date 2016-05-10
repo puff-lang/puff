@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
-	// "reflect"
 )
 
 func showNode(node Node, addr Addr, state GmState) string {
@@ -159,11 +159,19 @@ func dispatch(instr Instruction, gmState GmState) GmState { //Done
 		fmt.Println("CasejumpConstr")
 		return casejump(instr.(CasejumpConstr), gmState)
 
-	default:
-		fmt.Println("Default")
-		// fmt.Println(instr.(type))
-		return mod(gmState)
+	case Pushconstr:
+		fmt.Println("Pushconstr")
+		n := instr.(Pushconstr)
+		return pushconstr(n.Tag, n.Arity, gmState)
 
+	case Pack:
+		fmt.Println("Pack")
+		n := instr.(Pack)
+		return pack(n.Tag, n.Arity, gmState)
+
+	default:
+		fmt.Println("Dispatch for", reflect.TypeOf(instr), "instruction on implemented.")
+		panic("Exiting")
 	}
 }
 
@@ -217,7 +225,7 @@ func findMatchingBranch(objs []CasejumpObj, node Node) GmCode {
 		fmt.Println("findMatchingBranch NGlobal", obj.Int)
 		switch tmp.(type) {
 		case Pack:
-			if tmp.(Pack).tag == obj.Int {
+			if tmp.(Pack).Tag == obj.Int {
 				return obj.gmC
 			} else {
 				return findMatchingBranch(objs[1:], node)
@@ -513,6 +521,21 @@ func pushBasic(n int, gmState GmState) GmState { //Done
 	return gmState
 }
 
+func pushconstr(tag int, arity int, gmState GmState) GmState {
+	globals := gmState.gmg
+	name := "Pack{" + strconv.Itoa(tag) + "," + strconv.Itoa(arity) + "}"
+	addr := GlobalsLookup(globals, Name(name))
+	if addr != Addr(-1) {
+		gmState.gms.PushStack(addr)
+	} else {
+		naddr := gmState.gmh.HAlloc(NGlobal{arity, GmCode{Pack{tag, arity}, Update(0), Unwind{}}})
+		gmState.gms.PushStack(naddr)
+		gmState.gmg = append([]Object{Object{Name(name), naddr}}, gmState.gmg...)
+	}
+
+	return gmState
+}
+
 func add(gmState GmState) GmState { //Done
 	return arithmetic2("+", gmState)
 }
@@ -557,6 +580,7 @@ func relational2(op string, gmState GmState) GmState {
 
 func binOp(op string, gmState GmState) GmState { //DOne
 	vstack := gmState.gmvstack
+	fmt.Println("Inside binOp op:", op)
 	fmt.Println("Inside binOp vstack: ", vstack)
 	fmt.Println(len(vstack), "=>", 2)
 	if len(vstack) > 1 {

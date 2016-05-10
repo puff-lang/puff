@@ -272,6 +272,7 @@ func (t *Tree) parse() (next ast.Node) {
 	for tok := t.peek(); tok.Type() != token.EOF; {
 		n := t.parseStatement()
 		if n == nil {
+			fmt.Println("Parse ends")
 			break
 		}
 		t.Root.Append(n)
@@ -640,6 +641,8 @@ func (t *Tree) parseDataStatement(pos int) *ast.DataNode {
 	for {
 		constr := t.parseConstructor(params)
 		constrs = append(constrs, *constr)
+		obj := ast.NewObj(constr.Name)
+		t.topScope.Insert(obj)
 
 		if next := t.peekNonSpace(); next.Type() != token.OR {
 			break
