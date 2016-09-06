@@ -42,11 +42,11 @@ func createNextPtr(module llvm.Module) llvm.Value {
 	)
 }
 
-func createGetPtrFuncs(module llvm.Module, name string, num int, castTo llvm.Type) llvm.Value {
+func createGetPtrFuncs(module llvm.Module, name string, num uint64, castTo llvm.Type, nextPtr llvm.Value) llvm.Value {
 
 	bodyBuilder := func (Builder llvm.Builder, f llvm.Value) {
 		p8 := Builder.CreateCall(
-			module.NamedGlobal("nextPtr"),
+			nextPtr,
 			[]llvm.Value{
 				llvm.ConstInt(llvm.Int64Type(), num, false),
 				f.Param(0),
@@ -71,7 +71,15 @@ func createGetPtrFuncs(module llvm.Module, name string, num int, castTo llvm.Typ
 
 func createUtilityFunctions(module llvm.Module) {
 	createGetTag(module)
-	createNextPtr(module)
+	nextPtr := createNextPtr(module)
 
-	createGetPtrFuncs(module, "Num", 1, llvm.PointerType(llvm.Int64Type(), 0))
+	createGetPtrFuncs(module, "Num", 1, llvm.PointerType(llvm.Int64Type(), 0), nextPtr)
+	createGetPtrFuncs(module, "Fun", 1, llvm.PointerType(llvm.PointerType(llvm.Int64Type(), 0), 0), nextPtr)
+	createGetPtrFuncs(module, "Arg", 2, llvm.PointerType(llvm.PointerType(llvm.Int64Type(), 0), 0), nextPtr)
+	createGetPtrFuncs(module, "Arity", 1, llvm.PointerType(llvm.Int64Type(), 0), nextPtr)
+	createGetPtrFuncs(module, "Code", 2, llvm.PointerType(llvm.PointerType(llvm.FunctionType(llvm.VoidType(), []llvm.Type{}, false), 0), 0), nextPtr)
+	createGetPtrFuncs(module, "Addr", 1, llvm.PointerType(llvm.PointerType(llvm.Int64Type(), 0), 0), nextPtr)
+	createGetPtrFuncs(module, "ConstrTag", 1, llvm.PointerType(llvm.Int64Type(), 0), nextPtr)
+	createGetPtrFuncs(module, "ConstrArity", 2, llvm.PointerType(llvm.Int64Type(), 0), nextPtr)
+	createGetPtrFuncs(module, "ConstrArgs", 3, llvm.PointerType(llvm.PointerType(llvm.Int64Type(), 0), 0), nextPtr)
 }
