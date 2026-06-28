@@ -1,0 +1,33 @@
+name: "🧪 CI — Test"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+    name: Test
+    steps:
+      - name: ➕ Actions - Checkout
+        uses: actions/checkout@v7
+
+      - name: ➕ Actions - Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+
+      - name: 📦 Downloading Dependencies
+        working-directory: src
+        run: go mod download
+
+      - name: 🧪 Go Test
+        working-directory: src
+        run: go test ./...

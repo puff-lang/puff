@@ -1,0 +1,49 @@
+name: "🐛 Bug Report"
+description: Report something broken in Puff.
+title: "bug: "
+labels:
+  - kind/bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal steps or code needed to reproduce the issue.
+      render: puff
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the full error output.
+      render: text
+
+  - type: input
+    id: puff-version
+    attributes:
+      label: Puff version
+      placeholder: "puff 0.0.0-dev"
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft target version
+      placeholder: "1.21.6"

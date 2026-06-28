@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 Discord Community
+    url: https://discord.gg/UzhKQFRAj2
+    about: Ask questions, get help, and discuss Puff with the community.
+
+  - name: 📜 RFCs and Language Design
+    url: https://github.com/puff-lang/rfcs
+    about: Propose or discuss larger language and ecosystem changes.
