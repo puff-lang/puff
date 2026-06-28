@@ -1,0 +1,43 @@
+name: "✨ Feature Request"
+description: Suggest a new Puff feature.
+title: "feat: "
+labels:
+  - kind/feature
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem would this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the feature or behavior you want.
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: Show what the feature could look like.
+      render: puff
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - cli
+        - syntax
+        - parser
+        - resolver
+        - codegen
+        - datapack output
+        - dependencies
+        - documentation
+        - tooling
