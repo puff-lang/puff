@@ -37,3 +37,7 @@ dist/
 
 # coverage
 coverage/
+
+# Local planning/reference drafts
+.specs/
+docs/
