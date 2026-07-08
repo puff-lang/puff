@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-var packIDPattern = regexp.MustCompile(`^[a-z][a-z0-9_]*`)
+var packIDPattern = regexp.MustCompile(`^[a-z0-9._-]+$`)
 
 func ValidateConfig(config *Config) error {
 	if config == nil {
@@ -18,7 +18,7 @@ func ValidateConfig(config *Config) error {
 	}
 
 	if !packIDPattern.MatchString(config.Pack.ID) {
-		return fmt.Errorf("pack.id must be snake_case, got %q", config.Pack.ID)
+		return fmt.Errorf("pack.id must be a valid Minecraft namespace, got %q", config.Pack.ID)
 	}
 
 	if config.Minecraft.Versions == "" {
