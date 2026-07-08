@@ -111,19 +111,51 @@ func TestLoadConfigRequiresPackID(t *testing.T) {
 }
 
 func TestLoadConfigRejectsInvalidPackID(t *testing.T) {
+	invalidIDs := []string{
+		"Example-Pack",
+		"my pack",
+		"my/pack",
+		"",
+	}
+
+	for _, id := range invalidIDs {
+		t.Run(id, func(t *testing.T) {
+			dir := t.TempDir()
+
+			path := writeConfig(t, dir, `
+			[pack]
+			id = "`+id+`"
+
+			[minecraft]
+			versions = ">=1.21 <=1.21.6"
+			`)
+
+			_, err := LoadConfig(path)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestLoadConfigAllowsMinecraftNamespacePackID(t *testing.T) {
 	dir := t.TempDir()
 
 	path := writeConfig(t, dir, `
 	[pack]
-	id = "Example-Pack"
+	id = "my-pack.example_1"
 
 	[minecraft]
 	versions = ">=1.21 <=1.21.6"
 	`)
 
-	_, err := LoadConfig(path)
-	if err == nil {
-		t.Fatal("expected error, got nil")
+	config, err := LoadConfig(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if config.Pack.ID != "my-pack.example_1" {
+		t.Fatalf("expected pack id %q, got %q", "my-pack.example_1", config.Pack.ID)
 	}
 }
 
