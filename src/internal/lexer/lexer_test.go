@@ -285,14 +285,14 @@ func TestLexTracksTokenPositions(t *testing.T) {
 }
 
 func TestLexGoldenFunction(t *testing.T) {
-	result := Lex(testFile("fun add(a: int, b: int) -> int\n   return a + b\nend\n"))
+	result := Lex(testFile("fun sum(a: int, b: int) -> int\n   return a + b\nend\n"))
 
 	if len(result.Diagnostics) != 0 {
 		t.Fatalf("expected no diagnostics, got %v", result.Diagnostics)
 	}
 
 	assertTokenTypes(t, result.Tokens, []token.Type{
-		token.Fun, token.Add, token.LParen,
+		token.Fun, token.Ident, token.LParen,
 		token.Ident, token.Colon, token.Ident, token.Comma,
 		token.Ident, token.Colon, token.Ident, token.RParen,
 		token.Arrow, token.Ident, token.Newline,
@@ -565,6 +565,9 @@ func TestLexReportsMetadataErrors(t *testing.T) {
 			result := Lex(testFile(test.text))
 
 			assertDiagnosticCodes(t, result.Diagnostics, []diagnostic.Code{test.code})
+			if test.code == diagnostic.CodeInvalidMetadataValue && strings.HasPrefix(test.text, "# tags:") && len(result.Metadata.Tags) != 0 {
+				t.Fatalf("expected invalid tags not to be stored, got %v", result.Metadata.Tags)
+			}
 		})
 	}
 }
