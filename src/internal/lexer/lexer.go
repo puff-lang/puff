@@ -239,13 +239,14 @@ func (lexer *lexer) scanMetadata(comment string) {
 		return
 	}
 
-	lexer.metadata.Tags = parseTags(value)
-	for _, tag := range lexer.metadata.Tags {
+	tags := parseTags(value)
+	for _, tag := range tags {
 		if !tagPattern.MatchString(tag) {
 			lexer.report(diagnostic.CodeInvalidMetadataValue, "Invalid metadata value for tags.", "Use valid Minecraft resource locations separated by commas.", lexer.start, lexer.start+len(comment))
 			return
 		}
 	}
+	lexer.metadata.Tags = tags
 }
 
 func (lexer *lexer) emitNewline() {
@@ -261,6 +262,9 @@ func (lexer *lexer) emitNewline() {
 
 func (lexer *lexer) scanNumber() {
 	lexer.consumeDigits()
+	if lexer.rejectInvalidNumberSuffix() {
+		return
+	}
 
 	if lexer.peek() == '.' {
 		if lexer.peekNext() == '.' {
@@ -276,6 +280,9 @@ func (lexer *lexer) scanNumber() {
 		}
 
 		lexer.consumeDigits()
+		if lexer.rejectInvalidNumberSuffix() {
+			return
+		}
 		value, _ := strconv.ParseFloat(lexer.input[lexer.start:lexer.current], 64)
 		lexer.addToken(token.Float, lexer.input[lexer.start:lexer.current], value, lexer.current)
 		return
@@ -283,6 +290,18 @@ func (lexer *lexer) scanNumber() {
 
 	value, _ := strconv.Atoi(lexer.input[lexer.start:lexer.current])
 	lexer.addToken(token.Int, lexer.input[lexer.start:lexer.current], value, lexer.current)
+}
+
+func (lexer *lexer) rejectInvalidNumberSuffix() bool {
+	if !isLetter(rune(lexer.peek())) && lexer.peek() != '_' {
+		return false
+	}
+
+	for isLetter(rune(lexer.peek())) || isDigit(lexer.peek()) || lexer.peek() == '_' {
+		lexer.current++
+	}
+	lexer.report(diagnostic.CodeInvalidNumber, "Invalid number literal.", "Use an integer like 100 or a float like 100.0.", lexer.start, lexer.current)
+	return true
 }
 
 func (lexer *lexer) scanIdentifier(firstSize int) {
@@ -401,7 +420,7 @@ func parseTags(value string) []string {
 	seen := map[string]bool{}
 	for _, part := range parts {
 		tag := strings.TrimSpace(part)
-		if tag == "" || seen[tag] {
+		if seen[tag] {
 			continue
 		}
 
