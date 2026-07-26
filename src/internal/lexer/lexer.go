@@ -293,6 +293,11 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 			textStart = lexer.current
 		case '}':
 			if !allowInterpolation {
+				if lexer.peekNext() == '}' {
+					lexer.current += 2
+					value.WriteByte('}')
+					continue
+				}
 				lexer.current++
 				value.WriteByte(char)
 				continue
@@ -343,6 +348,17 @@ func (lexer *lexer) scanInterpolation(interpolationStart int) bool {
 	}()
 
 	for !lexer.isAtEnd() {
+		if lexer.peek() == '\n' || lexer.peek() == '\r' {
+			lexer.report(
+				diagnostic.CodeUnterminatedInterpolation,
+				"Unterminated string interpolation.",
+				"Close the interpolation with }.",
+				interpolationStart,
+				lexer.current,
+			)
+			return false
+		}
+
 		if lexer.peek() == '}' && lexer.braceDepth == baseBraceDepth+1 {
 			if strings.TrimSpace(lexer.input[interpolationStart+1:lexer.current]) == "" {
 				lexer.report(
