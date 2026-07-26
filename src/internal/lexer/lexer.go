@@ -219,9 +219,7 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 		switch char {
 		case '\n', '\r':
 			flushText(lexer.current)
-			if allowInterpolation {
-				lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
-			}
+			lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
 			return false
 		case '\\':
 			escapeStart := lexer.current
@@ -287,7 +285,7 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 			lexer.start = lexer.current
 			lexer.current++
 			lexer.addToken(token.InterpStart, "{", nil, lexer.current)
-			if !lexer.scanInterpolation(interpolationStart) {
+			if !lexer.scanInterpolation(quote, interpolationStart) {
 				return false
 			}
 			textStart = lexer.current
@@ -334,13 +332,11 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 	}
 
 	flushText(lexer.current)
-	if allowInterpolation {
-		lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
-	}
+	lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
 	return false
 }
 
-func (lexer *lexer) scanInterpolation(interpolationStart int) bool {
+func (lexer *lexer) scanInterpolation(outerQuote byte, interpolationStart int) bool {
 	baseBraceDepth := lexer.braceDepth
 	lexer.braceDepth++
 	defer func() {
@@ -378,6 +374,16 @@ func (lexer *lexer) scanInterpolation(interpolationStart int) bool {
 
 		if lexer.peek() == '"' || lexer.peek() == '\'' {
 			quote := lexer.peek()
+			if quote == outerQuote && (lexer.current+1 == len(lexer.input) || lexer.peekNext() == '\n' || lexer.peekNext() == '\r') {
+				lexer.report(
+					diagnostic.CodeUnterminatedInterpolation,
+					"Unterminated string interpolation.",
+					"Close the interpolation with }.",
+					interpolationStart,
+					lexer.current,
+				)
+				return true
+			}
 			lexer.start = lexer.current
 			lexer.current++
 			if !lexer.scanString(quote, false) {
