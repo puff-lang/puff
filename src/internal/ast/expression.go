@@ -155,3 +155,11 @@ type PatternExpr struct {
 }
 
 func (*PatternExpr) expressionNode() {}
+
+type AccessExpr struct {
+	NodeBase
+	Tokens []token.Token
+}
+
+func (*AccessExpr) expressionNode() {}
+func (*AccessExpr) assignableNode() {}
