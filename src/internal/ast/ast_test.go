@@ -8,6 +8,20 @@ import (
 	"github.com/puff-lang/puff/internal/token"
 )
 
+var _ Assignable = (*VariableExpr)(nil)
+
+func TestOnlyAssignableExpressionsImplementAssignable(t *testing.T) {
+	var expression Expression = &IntLiteral{Value: 10}
+	if _, ok := expression.(Assignable); ok {
+		t.Fatal("integer literals must not be assignable")
+	}
+
+	expression = &VariableExpr{Name: Identifier{Name: "coins"}}
+	if _, ok := expression.(Assignable); !ok {
+		t.Fatal("variables must be assignable")
+	}
+}
+
 func TestFileCarriesMetadataRequiresAndTopLevelDeclarations(t *testing.T) {
 	path := &StringExpr{Parts: []StringPart{&StringText{Value: "abc/shop"}}}
 	alias := &Identifier{Name: "shop"}
