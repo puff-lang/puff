@@ -22,6 +22,11 @@ type Expression interface {
 	expressionNode()
 }
 
+type Assignable interface {
+	Expression
+	assignableNode()
+}
+
 type StringPart interface {
 	Node
 	stringPartNode()

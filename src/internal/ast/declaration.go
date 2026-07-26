@@ -19,8 +19,6 @@ type RequireDecl struct {
 	Alias *Identifier
 }
 
-func (*RequireDecl) declarationNode() {}
-
 type FunctionDecl struct {
 	NodeBase
 	Public     bool

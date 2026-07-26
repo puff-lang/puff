@@ -13,7 +13,7 @@ func (*AssignmentStmt) statementNode() {}
 type AddStmt struct {
 	NodeBase
 	Value  Expression
-	Target Expression
+	Target Assignable
 }
 
 func (*AddStmt) statementNode() {}

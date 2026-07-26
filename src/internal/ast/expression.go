@@ -127,6 +127,7 @@ type VariableExpr struct {
 }
 
 func (*VariableExpr) expressionNode() {}
+func (*VariableExpr) assignableNode() {}
 
 type FieldAccess struct {
 	NodeBase
