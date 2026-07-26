@@ -11,6 +11,11 @@ import (
 var _ Assignable = (*VariableExpr)(nil)
 
 func TestOnlyAssignableExpressionsImplementAssignable(t *testing.T) {
+	targetField, ok := reflect.TypeOf(AddStmt{}).FieldByName("Target")
+	if !ok || targetField.Type != reflect.TypeOf((*Assignable)(nil)).Elem() {
+		t.Fatalf("AddStmt.Target must use Assignable, got %v", targetField.Type)
+	}
+
 	var expression Expression = &IntLiteral{Value: 10}
 	if _, ok := expression.(Assignable); ok {
 		t.Fatal("integer literals must not be assignable")
@@ -19,6 +24,36 @@ func TestOnlyAssignableExpressionsImplementAssignable(t *testing.T) {
 	expression = &VariableExpr{Name: Identifier{Name: "coins"}}
 	if _, ok := expression.(Assignable); !ok {
 		t.Fatal("variables must be assignable")
+	}
+
+	expression = &AccessExpr{Tokens: []token.Token{{Type: token.Ident, Lexeme: "coins"}}}
+	if _, ok := expression.(Assignable); !ok {
+		t.Fatal("access expressions must be assignable")
+	}
+}
+
+func TestLeafExpressionsRepresentNilAndPatterns(t *testing.T) {
+	var nilExpression Expression = &NilLiteral{}
+	if _, ok := nilExpression.(*NilLiteral); !ok {
+		t.Fatalf("expected nil literal, got %T", nilExpression)
+	}
+
+	pattern := &PatternExpr{Tokens: []token.Token{
+		{Type: token.Ident, Lexeme: "coins"},
+		{Type: token.Ident, Lexeme: "of"},
+		{Type: token.Ident, Lexeme: "player"},
+	}}
+	var patternExpression Expression = pattern
+	got, ok := patternExpression.(*PatternExpr)
+	if !ok || len(got.Tokens) != 3 || got.Tokens[0].Lexeme != "coins" || got.Tokens[2].Lexeme != "player" {
+		t.Fatalf("unexpected pattern expression: %#v", patternExpression)
+	}
+}
+
+func TestRequireIsNotATopLevelDeclaration(t *testing.T) {
+	var node Node = &RequireDecl{}
+	if _, ok := node.(Declaration); ok {
+		t.Fatal("require declarations must remain separate from top-level declarations")
 	}
 }
 
