@@ -219,7 +219,9 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 		switch char {
 		case '\n', '\r':
 			flushText(lexer.current)
-			lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+			if allowInterpolation {
+				lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+			}
 			return false
 		case '\\':
 			escapeStart := lexer.current
@@ -250,6 +252,24 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 			}
 		case '{':
 			if !allowInterpolation {
+				if lexer.peekNext() == '{' {
+					lexer.current += 2
+					value.WriteByte('{')
+					continue
+				}
+				if lexer.peekNext() == '}' {
+					lexer.current += 2
+					value.WriteString("{}")
+					continue
+				}
+
+				lexer.report(
+					diagnostic.CodeInvalidCharacter,
+					"Nested string interpolation is not allowed.",
+					"Move the expression to the outer string interpolation.",
+					lexer.current,
+					lexer.current+1,
+				)
 				lexer.current++
 				value.WriteByte(char)
 				continue
@@ -267,7 +287,7 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 			lexer.start = lexer.current
 			lexer.current++
 			lexer.addToken(token.InterpStart, "{", nil, lexer.current)
-			if !lexer.scanInterpolation(quote, interpolationStart) {
+			if !lexer.scanInterpolation(interpolationStart) {
 				return false
 			}
 			textStart = lexer.current
@@ -309,18 +329,19 @@ func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
 	}
 
 	flushText(lexer.current)
-	lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+	if allowInterpolation {
+		lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+	}
 	return false
 }
 
-func (lexer *lexer) scanInterpolation(outerQuote byte, interpolationStart int) bool {
+func (lexer *lexer) scanInterpolation(interpolationStart int) bool {
 	baseBraceDepth := lexer.braceDepth
 	lexer.braceDepth++
 	defer func() {
 		lexer.braceDepth = baseBraceDepth
 	}()
 
-	tokenStart := len(lexer.tokens)
 	for !lexer.isAtEnd() {
 		if lexer.peek() == '}' && lexer.braceDepth == baseBraceDepth+1 {
 			if strings.TrimSpace(lexer.input[interpolationStart+1:lexer.current]) == "" {
@@ -341,17 +362,6 @@ func (lexer *lexer) scanInterpolation(outerQuote byte, interpolationStart int) b
 
 		if lexer.peek() == '"' || lexer.peek() == '\'' {
 			quote := lexer.peek()
-			if quote == outerQuote && (!canStartInnerString(lexer.tokens[tokenStart:]) || !lexer.hasClosingQuote(quote)) {
-				lexer.report(
-					diagnostic.CodeUnterminatedInterpolation,
-					"Unterminated string interpolation.",
-					"Close the interpolation with }.",
-					interpolationStart,
-					lexer.current,
-				)
-				return true
-			}
-
 			lexer.start = lexer.current
 			lexer.current++
 			if !lexer.scanString(quote, false) {
@@ -379,52 +389,6 @@ func (lexer *lexer) scanInterpolation(outerQuote byte, interpolationStart int) b
 		lexer.current,
 	)
 	return false
-}
-
-func (lexer *lexer) hasClosingQuote(quote byte) bool {
-	for offset := lexer.current + 1; offset < len(lexer.input); offset++ {
-		switch lexer.input[offset] {
-		case '\\':
-			offset++
-		case '\n', '\r':
-			return false
-		case quote:
-			return true
-		}
-	}
-	return false
-}
-
-func canStartInnerString(tokens []token.Token) bool {
-	if len(tokens) == 0 {
-		return true
-	}
-
-	switch tokens[len(tokens)-1].Type {
-	case token.LParen,
-		token.LBracket,
-		token.LBrace,
-		token.Comma,
-		token.Colon,
-		token.Equal,
-		token.EqualEqual,
-		token.BangEqual,
-		token.Greater,
-		token.GreaterEq,
-		token.Less,
-		token.LessEq,
-		token.Plus,
-		token.Minus,
-		token.Star,
-		token.Slash,
-		token.Percent,
-		token.And,
-		token.Or,
-		token.Not:
-		return true
-	default:
-		return false
-	}
 }
 
 func (lexer *lexer) scanComment() {
