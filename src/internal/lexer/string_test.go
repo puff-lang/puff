@@ -150,7 +150,7 @@ func TestLexStringErrors(t *testing.T) {
 }
 
 func TestLexStringsInsideInterpolation(t *testing.T) {
-	result := Lex(testFile(`"Result: {format("Value } {} here", $coins)}"`))
+	result := Lex(testFile(`"Result: {format("Value } }} {} here", $coins)}"`))
 
 	if len(result.Diagnostics) != 0 {
 		t.Fatalf("expected no diagnostics, got %v", result.Diagnostics)
@@ -173,7 +173,7 @@ func TestLexStringsInsideInterpolation(t *testing.T) {
 		token.Newline,
 		token.EOF,
 	})
-	if result.Tokens[6].Value != "Value } {} here" {
+	if result.Tokens[6].Value != "Value } } {} here" {
 		t.Fatalf("expected inner string text, got %q", result.Tokens[6].Value)
 	}
 }
@@ -296,6 +296,26 @@ func TestLexRestoresStateAfterMalformedSameQuoteInterpolation(t *testing.T) {
 	if !foundNextLine {
 		t.Fatalf("expected lexer to resume on the next line, got %v", tokenTypes(result.Tokens))
 	}
+}
+
+func TestLexRecoversAfterUnterminatedInterpolation(t *testing.T) {
+	result := Lex(testFile("\"bad: {$value\n$ok = 1\n"))
+
+	assertDiagnosticCodes(t, result.Diagnostics, []diagnostic.Code{diagnostic.CodeUnterminatedInterpolation})
+	assertTokenTypes(t, result.Tokens, []token.Type{
+		token.StringStart,
+		token.StringText,
+		token.InterpStart,
+		token.Dollar,
+		token.Ident,
+		token.Newline,
+		token.Dollar,
+		token.Ident,
+		token.Equal,
+		token.Int,
+		token.Newline,
+		token.EOF,
+	})
 }
 
 func TestLexMultipleInterpolationsRestoreBraceDepth(t *testing.T) {
