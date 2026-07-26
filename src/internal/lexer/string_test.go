@@ -298,6 +298,15 @@ func TestLexRestoresStateAfterMalformedSameQuoteInterpolation(t *testing.T) {
 	}
 }
 
+func TestLexReportsUnterminatedInnerStringAndInterpolation(t *testing.T) {
+	result := Lex(testFile("\"x: {format('bad\n"))
+
+	assertDiagnosticCodes(t, result.Diagnostics, []diagnostic.Code{
+		diagnostic.CodeUnterminatedString,
+		diagnostic.CodeUnterminatedInterpolation,
+	})
+}
+
 func TestLexRecoversAfterUnterminatedInterpolation(t *testing.T) {
 	result := Lex(testFile("\"bad: {$value\n$ok = 1\n"))
 
