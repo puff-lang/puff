@@ -178,7 +178,7 @@ func (lexer *lexer) scanToken() {
 	case '\uFEFF':
 		lexer.reportInvalidCharacter()
 	case '"', '\'':
-		lexer.reportInvalidCharacter()
+		lexer.scanString(byte(char), true)
 	default:
 		if isDigit(byte(char)) {
 			lexer.scanNumber()
@@ -190,6 +190,227 @@ func (lexer *lexer) scanToken() {
 		}
 		lexer.reportInvalidCharacter()
 	}
+}
+
+func (lexer *lexer) scanString(quote byte, allowInterpolation bool) bool {
+	openingStart := lexer.start
+	lexer.addToken(token.StringStart, lexer.input[lexer.start:lexer.current], nil, lexer.current)
+
+	textStart := lexer.current
+	var value strings.Builder
+	flushText := func(end int) {
+		if end <= textStart {
+			return
+		}
+		lexer.start = textStart
+		lexer.addToken(token.StringText, lexer.input[textStart:end], value.String(), end)
+	}
+
+	for !lexer.isAtEnd() {
+		char := lexer.peek()
+		if char == quote {
+			flushText(lexer.current)
+			lexer.start = lexer.current
+			lexer.current++
+			lexer.addToken(token.StringEnd, lexer.input[lexer.start:lexer.current], nil, lexer.current)
+			return true
+		}
+
+		switch char {
+		case '\n', '\r':
+			flushText(lexer.current)
+			lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+			return false
+		case '\\':
+			escapeStart := lexer.current
+			lexer.current++
+			if lexer.isAtEnd() || lexer.peek() == '\n' || lexer.peek() == '\r' {
+				value.WriteByte('\\')
+				continue
+			}
+
+			escaped := lexer.peek()
+			lexer.current++
+			switch escaped {
+			case 'n':
+				value.WriteByte('\n')
+			case 't':
+				value.WriteByte('\t')
+			case '\\', '"', '\'':
+				value.WriteByte(escaped)
+			default:
+				lexer.report(
+					diagnostic.CodeInvalidEscapeSequence,
+					fmt.Sprintf("Invalid escape sequence: \\%c", escaped),
+					"Supported escapes are \\n, \\t, \\\\, \\\", and \\'.",
+					escapeStart,
+					lexer.current,
+				)
+				value.WriteByte(escaped)
+			}
+		case '{':
+			if !allowInterpolation {
+				if lexer.peekNext() == '{' {
+					lexer.current += 2
+					value.WriteByte('{')
+					continue
+				}
+				if lexer.peekNext() == '}' {
+					lexer.current += 2
+					value.WriteString("{}")
+					continue
+				}
+
+				lexer.report(
+					diagnostic.CodeInvalidCharacter,
+					"Nested string interpolation is not allowed.",
+					"Move the expression to the outer string interpolation.",
+					lexer.current,
+					lexer.current+1,
+				)
+				lexer.current++
+				value.WriteByte(char)
+				continue
+			}
+			if lexer.peekNext() == '{' {
+				lexer.current += 2
+				value.WriteByte('{')
+				continue
+			}
+
+			flushText(lexer.current)
+			value.Reset()
+
+			interpolationStart := lexer.current
+			lexer.start = lexer.current
+			lexer.current++
+			lexer.addToken(token.InterpStart, "{", nil, lexer.current)
+			if !lexer.scanInterpolation(quote, interpolationStart) {
+				return false
+			}
+			textStart = lexer.current
+		case '}':
+			if !allowInterpolation {
+				if lexer.peekNext() == '}' {
+					lexer.current += 2
+					value.WriteByte('}')
+					continue
+				}
+				lexer.current++
+				value.WriteByte(char)
+				continue
+			}
+			if lexer.peekNext() == '}' {
+				lexer.current += 2
+				value.WriteByte('}')
+				continue
+			}
+
+			lexer.report(
+				diagnostic.CodeUnescapedCloseBrace,
+				"Unescaped close brace in string.",
+				"Use }} to write a literal }.",
+				lexer.current,
+				lexer.current+1,
+			)
+			lexer.current++
+			value.WriteByte('}')
+		default:
+			decoded, size := utf8.DecodeRuneInString(lexer.input[lexer.current:])
+			if decoded == utf8.RuneError && size == 1 {
+				flushText(lexer.current)
+				lexer.report(diagnostic.CodeInvalidUTF8, "File is not valid UTF-8.", "Save the file as UTF-8.", lexer.current, lexer.current+1)
+				lexer.current++
+				textStart = lexer.current
+				value.Reset()
+				continue
+			}
+
+			value.WriteString(lexer.input[lexer.current : lexer.current+size])
+			lexer.current += size
+		}
+	}
+
+	flushText(lexer.current)
+	lexer.report(diagnostic.CodeUnterminatedString, "Unterminated string.", "Close the string or use \\n for line breaks.", openingStart, lexer.current)
+	return false
+}
+
+func (lexer *lexer) scanInterpolation(outerQuote byte, interpolationStart int) bool {
+	baseBraceDepth := lexer.braceDepth
+	lexer.braceDepth++
+	defer func() {
+		lexer.braceDepth = baseBraceDepth
+	}()
+
+	for !lexer.isAtEnd() {
+		if lexer.peek() == '\n' || lexer.peek() == '\r' {
+			lexer.report(
+				diagnostic.CodeUnterminatedInterpolation,
+				"Unterminated string interpolation.",
+				"Close the interpolation with }.",
+				interpolationStart,
+				lexer.current,
+			)
+			return false
+		}
+
+		if lexer.peek() == '}' && lexer.braceDepth == baseBraceDepth+1 {
+			if strings.TrimSpace(lexer.input[interpolationStart+1:lexer.current]) == "" {
+				lexer.report(
+					diagnostic.CodeEmptyInterpolation,
+					"Empty string interpolation.",
+					"Put an expression inside the interpolation.",
+					interpolationStart,
+					lexer.current+1,
+				)
+			}
+
+			lexer.start = lexer.current
+			lexer.current++
+			lexer.addToken(token.InterpEnd, "}", nil, lexer.current)
+			return true
+		}
+
+		if lexer.peek() == '"' || lexer.peek() == '\'' {
+			quote := lexer.peek()
+			if quote == outerQuote && (lexer.current+1 == len(lexer.input) || lexer.peekNext() == '\n' || lexer.peekNext() == '\r') {
+				lexer.report(
+					diagnostic.CodeUnterminatedInterpolation,
+					"Unterminated string interpolation.",
+					"Close the interpolation with }.",
+					interpolationStart,
+					lexer.current,
+				)
+				return true
+			}
+			lexer.start = lexer.current
+			lexer.current++
+			if !lexer.scanString(quote, false) {
+				lexer.report(
+					diagnostic.CodeUnterminatedInterpolation,
+					"Unterminated string interpolation.",
+					"Close the interpolation with }.",
+					interpolationStart,
+					lexer.current,
+				)
+				return false
+			}
+			continue
+		}
+
+		lexer.start = lexer.current
+		lexer.scanToken()
+	}
+
+	lexer.report(
+		diagnostic.CodeUnterminatedInterpolation,
+		"Unterminated string interpolation.",
+		"Close the interpolation with }.",
+		interpolationStart,
+		lexer.current,
+	)
+	return false
 }
 
 func (lexer *lexer) scanComment() {
