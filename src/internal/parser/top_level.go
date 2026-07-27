@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/puff-lang/puff/internal/ast"
 	"github.com/puff-lang/puff/internal/diagnostic"
 	"github.com/puff-lang/puff/internal/token"
@@ -14,7 +12,7 @@ func (parser *parser) parseRequire() *ast.RequireDecl {
 
 	var alias *ast.Identifier
 	if parser.match(token.As) {
-		if parser.check(token.Ident) {
+		if parser.checkName() {
 			alias = parser.parseIdentifier()
 		} else {
 			parser.reportExpected("identifier", "")
@@ -38,7 +36,7 @@ func (parser *parser) parseFunction(public bool) *ast.FunctionDecl {
 	parser.advance()
 
 	name := ast.Identifier{}
-	if parser.check(token.Ident) {
+	if parser.checkName() {
 		name = *parser.parseIdentifier()
 	} else {
 		parser.reportExpected("function name", "")
@@ -70,7 +68,7 @@ func (parser *parser) parseParameters() []ast.Parameter {
 	var parameters []ast.Parameter
 	for !parser.check(token.RParen) && !parser.check(token.Arrow) && !parser.check(token.Newline) && !parser.atEnd() {
 		start := parser.peek().StartOffset
-		if !parser.check(token.Ident) {
+		if !parser.checkName() {
 			parser.reportExpected("parameter name", "")
 			parser.synchronizeUntil(token.Comma, token.RParen, token.Newline)
 		} else {
@@ -100,7 +98,7 @@ func (parser *parser) parseParameters() []ast.Parameter {
 
 func (parser *parser) parseType() *ast.TypeRef {
 	start := parser.peek().StartOffset
-	if !parser.check(token.Ident) {
+	if !parser.checkName() {
 		parser.reportExpected("type", "")
 		return nil
 	}
@@ -129,7 +127,7 @@ func (parser *parser) parseType() *ast.TypeRef {
 func (parser *parser) parseEvent() *ast.EventDecl {
 	start := parser.advance().StartOffset
 	var name []ast.Identifier
-	for parser.check(token.Ident) {
+	for parser.checkName() {
 		name = append(name, *parser.parseIdentifier())
 	}
 	if len(name) == 0 {
@@ -180,7 +178,7 @@ func (parser *parser) parseGlobalVariable() *ast.VariableExpr {
 		parser.reportExpected("$", "")
 		return nil
 	}
-	if !parser.check(token.Ident) {
+	if !parser.checkName() {
 		parser.reportExpected("global variable name", "")
 		return nil
 	}
@@ -190,7 +188,7 @@ func (parser *parser) parseGlobalVariable() *ast.VariableExpr {
 	for {
 		switch {
 		case parser.match(token.Dot):
-			if !parser.check(token.Ident) {
+			if !parser.checkName() {
 				parser.reportExpected("field name", "")
 				return &ast.VariableExpr{NodeBase: parser.base(start, parser.previous().EndOffset), Name: *name, Accesses: accesses}
 			}
@@ -350,6 +348,39 @@ func (parser *parser) parseIdentifier() *ast.Identifier {
 	}
 }
 
+func (parser *parser) checkName() bool {
+	switch parser.peek().Type {
+	case token.Ident,
+		token.Require,
+		token.As,
+		token.Pub,
+		token.Fun,
+		token.On,
+		token.End,
+		token.If,
+		token.Else,
+		token.Loop,
+		token.Times,
+		token.Numbers,
+		token.Players,
+		token.Entities,
+		token.From,
+		token.To,
+		token.In,
+		token.Radius,
+		token.Around,
+		token.Return,
+		token.Stop,
+		token.Add,
+		token.And,
+		token.Or,
+		token.Not:
+		return true
+	default:
+		return false
+	}
+}
+
 func (parser *parser) scanBlock(openingStart int) (ast.Block, int) {
 	bodyStart := parser.peek().StartOffset
 	depth := 0
@@ -397,6 +428,9 @@ func (parser *parser) requireLineEnd() {
 	if parser.match(token.Newline) || parser.atEnd() {
 		return
 	}
+	if parser.current > 0 && parser.peek().Line > parser.previous().Line {
+		return
+	}
 	tok := parser.peek()
 	parser.report(
 		diagnostic.CodeExpectedNewline,
@@ -435,12 +469,4 @@ func (parser *parser) synchronizeUntil(types ...token.Type) {
 		}
 		parser.advance()
 	}
-}
-
-func tokenText(tokens []token.Token) string {
-	var builder strings.Builder
-	for _, tok := range tokens {
-		builder.WriteString(tok.Lexeme)
-	}
-	return builder.String()
 }
