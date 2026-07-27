@@ -33,11 +33,14 @@ func TestParseTopLevelGolden(t *testing.T) {
 	if got := renderFile(result.File); got != string(want) {
 		t.Fatalf("unexpected AST\nwant:\n%s\ngot:\n%s", want, got)
 	}
+	if result.File.Metadata[0].Span().StartOffset != 0 || result.File.Metadata[0].Span().EndOffset != 20 {
+		t.Fatalf("unexpected metadata span: %#v", result.File.Metadata[0].Span())
+	}
 }
 
 func TestParseFunctionSignaturesAndNestedTypes(t *testing.T) {
 	result := parseTestSource("functions.puff", `
-fun noParams
+fun add
 end
 fun explicit()
 end
@@ -69,6 +72,24 @@ end
 	}
 	if function.ReturnType.Name.Name != "list" || function.ReturnType.Arguments[0].Name.Name != "string" {
 		t.Fatalf("unexpected return type: %#v", function.ReturnType)
+	}
+}
+
+func TestParseRejectsIncompleteParameterAndGenericLists(t *testing.T) {
+	tests := []string{
+		"fun f(a,)\nend\n",
+		"fun f(value: list<>)\nend\n",
+		"fun f(value: map<string,>)\nend\n",
+	}
+
+	for _, input := range tests {
+		result := parseTestSource("signature.puff", input)
+		if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != diagnostic.CodeExpectedToken {
+			t.Fatalf("source %q: expected one EXPECTED_TOKEN, got %#v", input, result.Diagnostics)
+		}
+		if len(result.File.Declarations) != 1 {
+			t.Fatalf("source %q: expected partial function declaration, got %#v", input, result.File.Declarations)
+		}
 	}
 }
 
@@ -215,6 +236,34 @@ end
 	event := result.File.Declarations[0].(*ast.EventDecl)
 	if len(event.Name) != 1 || event.Name[0].Name != "tick" {
 		t.Fatalf("unexpected recovered declaration: %#v", event)
+	}
+}
+
+func TestParseSkipsInvalidTopLevelBlockWithoutCascading(t *testing.T) {
+	result := parseTestSource("invalid-block.puff", `
+if true
+send "inside" to player
+end
+on tick
+end
+`)
+
+	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != diagnostic.CodeInvalidTopLevelStatement {
+		t.Fatalf("expected one invalid top-level diagnostic, got %#v", result.Diagnostics)
+	}
+	if len(result.File.Declarations) != 1 || result.File.Declarations[0].(*ast.EventDecl).Name[0].Name != "tick" {
+		t.Fatalf("expected recovery at tick event, got %#v", result.File.Declarations)
+	}
+}
+
+func TestParseDoesNotDuplicateUnterminatedStringDiagnostic(t *testing.T) {
+	result := parseTestSource("unterminated.puff", "require \"abc\non load\nend\n")
+
+	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != diagnostic.CodeUnterminatedString {
+		t.Fatalf("expected only lexer string diagnostic, got %#v", result.Diagnostics)
+	}
+	if len(result.File.Declarations) != 1 || result.File.Declarations[0].(*ast.EventDecl).Name[0].Name != "load" {
+		t.Fatalf("expected recovery at load event, got %#v", result.File.Declarations)
 	}
 }
 
