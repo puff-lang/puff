@@ -1,0 +1,22 @@
+# namespace: example
+# tags: load, tick
+
+require "abc/shop"
+require "github.com/123/123" as lib123
+
+$coins = 100
+$shop.name = "Main Shop"
+$players[] = []
+pub $tax = 0.1
+
+fun setup
+end
+
+pub fun finalPrice(price: float) -> float
+end
+
+on load
+end
+
+on scoreboard update
+end
