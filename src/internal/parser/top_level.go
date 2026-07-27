@@ -88,6 +88,10 @@ func (parser *parser) parseParameters() []ast.Parameter {
 		if !parser.match(token.Comma) {
 			break
 		}
+		if parser.check(token.RParen) {
+			parser.reportExpected("parameter name", "")
+			break
+		}
 	}
 
 	if !parser.match(token.RParen) {
@@ -106,12 +110,19 @@ func (parser *parser) parseType() *ast.TypeRef {
 	name := parser.parseIdentifier()
 	typeRef := &ast.TypeRef{Name: *name}
 	if parser.match(token.Less) {
+		if parser.check(token.Greater) {
+			parser.reportExpected("type", "")
+		}
 		for !parser.check(token.Greater) && !parser.check(token.Newline) && !parser.atEnd() {
 			argument := parser.parseType()
 			if argument != nil {
 				typeRef.Arguments = append(typeRef.Arguments, argument)
 			}
 			if !parser.match(token.Comma) {
+				break
+			}
+			if parser.check(token.Greater) {
+				parser.reportExpected("type", "")
 				break
 			}
 		}
@@ -284,12 +295,10 @@ func (parser *parser) parseString() *ast.StringExpr {
 				return parser.stringFromTokens(parser.tokens[start:parser.current])
 			}
 		case token.Newline:
-			parser.reportExpected("closing quote", "")
 			return parser.stringFromTokens(parser.tokens[start:parser.current])
 		}
 		parser.advance()
 	}
-	parser.reportExpected("closing quote", "")
 	return parser.stringFromTokens(parser.tokens[start:parser.current])
 }
 
@@ -305,7 +314,11 @@ func (parser *parser) stringFromTokens(tokens []token.Token) *ast.StringExpr {
 		expression.Quote = tokens[0].Lexeme[0]
 	}
 
-	for index := 1; index < len(tokens)-1; index++ {
+	endIndex := len(tokens)
+	if tokens[len(tokens)-1].Type == token.StringEnd {
+		endIndex--
+	}
+	for index := 1; index < endIndex; index++ {
 		tok := tokens[index]
 		switch tok.Type {
 		case token.StringText:

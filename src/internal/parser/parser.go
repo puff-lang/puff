@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/puff-lang/puff/internal/ast"
 	"github.com/puff-lang/puff/internal/diagnostic"
@@ -78,8 +77,11 @@ func (parser *parser) parseFile(metadata lexer.Metadata) *ast.File {
 			parser.reportUnexpected(parser.peek(), hint)
 			parser.synchronizeLine()
 		default:
+			block := parser.check(token.If) || parser.check(token.Loop)
 			parser.reportInvalidTopLevel()
-			parser.synchronizeLine()
+			if block {
+				parser.synchronizeInvalidBlock()
+			}
 		}
 		parser.skipNewlines()
 	}
@@ -88,12 +90,13 @@ func (parser *parser) parseFile(metadata lexer.Metadata) *ast.File {
 }
 
 func metadataEntries(metadata lexer.Metadata) []ast.MetadataEntry {
-	entries := make([]ast.MetadataEntry, 0, 2)
-	if metadata.Namespace != "" {
-		entries = append(entries, ast.MetadataEntry{Key: "namespace", Value: metadata.Namespace})
-	}
-	if len(metadata.Tags) > 0 {
-		entries = append(entries, ast.MetadataEntry{Key: "tags", Value: strings.Join(metadata.Tags, ", ")})
+	entries := make([]ast.MetadataEntry, 0, len(metadata.Entries))
+	for _, entry := range metadata.Entries {
+		entries = append(entries, ast.MetadataEntry{
+			NodeBase: ast.NodeBase{SourceSpan: entry.Span},
+			Key:      entry.Key,
+			Value:    entry.Value,
+		})
 	}
 	return entries
 }
@@ -172,6 +175,29 @@ func (parser *parser) synchronizeLine() {
 	for !parser.check(token.Newline) && !parser.atEnd() {
 		parser.advance()
 	}
+}
+
+func (parser *parser) synchronizeInvalidBlock() {
+	parser.match(token.Newline)
+	depth := 1
+	lineStart := true
+	for !parser.atEnd() && depth > 0 {
+		if lineStart {
+			switch parser.peek().Type {
+			case token.If, token.Loop:
+				depth++
+			case token.End:
+				depth--
+			}
+			lineStart = false
+		}
+		if parser.match(token.Newline) {
+			lineStart = true
+			continue
+		}
+		parser.advance()
+	}
+	parser.synchronizeLine()
 }
 
 func (parser *parser) match(types ...token.Type) bool {
