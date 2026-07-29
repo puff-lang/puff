@@ -36,6 +36,9 @@ func Resolve(sourceProject source.Project, syntax map[string]*ast.File) Result {
 
 		for _, declaration := range module.Syntax.Requirements {
 			importPath, ok := staticImportPath(declaration)
+			if ok {
+				importPath, ok = canonicalImportPath(importPath)
+			}
 			if !ok {
 				diagnostics = append(diagnostics, importDiagnostic(
 					module,
@@ -129,6 +132,19 @@ func staticImportPath(declaration *ast.RequireDecl) (string, bool) {
 	return importPath, importPath != ""
 }
 
+func canonicalImportPath(importPath string) (string, bool) {
+	canonical := path.Clean(importPath)
+	if canonical != importPath ||
+		path.IsAbs(canonical) ||
+		canonical == "." ||
+		canonical == ".." ||
+		strings.HasPrefix(canonical, "../") ||
+		strings.Contains(canonical, `\`) {
+		return "", false
+	}
+	return canonical, true
+}
+
 func validPrefix(prefix string) bool {
 	for index, char := range []byte(prefix) {
 		if index == 0 {
@@ -191,6 +207,9 @@ func displayPath(root string, file source.File) string {
 		if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 			return filepath.ToSlash(relative)
 		}
+	}
+	if root == "" && file.Path != "" && !filepath.IsAbs(file.Path) {
+		return filepath.ToSlash(file.Path)
 	}
 	return file.RelPath
 }
