@@ -148,6 +148,23 @@ func TestParseImportedVariableSpanIncludesQualifier(t *testing.T) {
 	}
 }
 
+func TestParseDoesNotDuplicateLexerExpressionDiagnostics(t *testing.T) {
+	tests := []struct {
+		source string
+		code   diagnostic.Code
+	}{
+		{source: `$x = "value: {}"` + "\n", code: diagnostic.CodeEmptyInterpolation},
+		{source: "$x = 1abc\n", code: diagnostic.CodeInvalidNumber},
+	}
+
+	for _, test := range tests {
+		result := parseTestSource("lexer-error.puff", test.source)
+		if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != test.code {
+			t.Fatalf("source %q: expected only %s, got %#v", test.source, test.code, result.Diagnostics)
+		}
+	}
+}
+
 func TestParseInvalidVariableForms(t *testing.T) {
 	tests := []struct {
 		name    string
