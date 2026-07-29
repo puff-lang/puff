@@ -136,6 +136,7 @@ func canonicalImportPath(importPath string) (string, bool) {
 	canonical := path.Clean(importPath)
 	if canonical != importPath ||
 		path.IsAbs(canonical) ||
+		windowsDriveAbsolute(canonical) ||
 		canonical == "." ||
 		canonical == ".." ||
 		strings.HasPrefix(canonical, "../") ||
@@ -143,6 +144,13 @@ func canonicalImportPath(importPath string) (string, bool) {
 		return "", false
 	}
 	return canonical, true
+}
+
+func windowsDriveAbsolute(importPath string) bool {
+	return len(importPath) >= 3 &&
+		asciiLetter(importPath[0]) &&
+		importPath[1] == ':' &&
+		importPath[2] == '/'
 }
 
 func validPrefix(prefix string) bool {
