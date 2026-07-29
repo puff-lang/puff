@@ -175,9 +175,6 @@ func (parser *parser) parseGlobal(public bool) *ast.GlobalAssignment {
 		parser.reportExpected("=", "")
 	}
 	value := parser.parseExpressionUntil(token.Newline)
-	if value == nil {
-		parser.reportExpected("expression", "")
-	}
 	end := parser.statementEnd(start, value)
 	parser.requireLineEnd()
 

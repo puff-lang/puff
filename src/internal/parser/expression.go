@@ -11,7 +11,11 @@ func (parser *parser) parseExpressionUntil(stops ...token.Type) ast.Expression {
 	for _, stop := range stops {
 		parser.expressionStops[stop] = true
 	}
+	diagnosticCount := len(parser.diagnostics)
 	expression := parser.parseRange()
+	if expression == nil && len(parser.diagnostics) == diagnosticCount {
+		parser.reportExpected("expression", "")
+	}
 	parser.expressionStops = previousStops
 	return expression
 }
@@ -34,6 +38,10 @@ func (parser *parser) parseRange() ast.Expression {
 	}
 	if parser.check(token.DotDot) {
 		parser.reportUnexpected(parser.peek(), "Ranges cannot be chained.")
+		parser.advance()
+		for !parser.atExpressionStop() && !parser.atEnd() {
+			parser.advance()
+		}
 	}
 	return expression
 }
@@ -142,9 +150,6 @@ func (parser *parser) parsePrimary() ast.Expression {
 func (parser *parser) parseGroup() ast.Expression {
 	start := parser.advance().StartOffset
 	expression := parser.parseExpressionUntil(token.RParen)
-	if expression == nil {
-		parser.reportExpected("expression", "")
-	}
 	if !parser.match(token.RParen) {
 		parser.reportExpected(")", "")
 		end := start
@@ -166,8 +171,6 @@ func (parser *parser) parseList() ast.Expression {
 		element := parser.parseExpressionUntil(token.Comma, token.RBracket)
 		if element != nil {
 			elements = append(elements, element)
-		} else {
-			parser.reportExpected("expression", "")
 		}
 		if parser.match(token.Comma) {
 			if parser.check(token.RBracket) {
@@ -191,9 +194,6 @@ func (parser *parser) parseMap() ast.Expression {
 	for !parser.check(token.RBrace) && !parser.atEnd() {
 		entryStart := parser.peek().StartOffset
 		key := parser.parseExpressionUntil(token.Colon)
-		if key == nil {
-			parser.reportExpected("expression", "")
-		}
 		hasColon := parser.match(token.Colon)
 		if !hasColon {
 			parser.reportExpected(":", "")
@@ -202,9 +202,6 @@ func (parser *parser) parseMap() ast.Expression {
 		var value ast.Expression
 		if hasColon {
 			value = parser.parseExpressionUntil(token.Comma, token.RBrace)
-		}
-		if hasColon && value == nil {
-			parser.reportExpected("expression", "")
 		}
 		entryEnd := entryStart
 		if value != nil {
@@ -337,11 +334,9 @@ func (parser *parser) finishCall(parts []ast.Identifier, explicit bool, start in
 		argument := parser.parseExpressionUntil(token.Comma, token.RParen)
 		if argument != nil {
 			arguments = append(arguments, argument)
-		} else {
-			parser.reportExpected("expression", "")
 		}
 		if parser.match(token.Comma) {
-			if parser.check(token.RParen) {
+			if argument != nil && parser.check(token.RParen) {
 				parser.reportExpected("expression", "")
 				break
 			}
