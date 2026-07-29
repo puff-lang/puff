@@ -155,6 +155,8 @@ func TestParseDoesNotDuplicateLexerExpressionDiagnostics(t *testing.T) {
 	}{
 		{source: `$x = "value: {}"` + "\n", code: diagnostic.CodeEmptyInterpolation},
 		{source: "$x = 1abc\n", code: diagnostic.CodeInvalidNumber},
+		{source: "$x = 1abc # comment\n", code: diagnostic.CodeInvalidNumber},
+		{source: "$x = @ # comment\r\n", code: diagnostic.CodeInvalidCharacter},
 	}
 
 	for _, test := range tests {
