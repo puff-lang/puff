@@ -166,6 +166,54 @@ func TestCheckIntegrationReportsDocumentedDiagnosticsWithoutCascades(t *testing.
 				},
 			},
 		},
+		{
+			name:    "semantic regressions",
+			fixture: "semantic-regressions",
+			expected: []expectedSemanticDiagnostic{
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "b_visibility.puff",
+					line:    4,
+					message: "Undefined variable: visibility.$config.secret",
+					hint:    "Declare it before using it: visibility.$config.secret = 0",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "c_top_level_collection.puff",
+					line:    1,
+					message: "Type mismatch: cannot assign int to $players[].",
+					hint:    "Convert one value or use compatible types.",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "a_import_order.puff",
+					line:    4,
+					message: "Type mismatch: cannot return int as string.",
+					hint:    "Return a value compatible with string.",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "d_heterogeneous_collection.puff",
+					line:    2,
+					message: "Type mismatch: cannot return list<unknown> as list<int>.",
+					hint:    "Return a value compatible with list<int>.",
+				},
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "e_branch_local.puff",
+					line:    5,
+					message: "Undefined variable: $_value",
+					hint:    "Declare it before using it: $_value = 0",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "f_add_type.puff",
+					line:    3,
+					message: "Type mismatch: cannot add string to int.",
+					hint:    "Convert one value or use compatible types.",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

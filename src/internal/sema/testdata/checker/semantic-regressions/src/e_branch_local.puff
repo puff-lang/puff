@@ -1,0 +1,7 @@
+fun branchLocal(flag: bool)
+   if flag
+      $_value = 1
+   else
+      $_copy = $_value
+   end
+end

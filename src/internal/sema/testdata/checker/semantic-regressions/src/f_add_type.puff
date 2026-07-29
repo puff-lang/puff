@@ -1,0 +1,4 @@
+$coins = 1
+on load
+   add "wrong" to $coins
+end

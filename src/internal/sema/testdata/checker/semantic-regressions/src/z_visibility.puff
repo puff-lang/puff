@@ -1,0 +1,2 @@
+pub $config.name = "Shop"
+$config.secret = "hidden"
