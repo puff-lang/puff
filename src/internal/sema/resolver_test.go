@@ -168,6 +168,10 @@ func TestResolveRejectsInvalidImportPaths(t *testing.T) {
 	}{
 		{name: "empty", requirement: staticRequire("", "")},
 		{name: "interpolated", requirement: interpolatedRequire()},
+		{name: "non-canonical", requirement: staticRequire("./abc/shop", "")},
+		{name: "escaping source root", requirement: staticRequire("../shop", "")},
+		{name: "absolute", requirement: staticRequire("/abc/shop", "")},
+		{name: "backslash", requirement: staticRequire(`abc\shop`, "")},
 	}
 
 	for _, test := range tests {
@@ -191,6 +195,29 @@ func TestResolveRejectsInvalidImportPaths(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestResolveFormatsAmbiguityFromRelativeProjectRoot(t *testing.T) {
+	requirement := staticRequire("abc/shop", "")
+	input := testSourceProject("main.puff", "abc/shop.puff", "abc/shop/main.puff")
+	input.Root = ""
+	for index := range input.Files {
+		input.Files[index].Path = filepath.FromSlash("src/" + input.Files[index].RelPath)
+	}
+
+	result := Resolve(input, testSyntax(input, map[string][]*ast.RequireDecl{
+		"main.puff": {requirement},
+	}))
+
+	assertSingleDiagnostic(t, result.Diagnostics, diagnostic.Diagnostic{
+		Code:     diagnostic.CodeAmbiguousImport,
+		Phase:    diagnostic.PhaseSemantics,
+		Severity: diagnostic.SeverityError,
+		Message:  "Ambiguous import: both src/abc/shop.puff and src/abc/shop/main.puff exist.",
+		Hint:     "Remove one file or import a more specific path.",
+		File:     "main.puff",
+		Span:     requirement.Path.Span(),
+	})
 }
 
 func TestResolvePreservesFileOrderAndModuleLookup(t *testing.T) {
