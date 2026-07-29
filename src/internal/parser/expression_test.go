@@ -117,23 +117,31 @@ func TestParseExpressionSeparatorErrors(t *testing.T) {
 		{source: "$x = call(1 2)\n", message: `Expected "\",\" or \")\"".`},
 		{source: `$x = {"a" 1}` + "\n", message: `Expected ":".`},
 		{source: "$x = 1 2\n", message: "Expected newline."},
+		{source: "$x = [1,,2]\n", message: `Expected "expression".`},
+		{source: "$x = call(,1)\n", message: `Expected "expression".`},
+		{source: "$x = ()\n", message: `Expected "expression".`},
+		{source: `$x = "value: {1 2}"` + "\n", message: `Expected "}".`},
 	}
 
 	for _, test := range tests {
 		result := parseTestSource("separator.puff", test.source)
-		if len(result.Diagnostics) == 0 {
-			t.Fatalf("source %q: expected diagnostic", test.source)
+		if len(result.Diagnostics) != 1 {
+			t.Fatalf("source %q: expected one diagnostic, got %#v", test.source, result.Diagnostics)
 		}
-		found := false
-		for _, diagnostic := range result.Diagnostics {
-			if diagnostic.Message == test.message {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if result.Diagnostics[0].Message != test.message {
 			t.Fatalf("source %q: expected %q, got %#v", test.source, test.message, result.Diagnostics)
 		}
+	}
+}
+
+func TestParseImportedVariableSpanIncludesQualifier(t *testing.T) {
+	result := parseTestSource("span.puff", "$value = shop.$tax\n")
+	if len(result.Diagnostics) != 0 {
+		t.Fatalf("expected no diagnostics, got %#v", result.Diagnostics)
+	}
+	variable := result.File.Declarations[0].(*ast.GlobalAssignment).Value.(*ast.VariableExpr)
+	if variable.Span().StartOffset != 9 || variable.Span().EndOffset != 18 {
+		t.Fatalf("expected imported variable span 9..18, got %#v", variable.Span())
 	}
 }
 

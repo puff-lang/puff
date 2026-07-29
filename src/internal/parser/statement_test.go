@@ -116,3 +116,18 @@ end
 		t.Fatalf("expected pattern condition, got %T", condition.Left)
 	}
 }
+
+func TestParseRejectsMissingLoopOperands(t *testing.T) {
+	tests := []string{
+		"on load\nloop times\nend\nend\n",
+		"on load\nloop numbers from to 3\nend\nend\n",
+		"on load\nloop entities in radius around player\nend\nend\n",
+	}
+
+	for _, input := range tests {
+		result := parseTestSource("loop.puff", input)
+		if len(result.Diagnostics) != 1 || result.Diagnostics[0].Message != `Expected "expression".` {
+			t.Fatalf("source %q: expected missing expression diagnostic, got %#v", input, result.Diagnostics)
+		}
+	}
+}
