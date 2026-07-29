@@ -14,9 +14,10 @@ type flowContext struct {
 
 func isolatedFlowScope(parent *scope) *scope {
 	current := &scope{
-		parent: parent,
-		names:  make(map[string]Type),
-		locals: copyLocals(parent),
+		parent:         parent,
+		names:          make(map[string]Type),
+		locals:         copyLocals(parent),
+		runtimeGlobals: copyRuntimeGlobals(parent),
 	}
 	current.owner = current
 	return current
@@ -33,6 +34,21 @@ func copyLocals(current *scope) map[string]*VariableSymbol {
 	}
 	for name, symbol := range owner.locals {
 		copied[name] = symbol
+	}
+	return copied
+}
+
+func copyRuntimeGlobals(current *scope) map[string]*VariableSymbol {
+	copied := make(map[string]*VariableSymbol)
+	if current == nil {
+		return copied
+	}
+	owner := current.owner
+	if owner == nil {
+		owner = current
+	}
+	for path, symbol := range owner.runtimeGlobals {
+		copied[path] = symbol
 	}
 	return copied
 }
@@ -63,6 +79,23 @@ func mergeFlowScopes(target *scope, paths []*scope) {
 		owner = target
 	}
 	owner.locals = merged
+
+	mergedGlobals := copyRuntimeGlobals(paths[0])
+	for path, first := range mergedGlobals {
+		combined := *first
+		for _, branch := range paths[1:] {
+			candidate, ok := copyRuntimeGlobals(branch)[path]
+			if !ok {
+				delete(mergedGlobals, path)
+				break
+			}
+			combined.Type = mergeInferredTypes(combined.Type, candidate.Type)
+		}
+		if _, ok := mergedGlobals[path]; ok {
+			mergedGlobals[path] = &combined
+		}
+	}
+	owner.runtimeGlobals = mergedGlobals
 }
 
 func (checker *checker) checkBlock(
@@ -184,13 +217,20 @@ func (checker *checker) checkAssignment(
 	path, depth := globalPath(target)
 	symbol := module.Symbols.lookupGlobal(target)
 	if symbol == nil {
+		symbol, _ = currentScope.lookupRuntimeGlobal(target)
+	}
+	if symbol == nil {
+		if depth < len(target.Accesses) && !endsWithEmptyIndex(target) {
+			checker.undefinedVariable(module, target)
+			return
+		}
 		symbol = &VariableSymbol{
 			Name:        target.Name.Name,
 			Declaration: statement,
 			Module:      module,
 			AccessDepth: depth,
 		}
-		module.Symbols.Globals[path] = symbol
+		currentScope.defineRuntimeGlobal(path, symbol)
 	}
 	if symbol.AccessDepth == len(target.Accesses) ||
 		endsWithEmptyIndex(target) && symbol.AccessDepth == len(target.Accesses)-1 {

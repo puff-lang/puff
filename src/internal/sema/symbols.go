@@ -140,16 +140,18 @@ func staticIndexValue(expression ast.Expression) (string, bool) {
 }
 
 type scope struct {
-	parent *scope
-	owner  *scope
-	names  map[string]Type
-	locals map[string]*VariableSymbol
+	parent         *scope
+	owner          *scope
+	names          map[string]Type
+	locals         map[string]*VariableSymbol
+	runtimeGlobals map[string]*VariableSymbol
 }
 
 func newExecutionScope() *scope {
 	current := &scope{
-		names:  make(map[string]Type),
-		locals: make(map[string]*VariableSymbol),
+		names:          make(map[string]Type),
+		locals:         make(map[string]*VariableSymbol),
+		runtimeGlobals: make(map[string]*VariableSymbol),
 	}
 	current.owner = current
 	return current
@@ -202,4 +204,39 @@ func (current *scope) lookupLocal(name string) (*VariableSymbol, bool) {
 	}
 	symbol, ok := owner.locals[name]
 	return symbol, ok
+}
+
+func (current *scope) defineRuntimeGlobal(path string, symbol *VariableSymbol) {
+	if current == nil || path == "" || symbol == nil {
+		return
+	}
+	owner := current.owner
+	if owner == nil {
+		owner = current
+	}
+	owner.runtimeGlobals[path] = symbol
+}
+
+func (current *scope) lookupRuntimeGlobal(variable *ast.VariableExpr) (*VariableSymbol, bool) {
+	if current == nil || variable == nil {
+		return nil, false
+	}
+	owner := current.owner
+	if owner == nil {
+		owner = current
+	}
+
+	path := variable.Name.Name
+	symbol := owner.runtimeGlobals[path]
+	for _, access := range variable.Accesses {
+		part, ok := staticGlobalAccess(access)
+		if !ok {
+			break
+		}
+		path += part
+		if candidate := owner.runtimeGlobals[path]; candidate != nil {
+			symbol = candidate
+		}
+	}
+	return symbol, symbol != nil
 }

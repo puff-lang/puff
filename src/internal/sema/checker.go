@@ -108,6 +108,9 @@ func (checker *checker) indexGlobal(module *Module, declaration *ast.GlobalAssig
 	}
 
 	path, depth := globalPath(target)
+	if depth < len(target.Accesses) && !endsWithEmptyIndex(target) {
+		return
+	}
 	module.Symbols.Globals[path] = &VariableSymbol{
 		Name:        target.Name.Name,
 		Declaration: declaration,
@@ -247,6 +250,11 @@ func (checker *checker) checkGlobalInitializers(module *Module, updateTypes bool
 		typ := checker.checkExpression(module, nil, global.Value)
 		checker.unresolvedGlobal = nil
 		if global.Target == nil || global.Target.Local {
+			continue
+		}
+		_, depth := globalPath(global.Target)
+		if depth < len(global.Target.Accesses) && !endsWithEmptyIndex(global.Target) {
+			checker.checkVariable(module, nil, global.Target)
 			continue
 		}
 		if endsWithEmptyIndex(global.Target) && !typ.IsUnknown() && typ.Kind != TypeList {

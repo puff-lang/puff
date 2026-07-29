@@ -88,6 +88,12 @@ func (checker *checker) checkString(module *Module, currentScope *scope, express
 
 func (checker *checker) checkUnary(module *Module, currentScope *scope, expression *ast.UnaryExpr) Type {
 	operand := checker.checkExpression(module, currentScope, expression.Operand)
+	if operand.incompatible {
+		checker.typeMismatch(module, expression,
+			fmt.Sprintf("Type mismatch: cannot use %s with incompatible values.",
+				operatorText(expression.Operator)))
+		return Type{Kind: TypeUnknown, incompatible: true}
+	}
 	switch expression.Operator {
 	case token.Not:
 		if !operand.IsUnknown() && operand.Kind != TypeBool {
@@ -116,6 +122,10 @@ func (checker *checker) checkBinary(module *Module, currentScope *scope, express
 
 	switch expression.Operator {
 	case token.Plus, token.Minus, token.Star, token.Slash, token.Percent:
+		if left.incompatible || right.incompatible {
+			checker.typeMismatch(module, expression, arithmeticMismatch(expression.Operator, left, right))
+			return Type{Kind: TypeUnknown, incompatible: true}
+		}
 		if expression.Operator == token.Plus && left.Kind == TypeString && right.Kind == TypeString {
 			return Type{Kind: TypeString}
 		}
@@ -125,6 +135,12 @@ func (checker *checker) checkBinary(module *Module, currentScope *scope, express
 		}
 		return result
 	case token.And, token.Or:
+		if left.incompatible || right.incompatible {
+			checker.typeMismatch(module, expression,
+				fmt.Sprintf("Type mismatch: cannot use %s with %s and %s.",
+					operatorText(expression.Operator), left.String(), right.String()))
+			return Type{Kind: TypeBool}
+		}
 		if (!left.IsUnknown() && left.Kind != TypeBool) || (!right.IsUnknown() && right.Kind != TypeBool) {
 			checker.typeMismatch(module, expression,
 				fmt.Sprintf("Type mismatch: cannot use %s with %s and %s.",
@@ -132,6 +148,11 @@ func (checker *checker) checkBinary(module *Module, currentScope *scope, express
 		}
 		return Type{Kind: TypeBool}
 	case token.EqualEqual, token.BangEqual:
+		if left.incompatible || right.incompatible {
+			checker.typeMismatch(module, expression,
+				fmt.Sprintf("Type mismatch: cannot compare %s and %s.", left.String(), right.String()))
+			return Type{Kind: TypeBool}
+		}
 		if !left.IsUnknown() && !right.IsUnknown() &&
 			!compatible(left, right) && !compatible(right, left) {
 			checker.typeMismatch(module, expression,
@@ -139,6 +160,11 @@ func (checker *checker) checkBinary(module *Module, currentScope *scope, express
 		}
 		return Type{Kind: TypeBool}
 	case token.Greater, token.GreaterEq, token.Less, token.LessEq:
+		if left.incompatible || right.incompatible {
+			checker.typeMismatch(module, expression,
+				fmt.Sprintf("Type mismatch: cannot compare %s and %s.", left.String(), right.String()))
+			return Type{Kind: TypeBool}
+		}
 		if !left.IsUnknown() && !right.IsUnknown() && numericType(left, right).IsUnknown() {
 			checker.typeMismatch(module, expression,
 				fmt.Sprintf("Type mismatch: cannot compare %s and %s.", left.String(), right.String()))
@@ -281,8 +307,11 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 		symbol, _ = currentScope.lookupLocal(variable.Name.Name)
 	} else if typ, ok := currentScope.lookupName(variable.Name.Name); ok {
 		return checker.typeAfterAccesses(typ, variable.Accesses)
-	} else if module != nil && module.Symbols != nil {
-		symbol = module.Symbols.lookupGlobal(variable)
+	} else {
+		symbol, _ = currentScope.lookupRuntimeGlobal(variable)
+		if symbol == nil && module != nil && module.Symbols != nil {
+			symbol = module.Symbols.lookupGlobal(variable)
+		}
 	}
 
 	if symbol == nil {
@@ -293,15 +322,16 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 	}
 	if _, isGlobalDeclaration := symbol.Declaration.(*ast.GlobalAssignment); isGlobalDeclaration &&
 		(symbol.Module == module && !symbol.initialized || symbol.resolution == globalUnresolved) {
+		localBeforeDefinition := symbol.Module == module && !symbol.initialized
 		if checker.unresolvedGlobal != nil {
 			checker.unresolvedGlobal.unresolved = true
 			checker.unresolvedGlobal.reported = symbol.reported
 		}
-		if !symbol.reported {
+		if localBeforeDefinition || !symbol.reported {
 			checker.report(module, variable, diagnostic.CodeUndefinedVariable,
 				fmt.Sprintf("Undefined variable: %s", variableName(variable)),
 				fmt.Sprintf("Declare it before using it: %s = 0", variableName(variable)))
-			if !checker.suppressDiagnostics {
+			if !localBeforeDefinition && !checker.suppressDiagnostics {
 				symbol.reported = true
 				if checker.unresolvedGlobal != nil {
 					checker.unresolvedGlobal.reported = true
