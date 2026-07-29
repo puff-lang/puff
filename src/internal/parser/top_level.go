@@ -162,7 +162,7 @@ func (parser *parser) parseGlobal(public bool) *ast.GlobalAssignment {
 		parser.advance()
 	}
 	target, _ := parser.parseVariable(nil).(*ast.VariableExpr)
-	if target != nil && target.Local {
+	if target != nil && target.Local && target.Name.Name != "" {
 		parser.report(
 			diagnostic.CodeInvalidTopLevelStatement,
 			"Executable statements are not allowed at the top level.",
