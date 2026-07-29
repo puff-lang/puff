@@ -119,7 +119,10 @@ func TestParseExpressionSeparatorErrors(t *testing.T) {
 		{source: "$x = 1 2\n", message: "Expected newline."},
 		{source: "$x = [1,,2]\n", message: `Expected "expression".`},
 		{source: "$x = call(,1)\n", message: `Expected "expression".`},
+		{source: "$x = call(,)\n", message: `Expected "expression".`},
 		{source: "$x = ()\n", message: `Expected "expression".`},
+		{source: "$x = +\n", message: `Expected "expression".`},
+		{source: "$x = 1..2..3\n", message: `Unexpected token: ..`},
 		{source: `$x = "value: {1 2}"` + "\n", message: `Expected "}".`},
 	}
 

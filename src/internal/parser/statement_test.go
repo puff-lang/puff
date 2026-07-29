@@ -121,7 +121,9 @@ func TestParseRejectsMissingLoopOperands(t *testing.T) {
 	tests := []string{
 		"on load\nloop times\nend\nend\n",
 		"on load\nloop numbers from to 3\nend\nend\n",
+		"on load\nloop numbers from 1 to\nend\nend\n",
 		"on load\nloop entities in radius around player\nend\nend\n",
+		"on load\nloop entities in radius 1 around\nend\nend\n",
 	}
 
 	for _, input := range tests {
