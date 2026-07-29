@@ -1,0 +1,8 @@
+[pack]
+id = "test"
+
+[minecraft]
+versions = "1.21"
+
+[build]
+source = "code"

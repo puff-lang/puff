@@ -1,0 +1,4 @@
+require "abc/shop"
+
+$result = shop.finalPrice(100)
+$copy = shop.$tax
