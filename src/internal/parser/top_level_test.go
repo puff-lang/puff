@@ -12,7 +12,6 @@ import (
 	"github.com/puff-lang/puff/internal/diagnostic"
 	"github.com/puff-lang/puff/internal/lexer"
 	"github.com/puff-lang/puff/internal/source"
-	"github.com/puff-lang/puff/internal/token"
 )
 
 func TestParseTopLevelGolden(t *testing.T) {
@@ -30,7 +29,8 @@ func TestParseTopLevelGolden(t *testing.T) {
 	if len(result.Diagnostics) != 0 {
 		t.Fatalf("expected no diagnostics, got %#v", result.Diagnostics)
 	}
-	if got := renderFile(result.File); got != string(want) {
+	wantText := strings.ReplaceAll(string(want), "\r\n", "\n")
+	if got := renderFile(result.File); got != wantText {
 		t.Fatalf("unexpected AST\nwant:\n%s\ngot:\n%s", want, got)
 	}
 	if result.File.Metadata[0].Span().StartOffset != 0 || result.File.Metadata[0].Span().EndOffset != 20 {
@@ -126,8 +126,8 @@ pub $tax = 0.1
 	}
 
 	stats := result.File.Declarations[2].(*ast.GlobalAssignment)
-	index := stats.Target.Accesses[0].(*ast.IndexAccess).Index.(*ast.PatternExpr)
-	if len(index.Tokens) != 2 || index.Tokens[0].Type != token.Dollar || index.Tokens[1].Lexeme != "key" {
+	index := stats.Target.Accesses[0].(*ast.IndexAccess).Index.(*ast.VariableExpr)
+	if index.Name.Name != "key" || index.Local {
 		t.Fatalf("unexpected index expression: %#v", index)
 	}
 	if _, ok := stats.Value.(*ast.NilLiteral); !ok {

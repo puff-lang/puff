@@ -1,0 +1,49 @@
+# namespace: example
+# tags: load, tick
+
+require "abc/shop"
+require "github.com/123/123" as lib123
+
+pub $default_coins = 100
+$shop.name = "Main Shop"
+
+pub fun serverName -> string
+   return "Lobby"
+end
+
+fun hasEnoughCoins(player: Player, price: int) -> bool
+   if $player.coins >= price
+      return true
+   else
+      return false
+   end
+end
+
+on load
+   send "Loaded {{namespace}}: {serverName}" to console
+   send "Shop tax: {shop.$tax}" to console
+   shop.Run
+end
+
+on tick
+end
+
+on join
+   $_price = 50
+
+   if hasEnoughCoins(player, $_price)
+      send "You can buy this." to player
+   else if $player.coins >= 10
+      send "You are close." to player
+   else
+      send "You need more coins." to player
+   end
+
+   loop numbers from 1 to 3
+      send "Index {loop.index}: {loop.value}" to player
+   end
+
+   loop players
+      send "Welcome, {loop.player}" to console
+   end
+end

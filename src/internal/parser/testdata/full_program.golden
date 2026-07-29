@@ -1,0 +1,28 @@
+requirements 2
+declarations 7
+pub global $default_coins = 100
+global $shop.name = "Main Shop"
+pub fun serverName() -> string
+  return "Lobby"
+fun hasEnoughCoins(player: Player, price: int) -> bool
+  if (>= $player.coins price)
+    return true
+  else
+    return false
+event load
+  effect send
+  effect send
+  expr shop.Run
+event tick
+event join
+  assign $_price = 50
+  if hasEnoughCoins(player, $_price)
+    effect send
+  else if (>= $player.coins 10)
+    effect send
+  else
+    effect send
+  loop numbers from 1 to 3
+    effect send
+  loop players
+    effect send
