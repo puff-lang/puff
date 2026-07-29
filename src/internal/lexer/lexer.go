@@ -20,6 +20,13 @@ var (
 type Metadata struct {
 	Namespace string
 	Tags      []string
+	Entries   []MetadataEntry
+}
+
+type MetadataEntry struct {
+	Key   string
+	Value string
+	Span  diagnostic.Span
 }
 
 type Result struct {
@@ -457,6 +464,7 @@ func (lexer *lexer) scanMetadata(comment string) {
 		}
 
 		lexer.metadata.Namespace = value
+		lexer.addMetadataEntry(key, value, len(comment))
 		return
 	}
 
@@ -468,6 +476,25 @@ func (lexer *lexer) scanMetadata(comment string) {
 		}
 	}
 	lexer.metadata.Tags = tags
+	lexer.addMetadataEntry(key, strings.Join(tags, ", "), len(comment))
+}
+
+func (lexer *lexer) addMetadataEntry(key string, value string, length int) {
+	startLine, startColumn, _ := lexer.file.Map.LineColumn(lexer.start)
+	endOffset := lexer.start + length
+	endLine, endColumn, _ := lexer.file.Map.LineColumn(endOffset)
+	lexer.metadata.Entries = append(lexer.metadata.Entries, MetadataEntry{
+		Key:   key,
+		Value: value,
+		Span: diagnostic.Span{
+			StartLine:   startLine,
+			StartColumn: startColumn,
+			EndLine:     endLine,
+			EndColumn:   endColumn,
+			StartOffset: lexer.start,
+			EndOffset:   endOffset,
+		},
+	})
 }
 
 func (lexer *lexer) emitNewline() {

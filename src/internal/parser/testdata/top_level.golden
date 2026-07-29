@@ -1,0 +1,12 @@
+metadata namespace="example"
+metadata tags="load, tick"
+require "abc/shop"
+require "github.com/123/123" as lib123
+global $coins = int(100)
+global $shop.name = string("Main Shop")
+global $players[] = list()
+pub global $tax = float(0.1)
+fun setup()
+pub fun finalPrice(price: float) -> float
+event load
+event scoreboard update

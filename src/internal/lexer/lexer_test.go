@@ -75,6 +75,17 @@ func TestLexCollectsFrontMatterMetadata(t *testing.T) {
 	if result.Metadata.Tags[0] != "load" || result.Metadata.Tags[1] != "tick" {
 		t.Fatalf("expected tags [load tick], got %v", result.Metadata.Tags)
 	}
+	if len(result.Metadata.Entries) != 2 {
+		t.Fatalf("expected two metadata entries, got %d", len(result.Metadata.Entries))
+	}
+	namespace := result.Metadata.Entries[0]
+	if namespace.Key != "namespace" || namespace.Value != "example" || namespace.Span.StartOffset != 1 || namespace.Span.EndOffset != 21 {
+		t.Fatalf("unexpected namespace entry: %#v", namespace)
+	}
+	tags := result.Metadata.Entries[1]
+	if tags.Key != "tags" || tags.Value != "load, tick" || tags.Span.StartLine != 3 || tags.Span.EndLine != 3 {
+		t.Fatalf("unexpected tags entry: %#v", tags)
+	}
 
 	assertTokenTypes(t, result.Tokens, []token.Type{
 		token.On,
