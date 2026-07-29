@@ -171,6 +171,7 @@ func TestResolveRejectsInvalidImportPaths(t *testing.T) {
 		{name: "non-canonical", requirement: staticRequire("./abc/shop", "")},
 		{name: "escaping source root", requirement: staticRequire("../shop", "")},
 		{name: "absolute", requirement: staticRequire("/abc/shop", "")},
+		{name: "windows drive absolute", requirement: staticRequire("C:/abc/shop", "")},
 		{name: "backslash", requirement: staticRequire(`abc\shop`, "")},
 	}
 
