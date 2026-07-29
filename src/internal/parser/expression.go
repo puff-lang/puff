@@ -35,7 +35,9 @@ func (parser *parser) hasLexerDiagnosticAt(offset int) bool {
 			return true
 		}
 		between := parser.file.Text[item.Span.EndOffset:offset]
-		if !strings.ContainsAny(between, "\r\n") && strings.TrimSpace(between) == "" {
+		trimmed := strings.TrimSpace(between)
+		if !strings.ContainsAny(between, "\r\n") &&
+			(trimmed == "" || strings.HasPrefix(trimmed, "#")) {
 			return true
 		}
 	}
