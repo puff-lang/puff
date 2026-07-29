@@ -214,6 +214,47 @@ func TestCheckIntegrationReportsDocumentedDiagnosticsWithoutCascades(t *testing.
 				},
 			},
 		},
+		{
+			name:    "final semantic edges",
+			fixture: "final-edges",
+			expected: []expectedSemanticDiagnostic{
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "b_index_private_last_use.puff",
+					line:    4,
+					message: "Undefined variable: private_last.$stats",
+					hint:    "Declare it before using it: private_last.$stats = 0",
+				},
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "d_index_public_last_use.puff",
+					line:    4,
+					message: "Undefined variable: public_last.$stats",
+					hint:    "Declare it before using it: public_last.$stats = 0",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "f_cycle_copy.puff",
+					line:    6,
+					message: "Type mismatch: cannot return int as string.",
+					hint:    "Return a value compatible with string.",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "h_add_scalar_list_target.puff",
+					line:    3,
+					message: "Type mismatch: cannot add int to int[].",
+					hint:    "Convert one value or use compatible types.",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "i_add_merged_type.puff",
+					line:    7,
+					message: "Type mismatch: cannot add int to unknown.",
+					hint:    "Convert one value or use compatible types.",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

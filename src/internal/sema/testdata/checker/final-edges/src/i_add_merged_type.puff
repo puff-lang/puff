@@ -1,0 +1,8 @@
+fun addAfterIncompatibleMerge(flag: bool)
+   if flag
+      $_value = 1
+   else
+      $_value = "wrong"
+   end
+   add 1 to $_value
+end
