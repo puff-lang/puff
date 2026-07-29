@@ -173,11 +173,18 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 		if !parser.match(token.From) {
 			parser.reportExpected("from", "")
 		}
-		rangeStart := parser.parseExpressionUntil(token.To)
-		if !parser.match(token.To) {
-			parser.reportExpected("to", "")
+		rangeStart := parser.parseExpressionUntil(token.To, token.Newline)
+		hasTo := parser.match(token.To)
+		if !hasTo {
+			if rangeStart != nil {
+				parser.reportExpected("to", "")
+			}
+			parser.synchronizeLine()
 		}
-		rangeEnd := parser.parseExpressionUntil(token.Newline)
+		var rangeEnd ast.Expression
+		if hasTo {
+			rangeEnd = parser.parseExpressionUntil(token.Newline)
+		}
 		parser.requireLineEnd()
 		body := parser.parseBlock(false)
 		end := parser.consumeBlockEnd(start)
@@ -194,11 +201,18 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 		if !parser.match(token.Radius) {
 			parser.reportExpected("radius", "")
 		}
-		radius := parser.parseExpressionUntil(token.Around)
-		if !parser.match(token.Around) {
-			parser.reportExpected("around", "")
+		radius := parser.parseExpressionUntil(token.Around, token.Newline)
+		hasAround := parser.match(token.Around)
+		if !hasAround {
+			if radius != nil {
+				parser.reportExpected("around", "")
+			}
+			parser.synchronizeLine()
 		}
-		around := parser.parseExpressionUntil(token.Newline)
+		var around ast.Expression
+		if hasAround {
+			around = parser.parseExpressionUntil(token.Newline)
+		}
 		parser.requireLineEnd()
 		body := parser.parseBlock(false)
 		end := parser.consumeBlockEnd(start)
@@ -209,9 +223,12 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 			Body:     body,
 		}
 	default:
-		count := parser.parseExpressionUntil(token.Times)
+		count := parser.parseExpressionUntil(token.Times, token.Newline)
 		if !parser.match(token.Times) {
-			parser.reportExpected("times", "")
+			if count != nil {
+				parser.reportExpected("times", "")
+			}
+			parser.synchronizeLine()
 		}
 		parser.requireLineEnd()
 		body := parser.parseBlock(false)

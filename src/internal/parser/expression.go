@@ -216,6 +216,11 @@ func (parser *parser) parseMap() ast.Expression {
 	start := parser.advance().StartOffset
 	var entries []ast.MapEntry
 	for !parser.check(token.RBrace) && !parser.atEnd() {
+		if parser.check(token.Comma) {
+			parser.reportExpected("expression", "")
+			parser.advance()
+			continue
+		}
 		entryStart := parser.peek().StartOffset
 		key := parser.parseExpressionUntil(token.Colon)
 		hasColon := parser.match(token.Colon)
