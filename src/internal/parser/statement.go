@@ -186,10 +186,16 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 			parser.reportExpected("from", "")
 		}
 		rangeStart := parser.parseExpressionUntil(token.To)
+		if rangeStart == nil {
+			parser.reportExpected("expression", "")
+		}
 		if !parser.match(token.To) {
 			parser.reportExpected("to", "")
 		}
 		rangeEnd := parser.parseExpressionUntil(token.Newline)
+		if rangeEnd == nil {
+			parser.reportExpected("expression", "")
+		}
 		parser.requireLineEnd()
 		body := parser.parseBlock(false)
 		end := parser.consumeBlockEnd(start)
@@ -207,10 +213,16 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 			parser.reportExpected("radius", "")
 		}
 		radius := parser.parseExpressionUntil(token.Around)
+		if radius == nil {
+			parser.reportExpected("expression", "")
+		}
 		if !parser.match(token.Around) {
 			parser.reportExpected("around", "")
 		}
 		around := parser.parseExpressionUntil(token.Newline)
+		if around == nil {
+			parser.reportExpected("expression", "")
+		}
 		parser.requireLineEnd()
 		body := parser.parseBlock(false)
 		end := parser.consumeBlockEnd(start)
@@ -222,6 +234,9 @@ func (parser *parser) parseLoopStatement() ast.Statement {
 		}
 	default:
 		count := parser.parseExpressionUntil(token.Times)
+		if count == nil {
+			parser.reportExpected("expression", "")
+		}
 		if !parser.match(token.Times) {
 			parser.reportExpected("times", "")
 		}
