@@ -16,10 +16,11 @@ type Result struct {
 }
 
 type parser struct {
-	file        source.File
-	tokens      []token.Token
-	current     int
-	diagnostics []diagnostic.Diagnostic
+	file            source.File
+	tokens          []token.Token
+	current         int
+	diagnostics     []diagnostic.Diagnostic
+	expressionStops map[token.Type]bool
 }
 
 func Parse(file source.File, lexed lexer.Result) Result {
@@ -233,6 +234,14 @@ func (parser *parser) peekNext() token.Token {
 		return parser.peek()
 	}
 	return parser.tokens[parser.current+1]
+}
+
+func (parser *parser) peekAt(distance int) token.Token {
+	index := parser.current + distance
+	if index >= len(parser.tokens) {
+		return parser.tokens[len(parser.tokens)-1]
+	}
+	return parser.tokens[index]
 }
 
 func (parser *parser) previous() token.Token {
