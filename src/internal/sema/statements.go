@@ -103,7 +103,7 @@ func (checker *checker) checkStatement(
 		if statement == nil {
 			return true
 		}
-		checker.checkLoopRange(module, currentScope, statement, context)
+		return checker.checkLoopRange(module, currentScope, statement, context)
 	case *ast.LoopPlayersStmt:
 		if statement == nil {
 			return true
@@ -233,7 +233,21 @@ func (checker *checker) checkAdd(module *Module, currentScope *scope, statement 
 		targetType := checker.checkVariable(module, currentScope, target)
 		if len(target.Accesses) > 0 {
 			if _, empty := target.Accesses[len(target.Accesses)-1].(*ast.EmptyIndexAccess); empty {
-				if targetType.Kind != TypeList || len(targetType.Arguments) == 0 {
+				if targetType.IsUnknown() && !targetType.incompatible ||
+					valueType.IsUnknown() && !valueType.incompatible {
+					return
+				}
+				if targetType.incompatible {
+					checker.typeMismatch(module, statement.Value,
+						fmt.Sprintf("Type mismatch: cannot add %s to %s[].", valueType.String(), targetType.String()))
+					return
+				}
+				if targetType.Kind != TypeList {
+					checker.typeMismatch(module, statement.Value,
+						fmt.Sprintf("Type mismatch: cannot add %s to %s[].", valueType.String(), targetType.String()))
+					return
+				}
+				if len(targetType.Arguments) == 0 {
 					return
 				}
 				targetType = targetType.Arguments[0]
@@ -248,6 +262,9 @@ func (checker *checker) checkAdd(module *Module, currentScope *scope, statement 
 }
 
 func addCompatible(target Type, value Type) bool {
+	if target.incompatible || value.incompatible {
+		return false
+	}
 	if target.IsUnknown() || value.IsUnknown() {
 		return true
 	}
@@ -316,7 +333,7 @@ func (checker *checker) checkLoopRange(
 	currentScope *scope,
 	statement *ast.LoopRangeStmt,
 	context flowContext,
-) {
+) bool {
 	start := checker.checkExpression(module, currentScope, statement.Start)
 	end := checker.checkExpression(module, currentScope, statement.End)
 	checker.requireNumeric(module, statement.Start, start)
@@ -326,7 +343,11 @@ func (checker *checker) checkLoopRange(
 	loopScope := newInjectedScope(isolatedFlowScope(currentScope))
 	loopScope.defineName("loop.index", Type{Kind: TypeInt})
 	loopScope.defineName("loop.value", valueType)
-	checker.checkBlock(module, loopScope, statement.Body, context)
+	fallsThrough := checker.checkBlock(module, loopScope, statement.Body, context)
+	if fallsThrough {
+		mergeFlowScopes(currentScope, []*scope{loopScope})
+	}
+	return fallsThrough
 }
 
 func (checker *checker) checkLoopPlayers(

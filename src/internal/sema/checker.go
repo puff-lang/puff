@@ -10,8 +10,9 @@ import (
 )
 
 type checker struct {
-	project     *Project
-	diagnostics []diagnostic.Diagnostic
+	project             *Project
+	diagnostics         []diagnostic.Diagnostic
+	suppressDiagnostics bool
 }
 
 func Check(project *Project) Result {
@@ -158,7 +159,6 @@ func (checker *checker) checkModules() {
 }
 
 func (checker *checker) checkGlobalInitializersInDependencyOrder() {
-	state := make(map[*Module]uint8)
 	modules := append([]*Module(nil), checker.project.Modules...)
 	sort.SliceStable(modules, func(left, right int) bool {
 		if modules[left] == nil {
@@ -170,42 +170,54 @@ func (checker *checker) checkGlobalInitializersInDependencyOrder() {
 		return modules[left].Source.RelPath < modules[right].Source.RelPath
 	})
 
-	var checkModule func(*Module)
-	checkModule = func(module *Module) {
-		if module == nil || module.Syntax == nil || state[module] == 2 {
-			return
+	globalCount := 0
+	for _, module := range modules {
+		if module == nil || module.Syntax == nil {
+			continue
 		}
-		if state[module] == 1 {
-			return
-		}
-		state[module] = 1
-
-		dependencies := make([]*Module, 0, len(module.Imports))
-		seen := make(map[*Module]bool)
-		for _, imported := range module.Imports {
-			if imported == nil || imported.Target == nil || seen[imported.Target] {
-				continue
+		for _, declaration := range module.Syntax.Declarations {
+			if _, ok := declaration.(*ast.GlobalAssignment); ok {
+				globalCount++
 			}
-			seen[imported.Target] = true
-			dependencies = append(dependencies, imported.Target)
 		}
-		sort.Slice(dependencies, func(left, right int) bool {
-			return dependencies[left].Source.RelPath < dependencies[right].Source.RelPath
-		})
-		for _, dependency := range dependencies {
-			checkModule(dependency)
-		}
-
-		checker.checkGlobalInitializers(module)
-		state[module] = 2
 	}
 
+	checker.suppressDiagnostics = true
+	for iteration := 0; iteration <= globalCount; iteration++ {
+		checker.resetGlobalInitialization(modules)
+		changed := false
+		for _, module := range modules {
+			changed = checker.checkGlobalInitializers(module, true) || changed
+		}
+		if !changed {
+			break
+		}
+	}
+	checker.suppressDiagnostics = false
+
+	checker.resetGlobalInitialization(modules)
 	for _, module := range modules {
-		checkModule(module)
+		checker.checkGlobalInitializers(module, false)
 	}
 }
 
-func (checker *checker) checkGlobalInitializers(module *Module) {
+func (checker *checker) resetGlobalInitialization(modules []*Module) {
+	for _, module := range modules {
+		if module == nil || module.Symbols == nil {
+			continue
+		}
+		for _, symbol := range module.Symbols.Globals {
+			symbol.initialized = false
+		}
+	}
+}
+
+func (checker *checker) checkGlobalInitializers(module *Module, updateTypes bool) bool {
+	if module == nil || module.Syntax == nil {
+		return false
+	}
+
+	changed := false
 	for _, declaration := range module.Syntax.Declarations {
 		global, ok := declaration.(*ast.GlobalAssignment)
 		if !ok || global == nil {
@@ -222,12 +234,31 @@ func (checker *checker) checkGlobalInitializers(module *Module) {
 		}
 		path, _ := globalPath(global.Target)
 		if symbol, ok := module.Symbols.Globals[path]; ok {
-			symbol.Type = typ
+			if updateTypes && !sameType(symbol.Type, typ) {
+				symbol.Type = typ
+				changed = true
+			}
 			symbol.initialized = true
 			module.ResolvedVariables[global.Target] = symbol
 		}
 		checker.checkVariableAccesses(module, nil, global.Target)
 	}
+	return changed
+}
+
+func sameType(left Type, right Type) bool {
+	if left.Kind != right.Kind || left.Name != right.Name || left.incompatible != right.incompatible {
+		return false
+	}
+	if len(left.Arguments) != len(right.Arguments) {
+		return false
+	}
+	for index := range left.Arguments {
+		if !sameType(left.Arguments[index], right.Arguments[index]) {
+			return false
+		}
+	}
+	return true
 }
 
 func endsWithEmptyIndex(variable *ast.VariableExpr) bool {
@@ -341,5 +372,8 @@ func (checker *checker) report(
 	message string,
 	hint string,
 ) {
+	if checker.suppressDiagnostics {
+		return
+	}
 	checker.diagnostics = append(checker.diagnostics, semanticDiagnostic(module, node, code, message, hint))
 }

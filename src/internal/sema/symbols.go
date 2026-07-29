@@ -1,6 +1,11 @@
 package sema
 
-import "github.com/puff-lang/puff/internal/ast"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/puff-lang/puff/internal/ast"
+)
 
 type FunctionSymbol struct {
 	Name        string
@@ -42,11 +47,11 @@ func globalPath(variable *ast.VariableExpr) (string, int) {
 	path := variable.Name.Name
 	depth := 0
 	for _, access := range variable.Accesses {
-		field, ok := access.(*ast.FieldAccess)
+		part, ok := staticGlobalAccess(access)
 		if !ok {
 			break
 		}
-		path += "." + field.Field.Name
+		path += part
 		depth++
 	}
 	return path, depth
@@ -60,16 +65,56 @@ func (symbols *SymbolTable) lookupGlobal(variable *ast.VariableExpr) *VariableSy
 	path := variable.Name.Name
 	symbol := symbols.Globals[path]
 	for _, access := range variable.Accesses {
-		field, ok := access.(*ast.FieldAccess)
+		part, ok := staticGlobalAccess(access)
 		if !ok {
 			break
 		}
-		path += "." + field.Field.Name
+		path += part
 		if candidate := symbols.Globals[path]; candidate != nil {
 			symbol = candidate
 		}
 	}
 	return symbol
+}
+
+func staticGlobalAccess(access ast.VariableAccess) (string, bool) {
+	switch access := access.(type) {
+	case *ast.FieldAccess:
+		return "." + access.Field.Name, true
+	case *ast.IndexAccess:
+		value, ok := staticIndexValue(access.Index)
+		if !ok {
+			return "", false
+		}
+		return "[" + value + "]", true
+	default:
+		return "", false
+	}
+}
+
+func staticIndexValue(expression ast.Expression) (string, bool) {
+	switch expression := expression.(type) {
+	case *ast.StringExpr:
+		var value strings.Builder
+		for _, part := range expression.Parts {
+			text, ok := part.(*ast.StringText)
+			if !ok {
+				return "", false
+			}
+			value.WriteString(text.Value)
+		}
+		return strconv.Quote(value.String()), true
+	case *ast.IntLiteral:
+		return strconv.FormatInt(expression.Value, 10), true
+	case *ast.FloatLiteral:
+		return strconv.FormatFloat(expression.Value, 'g', -1, 64), true
+	case *ast.BoolLiteral:
+		return strconv.FormatBool(expression.Value), true
+	case *ast.NilLiteral:
+		return "nil", true
+	default:
+		return "", false
+	}
 }
 
 type scope struct {
