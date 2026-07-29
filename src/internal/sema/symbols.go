@@ -5,6 +5,14 @@ import (
 	"strings"
 
 	"github.com/puff-lang/puff/internal/ast"
+	"github.com/puff-lang/puff/internal/token"
+)
+
+type globalResolution uint8
+
+const (
+	globalUnresolved globalResolution = iota
+	globalResolved
 )
 
 type FunctionSymbol struct {
@@ -25,6 +33,8 @@ type VariableSymbol struct {
 	Local       bool
 	AccessDepth int
 	initialized bool
+	resolution  globalResolution
+	reported    bool
 }
 
 type SymbolTable struct {
@@ -103,13 +113,25 @@ func staticIndexValue(expression ast.Expression) (string, bool) {
 			}
 			value.WriteString(text.Value)
 		}
-		return strconv.Quote(value.String()), true
+		return "string:" + strconv.Quote(value.String()), true
 	case *ast.IntLiteral:
-		return strconv.FormatInt(expression.Value, 10), true
+		return "int:" + strconv.FormatInt(expression.Value, 10), true
 	case *ast.FloatLiteral:
-		return strconv.FormatFloat(expression.Value, 'g', -1, 64), true
+		return "float:" + strconv.FormatFloat(expression.Value, 'g', -1, 64), true
+	case *ast.UnaryExpr:
+		if expression.Operator != token.Minus {
+			return "", false
+		}
+		switch operand := expression.Operand.(type) {
+		case *ast.IntLiteral:
+			return "int:" + strconv.FormatInt(-operand.Value, 10), true
+		case *ast.FloatLiteral:
+			return "float:" + strconv.FormatFloat(-operand.Value, 'g', -1, 64), true
+		default:
+			return "", false
+		}
 	case *ast.BoolLiteral:
-		return strconv.FormatBool(expression.Value), true
+		return "bool:" + strconv.FormatBool(expression.Value), true
 	case *ast.NilLiteral:
 		return "nil", true
 	default:

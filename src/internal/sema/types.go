@@ -25,6 +25,7 @@ type Type struct {
 	Name         string
 	Arguments    []Type
 	incompatible bool
+	placeholder  bool
 }
 
 func (typ Type) String() string {
@@ -45,6 +46,10 @@ func (typ Type) String() string {
 
 func (typ Type) IsUnknown() bool {
 	return typ.Kind == TypeUnknown
+}
+
+func inferencePlaceholder() Type {
+	return Type{Kind: TypeUnknown, placeholder: true}
 }
 
 var builtInTypes = map[string]TypeKind{

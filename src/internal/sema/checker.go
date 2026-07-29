@@ -13,6 +13,12 @@ type checker struct {
 	project             *Project
 	diagnostics         []diagnostic.Diagnostic
 	suppressDiagnostics bool
+	unresolvedGlobal    *globalDependencyState
+}
+
+type globalDependencyState struct {
+	unresolved bool
+	reported   bool
 }
 
 func Check(project *Project) Result {
@@ -196,8 +202,9 @@ func (checker *checker) checkGlobalInitializersInDependencyOrder() {
 	checker.suppressDiagnostics = false
 
 	checker.resetGlobalInitialization(modules)
+	checker.resetGlobalReports(modules)
 	for _, module := range modules {
-		checker.checkGlobalInitializers(module, false)
+		checker.checkGlobalInitializers(module, true)
 	}
 }
 
@@ -208,6 +215,17 @@ func (checker *checker) resetGlobalInitialization(modules []*Module) {
 		}
 		for _, symbol := range module.Symbols.Globals {
 			symbol.initialized = false
+		}
+	}
+}
+
+func (checker *checker) resetGlobalReports(modules []*Module) {
+	for _, module := range modules {
+		if module == nil || module.Symbols == nil {
+			continue
+		}
+		for _, symbol := range module.Symbols.Globals {
+			symbol.reported = false
 		}
 	}
 }
@@ -224,7 +242,10 @@ func (checker *checker) checkGlobalInitializers(module *Module, updateTypes bool
 			continue
 		}
 
+		dependency := globalDependencyState{}
+		checker.unresolvedGlobal = &dependency
 		typ := checker.checkExpression(module, nil, global.Value)
+		checker.unresolvedGlobal = nil
 		if global.Target == nil || global.Target.Local {
 			continue
 		}
@@ -238,6 +259,17 @@ func (checker *checker) checkGlobalInitializers(module *Module, updateTypes bool
 				symbol.Type = typ
 				changed = true
 			}
+			resolution := globalResolved
+			if dependency.unresolved {
+				resolution = globalUnresolved
+			}
+			if symbol.resolution != resolution {
+				symbol.resolution = resolution
+				changed = true
+			}
+			if !checker.suppressDiagnostics {
+				symbol.reported = dependency.reported
+			}
 			symbol.initialized = true
 			module.ResolvedVariables[global.Target] = symbol
 		}
@@ -247,7 +279,8 @@ func (checker *checker) checkGlobalInitializers(module *Module, updateTypes bool
 }
 
 func sameType(left Type, right Type) bool {
-	if left.Kind != right.Kind || left.Name != right.Name || left.incompatible != right.incompatible {
+	if left.Kind != right.Kind || left.Name != right.Name ||
+		left.incompatible != right.incompatible || left.placeholder != right.placeholder {
 		return false
 	}
 	if len(left.Arguments) != len(right.Arguments) {

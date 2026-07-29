@@ -292,10 +292,22 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 		return Type{Kind: TypeUnknown}
 	}
 	if _, isGlobalDeclaration := symbol.Declaration.(*ast.GlobalAssignment); isGlobalDeclaration &&
-		symbol.Module == module && !symbol.initialized {
-		checker.report(module, variable, diagnostic.CodeUndefinedVariable,
-			fmt.Sprintf("Undefined variable: %s", variableName(variable)),
-			fmt.Sprintf("Declare it before using it: %s = 0", variableName(variable)))
+		(symbol.Module == module && !symbol.initialized || symbol.resolution == globalUnresolved) {
+		if checker.unresolvedGlobal != nil {
+			checker.unresolvedGlobal.unresolved = true
+			checker.unresolvedGlobal.reported = symbol.reported
+		}
+		if !symbol.reported {
+			checker.report(module, variable, diagnostic.CodeUndefinedVariable,
+				fmt.Sprintf("Undefined variable: %s", variableName(variable)),
+				fmt.Sprintf("Declare it before using it: %s = 0", variableName(variable)))
+			if !checker.suppressDiagnostics {
+				symbol.reported = true
+				if checker.unresolvedGlobal != nil {
+					checker.unresolvedGlobal.reported = true
+				}
+			}
+		}
 		return Type{Kind: TypeUnknown}
 	}
 
@@ -357,29 +369,20 @@ func variableName(variable *ast.VariableExpr) string {
 }
 
 func (checker *checker) checkList(module *Module, currentScope *scope, expression *ast.ListExpr) Type {
-	elementType := Type{Kind: TypeUnknown}
-	for index, element := range expression.Elements {
+	elementType := inferencePlaceholder()
+	for _, element := range expression.Elements {
 		current := checker.checkExpression(module, currentScope, element)
-		if index == 0 {
-			elementType = current
-		} else {
-			elementType = mergeInferredTypes(elementType, current)
-		}
+		elementType = mergeInferredTypes(elementType, current)
 	}
 	return Type{Kind: TypeList, Arguments: []Type{elementType}}
 }
 
 func (checker *checker) checkMap(module *Module, currentScope *scope, expression *ast.MapExpr) Type {
-	keyType := Type{Kind: TypeUnknown}
-	valueType := Type{Kind: TypeUnknown}
-	for index, entry := range expression.Entries {
+	keyType := inferencePlaceholder()
+	valueType := inferencePlaceholder()
+	for _, entry := range expression.Entries {
 		key := checker.checkExpression(module, currentScope, entry.Key)
 		value := checker.checkExpression(module, currentScope, entry.Value)
-		if index == 0 {
-			keyType = key
-			valueType = value
-			continue
-		}
 		keyType = mergeInferredTypes(keyType, key)
 		valueType = mergeInferredTypes(valueType, value)
 	}
@@ -387,11 +390,24 @@ func (checker *checker) checkMap(module *Module, currentScope *scope, expression
 }
 
 func mergeInferredTypes(left Type, right Type) Type {
-	if left.IsUnknown() && !left.incompatible || right.IsUnknown() && !right.incompatible {
+	if (left.IsUnknown() && !left.placeholder && !left.incompatible) ||
+		(right.IsUnknown() && !right.placeholder && !right.incompatible) {
 		return Type{Kind: TypeUnknown}
 	}
 	if left.incompatible || right.incompatible {
 		return Type{Kind: TypeUnknown, incompatible: true}
+	}
+	if left.IsUnknown() {
+		if left.placeholder {
+			return right
+		}
+		return left
+	}
+	if right.IsUnknown() {
+		if right.placeholder {
+			return left
+		}
+		return right
 	}
 	if numeric := numericType(left, right); !numeric.IsUnknown() {
 		return numeric
