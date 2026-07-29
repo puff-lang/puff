@@ -120,6 +120,19 @@ func TestCheckIntegrationReportsDocumentedDiagnosticsWithoutCascades(t *testing.
 			},
 		},
 		{
+			name:    "public local variable",
+			fixture: "public-local",
+			expected: []expectedSemanticDiagnostic{
+				{
+					code:    diagnostic.CodeInvalidPublicLocalVariable,
+					file:    "main.puff",
+					line:    1,
+					message: "Local variables cannot be public.",
+					hint:    "Only global variables can be exported.",
+				},
+			},
+		},
+		{
 			name:    "return and stop distinctions",
 			fixture: "returns",
 			expected: []expectedSemanticDiagnostic{

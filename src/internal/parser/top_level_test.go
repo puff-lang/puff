@@ -140,6 +140,33 @@ pub $tax = 0.1
 	}
 }
 
+func TestParsePreservesPublicLocalForSemanticValidation(t *testing.T) {
+	input := "pub $_price = 50\n"
+	result := parseTestSource("public-local.puff", input)
+
+	if len(result.Diagnostics) != 0 {
+		t.Fatalf("expected semantic validation to receive the declaration, got %#v", result.Diagnostics)
+	}
+	if len(result.File.Declarations) != 1 {
+		t.Fatalf("expected one declaration, got %#v", result.File.Declarations)
+	}
+
+	declaration, ok := result.File.Declarations[0].(*ast.GlobalAssignment)
+	if !ok {
+		t.Fatalf("expected global assignment, got %T", result.File.Declarations[0])
+	}
+	if !declaration.Public || declaration.Target == nil || !declaration.Target.Local || declaration.Target.Name.Name != "price" {
+		t.Fatalf("unexpected public local declaration: %#v", declaration)
+	}
+	value, ok := declaration.Value.(*ast.IntLiteral)
+	if !ok || value.Value != 50 {
+		t.Fatalf("unexpected public local value: %#v", declaration.Value)
+	}
+	if declaration.Span().StartOffset != 0 || declaration.Span().EndOffset != len(input)-1 {
+		t.Fatalf("unexpected declaration span: %#v", declaration.Span())
+	}
+}
+
 func TestParseEventsAndBalancedBodies(t *testing.T) {
 	result := parseTestSource("events.puff", `
 fun nested
