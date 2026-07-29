@@ -98,6 +98,13 @@ func (checker *checker) checkAssignment(
 		return
 	}
 	checker.checkVariableAccesses(module, currentScope, target)
+	if len(target.Accesses) > 0 {
+		if _, ok := target.Accesses[len(target.Accesses)-1].(*ast.EmptyIndexAccess); ok &&
+			!valueType.IsUnknown() && valueType.Kind != TypeList {
+			checker.typeMismatch(module, statement.Value,
+				fmt.Sprintf("Type mismatch: cannot assign %s to %s[].", valueType.String(), variableName(target)))
+		}
+	}
 
 	if target.Qualifier != nil {
 		checker.checkImportedAssignment(module, target)

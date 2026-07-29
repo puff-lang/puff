@@ -18,6 +18,7 @@ type VariableSymbol struct {
 	Type        Type
 	Public      bool
 	Local       bool
+	initialized bool
 }
 
 type SymbolTable struct {

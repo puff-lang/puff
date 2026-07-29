@@ -167,6 +167,7 @@ func (checker *checker) checkGlobalInitializers(module *Module) {
 		}
 		if symbol, ok := module.Symbols.Globals[global.Target.Name.Name]; ok {
 			symbol.Type = typ
+			symbol.initialized = true
 			module.ResolvedVariables[global.Target] = symbol
 		}
 		checker.checkVariableAccesses(module, nil, global.Target)

@@ -291,6 +291,13 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 			fmt.Sprintf("Declare it before using it: %s = 0", variableName(variable)))
 		return Type{Kind: TypeUnknown}
 	}
+	if _, isGlobalDeclaration := symbol.Declaration.(*ast.GlobalAssignment); isGlobalDeclaration &&
+		symbol.Module == module && !symbol.initialized {
+		checker.report(module, variable, diagnostic.CodeUndefinedVariable,
+			fmt.Sprintf("Undefined variable: %s", variableName(variable)),
+			fmt.Sprintf("Declare it before using it: %s = 0", variableName(variable)))
+		return Type{Kind: TypeUnknown}
+	}
 
 	module.ResolvedVariables[variable] = symbol
 	return checker.typeAfterAccesses(symbol.Type, variable.Accesses)
@@ -348,8 +355,8 @@ func (checker *checker) checkList(module *Module, currentScope *scope, expressio
 		current := checker.checkExpression(module, currentScope, element)
 		if index == 0 {
 			elementType = current
-		} else if !compatible(elementType, current) && !compatible(current, elementType) {
-			elementType = Type{Kind: TypeUnknown}
+		} else {
+			elementType = mergeInferredTypes(elementType, current)
 		}
 	}
 	return Type{Kind: TypeList, Arguments: []Type{elementType}}
@@ -366,14 +373,38 @@ func (checker *checker) checkMap(module *Module, currentScope *scope, expression
 			valueType = value
 			continue
 		}
-		if !compatible(keyType, key) && !compatible(key, keyType) {
-			keyType = Type{Kind: TypeUnknown}
-		}
-		if !compatible(valueType, value) && !compatible(value, valueType) {
-			valueType = Type{Kind: TypeUnknown}
-		}
+		keyType = mergeInferredTypes(keyType, key)
+		valueType = mergeInferredTypes(valueType, value)
 	}
 	return Type{Kind: TypeMap, Arguments: []Type{keyType, valueType}}
+}
+
+func mergeInferredTypes(left Type, right Type) Type {
+	if left.IsUnknown() || right.IsUnknown() {
+		return Type{Kind: TypeUnknown}
+	}
+	if numeric := numericType(left, right); !numeric.IsUnknown() {
+		return numeric
+	}
+	if left.Kind != right.Kind || left.Kind == TypeNamed && left.Name != right.Name {
+		return Type{Kind: TypeUnknown}
+	}
+	if len(left.Arguments) == 0 {
+		return right
+	}
+	if len(right.Arguments) == 0 {
+		return left
+	}
+	if len(left.Arguments) != len(right.Arguments) {
+		return Type{Kind: TypeUnknown}
+	}
+
+	merged := left
+	merged.Arguments = make([]Type, len(left.Arguments))
+	for index := range left.Arguments {
+		merged.Arguments[index] = mergeInferredTypes(left.Arguments[index], right.Arguments[index])
+	}
+	return merged
 }
 
 func (checker *checker) checkRange(module *Module, currentScope *scope, expression *ast.RangeExpr) Type {
