@@ -21,9 +21,10 @@ const (
 )
 
 type Type struct {
-	Kind      TypeKind
-	Name      string
-	Arguments []Type
+	Kind         TypeKind
+	Name         string
+	Arguments    []Type
+	incompatible bool
 }
 
 func (typ Type) String() string {
@@ -81,6 +82,9 @@ var builtInTypes = map[string]TypeKind{
 }
 
 func compatible(expected Type, actual Type) bool {
+	if expected.incompatible || actual.incompatible {
+		return false
+	}
 	if expected.IsUnknown() || actual.IsUnknown() {
 		return true
 	}

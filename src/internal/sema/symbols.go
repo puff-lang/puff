@@ -18,6 +18,7 @@ type VariableSymbol struct {
 	Type        Type
 	Public      bool
 	Local       bool
+	AccessDepth int
 	initialized bool
 }
 
@@ -31,6 +32,44 @@ func newSymbolTable() *SymbolTable {
 		Functions: make(map[string]*FunctionSymbol),
 		Globals:   make(map[string]*VariableSymbol),
 	}
+}
+
+func globalPath(variable *ast.VariableExpr) (string, int) {
+	if variable == nil || variable.Name.Name == "" {
+		return "", 0
+	}
+
+	path := variable.Name.Name
+	depth := 0
+	for _, access := range variable.Accesses {
+		field, ok := access.(*ast.FieldAccess)
+		if !ok {
+			break
+		}
+		path += "." + field.Field.Name
+		depth++
+	}
+	return path, depth
+}
+
+func (symbols *SymbolTable) lookupGlobal(variable *ast.VariableExpr) *VariableSymbol {
+	if symbols == nil || variable == nil {
+		return nil
+	}
+
+	path := variable.Name.Name
+	symbol := symbols.Globals[path]
+	for _, access := range variable.Accesses {
+		field, ok := access.(*ast.FieldAccess)
+		if !ok {
+			break
+		}
+		path += "." + field.Field.Name
+		if candidate := symbols.Globals[path]; candidate != nil {
+			symbol = candidate
+		}
+	}
+	return symbol
 }
 
 type scope struct {

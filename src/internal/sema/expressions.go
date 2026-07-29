@@ -272,7 +272,7 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 	if variable.Qualifier != nil {
 		imported, ok := module.Import(variable.Qualifier.Name)
 		if ok && imported != nil && imported.Target != nil && imported.Target.Symbols != nil {
-			symbol = imported.Target.Symbols.Globals[variable.Name.Name]
+			symbol = imported.Target.Symbols.lookupGlobal(variable)
 			if symbol != nil && !symbol.Public {
 				symbol = nil
 			}
@@ -282,7 +282,7 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 	} else if typ, ok := currentScope.lookupName(variable.Name.Name); ok {
 		return checker.typeAfterAccesses(typ, variable.Accesses)
 	} else if module != nil && module.Symbols != nil {
-		symbol = module.Symbols.Globals[variable.Name.Name]
+		symbol = module.Symbols.lookupGlobal(variable)
 	}
 
 	if symbol == nil {
@@ -300,7 +300,7 @@ func (checker *checker) checkVariable(module *Module, currentScope *scope, varia
 	}
 
 	module.ResolvedVariables[variable] = symbol
-	return checker.typeAfterAccesses(symbol.Type, variable.Accesses)
+	return checker.typeAfterAccesses(symbol.Type, variable.Accesses[symbol.AccessDepth:])
 }
 
 func (checker *checker) checkVariableAccesses(module *Module, currentScope *scope, variable *ast.VariableExpr) {
@@ -346,6 +346,13 @@ func variableName(variable *ast.VariableExpr) string {
 	if variable.Qualifier != nil {
 		name = variable.Qualifier.Name + "." + name
 	}
+	for _, access := range variable.Accesses {
+		field, ok := access.(*ast.FieldAccess)
+		if !ok {
+			break
+		}
+		name += "." + field.Field.Name
+	}
 	return name
 }
 
@@ -380,14 +387,17 @@ func (checker *checker) checkMap(module *Module, currentScope *scope, expression
 }
 
 func mergeInferredTypes(left Type, right Type) Type {
-	if left.IsUnknown() || right.IsUnknown() {
+	if left.IsUnknown() && !left.incompatible || right.IsUnknown() && !right.incompatible {
 		return Type{Kind: TypeUnknown}
+	}
+	if left.incompatible || right.incompatible {
+		return Type{Kind: TypeUnknown, incompatible: true}
 	}
 	if numeric := numericType(left, right); !numeric.IsUnknown() {
 		return numeric
 	}
 	if left.Kind != right.Kind || left.Kind == TypeNamed && left.Name != right.Name {
-		return Type{Kind: TypeUnknown}
+		return Type{Kind: TypeUnknown, incompatible: true}
 	}
 	if len(left.Arguments) == 0 {
 		return right
@@ -396,7 +406,7 @@ func mergeInferredTypes(left Type, right Type) Type {
 		return left
 	}
 	if len(left.Arguments) != len(right.Arguments) {
-		return Type{Kind: TypeUnknown}
+		return Type{Kind: TypeUnknown, incompatible: true}
 	}
 
 	merged := left

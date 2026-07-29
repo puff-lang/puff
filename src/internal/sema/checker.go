@@ -2,6 +2,7 @@ package sema
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/puff-lang/puff/internal/ast"
@@ -99,12 +100,14 @@ func (checker *checker) indexGlobal(module *Module, declaration *ast.GlobalAssig
 		return
 	}
 
-	module.Symbols.Globals[target.Name.Name] = &VariableSymbol{
+	path, depth := globalPath(target)
+	module.Symbols.Globals[path] = &VariableSymbol{
 		Name:        target.Name.Name,
 		Declaration: declaration,
 		Module:      module,
 		Type:        Type{Kind: TypeUnknown},
 		Public:      declaration.Public,
+		AccessDepth: depth,
 	}
 }
 
@@ -136,8 +139,8 @@ func (checker *checker) checkModules() {
 			continue
 		}
 		checker.checkRequiredEvents(module)
-		checker.checkGlobalInitializers(module)
 	}
+	checker.checkGlobalInitializersInDependencyOrder()
 
 	for _, module := range checker.project.Modules {
 		if module == nil || module.Syntax == nil {
@@ -154,6 +157,54 @@ func (checker *checker) checkModules() {
 	}
 }
 
+func (checker *checker) checkGlobalInitializersInDependencyOrder() {
+	state := make(map[*Module]uint8)
+	modules := append([]*Module(nil), checker.project.Modules...)
+	sort.SliceStable(modules, func(left, right int) bool {
+		if modules[left] == nil {
+			return false
+		}
+		if modules[right] == nil {
+			return true
+		}
+		return modules[left].Source.RelPath < modules[right].Source.RelPath
+	})
+
+	var checkModule func(*Module)
+	checkModule = func(module *Module) {
+		if module == nil || module.Syntax == nil || state[module] == 2 {
+			return
+		}
+		if state[module] == 1 {
+			return
+		}
+		state[module] = 1
+
+		dependencies := make([]*Module, 0, len(module.Imports))
+		seen := make(map[*Module]bool)
+		for _, imported := range module.Imports {
+			if imported == nil || imported.Target == nil || seen[imported.Target] {
+				continue
+			}
+			seen[imported.Target] = true
+			dependencies = append(dependencies, imported.Target)
+		}
+		sort.Slice(dependencies, func(left, right int) bool {
+			return dependencies[left].Source.RelPath < dependencies[right].Source.RelPath
+		})
+		for _, dependency := range dependencies {
+			checkModule(dependency)
+		}
+
+		checker.checkGlobalInitializers(module)
+		state[module] = 2
+	}
+
+	for _, module := range modules {
+		checkModule(module)
+	}
+}
+
 func (checker *checker) checkGlobalInitializers(module *Module) {
 	for _, declaration := range module.Syntax.Declarations {
 		global, ok := declaration.(*ast.GlobalAssignment)
@@ -165,13 +216,26 @@ func (checker *checker) checkGlobalInitializers(module *Module) {
 		if global.Target == nil || global.Target.Local {
 			continue
 		}
-		if symbol, ok := module.Symbols.Globals[global.Target.Name.Name]; ok {
+		if endsWithEmptyIndex(global.Target) && !typ.IsUnknown() && typ.Kind != TypeList {
+			checker.typeMismatch(module, global.Value,
+				fmt.Sprintf("Type mismatch: cannot assign %s to %s[].", typ.String(), variableName(global.Target)))
+		}
+		path, _ := globalPath(global.Target)
+		if symbol, ok := module.Symbols.Globals[path]; ok {
 			symbol.Type = typ
 			symbol.initialized = true
 			module.ResolvedVariables[global.Target] = symbol
 		}
 		checker.checkVariableAccesses(module, nil, global.Target)
 	}
+}
+
+func endsWithEmptyIndex(variable *ast.VariableExpr) bool {
+	if variable == nil || len(variable.Accesses) == 0 {
+		return false
+	}
+	_, ok := variable.Accesses[len(variable.Accesses)-1].(*ast.EmptyIndexAccess)
+	return ok
 }
 
 func (checker *checker) checkFunction(module *Module, declaration *ast.FunctionDecl) {

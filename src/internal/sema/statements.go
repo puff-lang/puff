@@ -12,6 +12,59 @@ type flowContext struct {
 	returnType Type
 }
 
+func isolatedFlowScope(parent *scope) *scope {
+	current := &scope{
+		parent: parent,
+		names:  make(map[string]Type),
+		locals: copyLocals(parent),
+	}
+	current.owner = current
+	return current
+}
+
+func copyLocals(current *scope) map[string]*VariableSymbol {
+	copied := make(map[string]*VariableSymbol)
+	if current == nil {
+		return copied
+	}
+	owner := current.owner
+	if owner == nil {
+		owner = current
+	}
+	for name, symbol := range owner.locals {
+		copied[name] = symbol
+	}
+	return copied
+}
+
+func mergeFlowScopes(target *scope, paths []*scope) {
+	if target == nil || len(paths) == 0 {
+		return
+	}
+
+	merged := copyLocals(paths[0])
+	for name, first := range merged {
+		combined := *first
+		for _, path := range paths[1:] {
+			candidate, ok := copyLocals(path)[name]
+			if !ok {
+				delete(merged, name)
+				break
+			}
+			combined.Type = mergeInferredTypes(combined.Type, candidate.Type)
+		}
+		if _, ok := merged[name]; ok {
+			merged[name] = &combined
+		}
+	}
+
+	owner := target.owner
+	if owner == nil {
+		owner = target
+	}
+	owner.locals = merged
+}
+
 func (checker *checker) checkBlock(
 	module *Module,
 	currentScope *scope,
@@ -128,16 +181,19 @@ func (checker *checker) checkAssignment(
 		return
 	}
 
-	symbol := module.Symbols.Globals[target.Name.Name]
+	path, depth := globalPath(target)
+	symbol := module.Symbols.lookupGlobal(target)
 	if symbol == nil {
 		symbol = &VariableSymbol{
 			Name:        target.Name.Name,
 			Declaration: statement,
 			Module:      module,
+			AccessDepth: depth,
 		}
-		module.Symbols.Globals[target.Name.Name] = symbol
+		module.Symbols.Globals[path] = symbol
 	}
-	if len(target.Accesses) == 0 {
+	if symbol.AccessDepth == len(target.Accesses) ||
+		endsWithEmptyIndex(target) && symbol.AccessDepth == len(target.Accesses)-1 {
 		symbol.Type = valueType
 	}
 	module.ResolvedVariables[target] = symbol
@@ -150,7 +206,7 @@ func (checker *checker) checkImportedAssignment(module *Module, target *ast.Vari
 		return
 	}
 
-	symbol := imported.Target.Symbols.Globals[target.Name.Name]
+	symbol := imported.Target.Symbols.lookupGlobal(target)
 	if symbol == nil || !symbol.Public {
 		checker.undefinedVariable(module, target)
 		return
@@ -172,11 +228,35 @@ func (checker *checker) checkAdd(module *Module, currentScope *scope, statement 
 	if statement == nil {
 		return
 	}
-	checker.checkExpression(module, currentScope, statement.Value)
+	valueType := checker.checkExpression(module, currentScope, statement.Value)
 	if target, ok := statement.Target.(*ast.VariableExpr); ok {
-		checker.checkVariable(module, currentScope, target)
+		targetType := checker.checkVariable(module, currentScope, target)
+		if len(target.Accesses) > 0 {
+			if _, empty := target.Accesses[len(target.Accesses)-1].(*ast.EmptyIndexAccess); empty {
+				if targetType.Kind != TypeList || len(targetType.Arguments) == 0 {
+					return
+				}
+				targetType = targetType.Arguments[0]
+			}
+		}
+		if !addCompatible(targetType, valueType) {
+			checker.typeMismatch(module, statement.Value,
+				fmt.Sprintf("Type mismatch: cannot add %s to %s.", valueType.String(), targetType.String()))
+		}
 	}
 	// AccessExpr is deliberately deferred to T12.
+}
+
+func addCompatible(target Type, value Type) bool {
+	if target.IsUnknown() || value.IsUnknown() {
+		return true
+	}
+	targetNumeric := target.Kind == TypeInt || target.Kind == TypeFloat
+	valueNumeric := value.Kind == TypeInt || value.Kind == TypeFloat
+	if targetNumeric && valueNumeric {
+		return true
+	}
+	return compatible(target, value)
 }
 
 func (checker *checker) checkIf(
@@ -190,22 +270,32 @@ func (checker *checker) checkIf(
 	}
 	checker.requireBool(module, statement.Condition,
 		checker.checkExpression(module, currentScope, statement.Condition))
-	fallsThrough := checker.checkBlock(module, currentScope, statement.Then, context)
+
+	fallthroughPaths := make([]*scope, 0, len(statement.ElseIf)+2)
+	thenScope := isolatedFlowScope(currentScope)
+	if checker.checkBlock(module, thenScope, statement.Then, context) {
+		fallthroughPaths = append(fallthroughPaths, thenScope)
+	}
 
 	for _, clause := range statement.ElseIf {
 		checker.requireBool(module, clause.Condition,
 			checker.checkExpression(module, currentScope, clause.Condition))
-		if checker.checkBlock(module, currentScope, clause.Body, context) {
-			fallsThrough = true
+		clauseScope := isolatedFlowScope(currentScope)
+		if checker.checkBlock(module, clauseScope, clause.Body, context) {
+			fallthroughPaths = append(fallthroughPaths, clauseScope)
 		}
 	}
 	if statement.Else == nil {
+		fallthroughPaths = append(fallthroughPaths, isolatedFlowScope(currentScope))
+		mergeFlowScopes(currentScope, fallthroughPaths)
 		return true
 	}
-	if checker.checkBlock(module, currentScope, *statement.Else, context) {
-		fallsThrough = true
+	elseScope := isolatedFlowScope(currentScope)
+	if checker.checkBlock(module, elseScope, *statement.Else, context) {
+		fallthroughPaths = append(fallthroughPaths, elseScope)
 	}
-	return fallsThrough
+	mergeFlowScopes(currentScope, fallthroughPaths)
+	return len(fallthroughPaths) > 0
 }
 
 func (checker *checker) checkLoopTimes(
@@ -216,7 +306,7 @@ func (checker *checker) checkLoopTimes(
 ) {
 	count := checker.checkExpression(module, currentScope, statement.Count)
 	checker.requireNumeric(module, statement.Count, count)
-	loopScope := newInjectedScope(currentScope)
+	loopScope := newInjectedScope(isolatedFlowScope(currentScope))
 	loopScope.defineName("loop.index", Type{Kind: TypeInt})
 	checker.checkBlock(module, loopScope, statement.Body, context)
 }
@@ -233,7 +323,7 @@ func (checker *checker) checkLoopRange(
 	checker.requireNumeric(module, statement.End, end)
 
 	valueType := numericType(start, end)
-	loopScope := newInjectedScope(currentScope)
+	loopScope := newInjectedScope(isolatedFlowScope(currentScope))
 	loopScope.defineName("loop.index", Type{Kind: TypeInt})
 	loopScope.defineName("loop.value", valueType)
 	checker.checkBlock(module, loopScope, statement.Body, context)
@@ -245,7 +335,7 @@ func (checker *checker) checkLoopPlayers(
 	statement *ast.LoopPlayersStmt,
 	context flowContext,
 ) {
-	loopScope := newInjectedScope(currentScope)
+	loopScope := newInjectedScope(isolatedFlowScope(currentScope))
 	loopScope.defineName("loop.index", Type{Kind: TypeInt})
 	loopScope.defineName("loop.player", Type{Kind: TypeNamed, Name: "Player"})
 	checker.checkBlock(module, loopScope, statement.Body, context)
@@ -261,7 +351,7 @@ func (checker *checker) checkLoopEntities(
 	checker.requireNumeric(module, statement.Radius, radius)
 	checker.checkExpression(module, currentScope, statement.Around)
 
-	loopScope := newInjectedScope(currentScope)
+	loopScope := newInjectedScope(isolatedFlowScope(currentScope))
 	loopScope.defineName("loop.index", Type{Kind: TypeInt})
 	loopScope.defineName("loop.entity", Type{Kind: TypeNamed, Name: "Entity"})
 	checker.checkBlock(module, loopScope, statement.Body, context)
