@@ -1,0 +1,4 @@
+require "c_negative_private_last" as private_last
+
+$public_value = private_last.$stats[-1]
+$private_value = private_last.$stats[-2]

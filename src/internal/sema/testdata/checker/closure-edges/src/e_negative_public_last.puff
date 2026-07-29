@@ -1,0 +1,2 @@
+$stats[-2] = "hidden"
+pub $stats[-1] = "visible"

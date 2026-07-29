@@ -255,6 +255,47 @@ func TestCheckIntegrationReportsDocumentedDiagnosticsWithoutCascades(t *testing.
 				},
 			},
 		},
+		{
+			name:    "closure semantic edges",
+			fixture: "closure-edges",
+			expected: []expectedSemanticDiagnostic{
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "a_cycle_no_seed.puff",
+					line:    3,
+					message: "Undefined variable: cycle_b.$y",
+					hint:    "Declare it before using it: cycle_b.$y = 0",
+				},
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "d_negative_private_last_use.puff",
+					line:    4,
+					message: "Undefined variable: private_last.$stats",
+					hint:    "Declare it before using it: private_last.$stats = 0",
+				},
+				{
+					code:    diagnostic.CodeUndefinedVariable,
+					file:    "f_negative_public_last_use.puff",
+					line:    4,
+					message: "Undefined variable: public_last.$stats",
+					hint:    "Declare it before using it: public_last.$stats = 0",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "g_nested_collection.puff",
+					line:    2,
+					message: "Type mismatch: cannot return list<list<int>> as list<list<string>>.",
+					hint:    "Return a value compatible with list<list<string>>.",
+				},
+				{
+					code:    diagnostic.CodeTypeMismatch,
+					file:    "h_top_level_reassignment.puff",
+					line:    6,
+					message: "Type mismatch: cannot return string as int.",
+					hint:    "Return a value compatible with int.",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

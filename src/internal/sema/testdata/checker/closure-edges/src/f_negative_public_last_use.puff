@@ -1,0 +1,4 @@
+require "e_negative_public_last" as public_last
+
+$public_value = public_last.$stats[-1]
+$private_value = public_last.$stats[-2]
