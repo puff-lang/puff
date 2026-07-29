@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"strings"
+
 	"github.com/puff-lang/puff/internal/ast"
+	"github.com/puff-lang/puff/internal/diagnostic"
 	"github.com/puff-lang/puff/internal/token"
 )
 
@@ -13,11 +16,30 @@ func (parser *parser) parseExpressionUntil(stops ...token.Type) ast.Expression {
 	}
 	diagnosticCount := len(parser.diagnostics)
 	expression := parser.parseRange()
-	if expression == nil && len(parser.diagnostics) == diagnosticCount {
+	if expression == nil &&
+		len(parser.diagnostics) == diagnosticCount &&
+		!parser.hasLexerDiagnosticAt(parser.peek().StartOffset) {
 		parser.reportExpected("expression", "")
 	}
 	parser.expressionStops = previousStops
 	return expression
+}
+
+func (parser *parser) hasLexerDiagnosticAt(offset int) bool {
+	for index := len(parser.diagnostics) - 1; index >= 0; index-- {
+		item := parser.diagnostics[index]
+		if item.Phase != diagnostic.PhaseLexer || item.Span.StartOffset > offset {
+			continue
+		}
+		if item.Span.EndOffset >= offset {
+			return true
+		}
+		between := parser.file.Text[item.Span.EndOffset:offset]
+		if !strings.ContainsAny(between, "\r\n") && strings.TrimSpace(between) == "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (parser *parser) parseRange() ast.Expression {
