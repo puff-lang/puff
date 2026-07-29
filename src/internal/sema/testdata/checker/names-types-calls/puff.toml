@@ -1,0 +1,5 @@
+[pack]
+id = "checker-names-types-calls"
+
+[minecraft]
+versions = "1.21"

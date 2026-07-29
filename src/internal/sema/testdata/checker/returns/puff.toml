@@ -1,0 +1,5 @@
+[pack]
+id = "checker-returns"
+
+[minecraft]
+versions = "1.21"

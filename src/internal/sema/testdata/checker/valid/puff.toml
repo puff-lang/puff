@@ -1,0 +1,5 @@
+[pack]
+id = "checker-valid"
+
+[minecraft]
+versions = "1.21"

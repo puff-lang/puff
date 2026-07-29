@@ -1,0 +1,5 @@
+[pack]
+id = "checker-imported-assignment"
+
+[minecraft]
+versions = "1.21"

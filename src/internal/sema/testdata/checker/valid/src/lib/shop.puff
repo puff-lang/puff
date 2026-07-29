@@ -1,0 +1,5 @@
+pub $tax = 0.1
+
+pub fun finalPrice(price: float) -> float
+   return price + $tax
+end

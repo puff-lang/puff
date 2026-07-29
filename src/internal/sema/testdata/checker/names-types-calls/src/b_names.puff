@@ -1,0 +1,12 @@
+fun add(a: int, b: int) -> int
+   return a + b
+end
+$variable = $missing
+$unknown = missingFunction()
+$without_arguments = add
+$too_many = add(1, 2, 3)
+$wrong_type = add("wrong", 2)
+
+on load
+   $_context = player
+end

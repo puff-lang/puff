@@ -1,0 +1,30 @@
+# tags: load, tick
+
+require "lib/shop"
+
+$base = 2
+
+fun choose(flag: bool) -> int
+   if flag
+      return 1
+   else
+      return $base
+   end
+end
+
+on load
+   $_tax = shop.$tax
+   $_total = shop.finalPrice(10.0)
+   $_copy = $_total
+
+   loop numbers from 1 to 2
+      $_line = "Index {loop.index}: {loop.value}"
+   end
+end
+
+on tick
+end
+
+on join
+   $_joined = player
+end
