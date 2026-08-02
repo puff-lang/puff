@@ -1,0 +1,7 @@
+$value = 1
+$copy = $value + 1
+$value = "done"
+
+fun sentinel -> int
+   return "wrong"
+end

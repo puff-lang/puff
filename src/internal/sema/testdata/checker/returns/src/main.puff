@@ -1,0 +1,25 @@
+on load
+   return
+end
+
+on tick
+   stop
+end
+
+fun stopAllowed
+   stop
+end
+
+fun missingValue -> int
+   return
+end
+
+fun missingPath(flag: bool) -> int
+   if flag
+      return 1
+   end
+end
+
+fun invalidStop -> int
+   stop
+end

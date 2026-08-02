@@ -1,0 +1,3 @@
+fun heterogeneous -> list<int>
+   return [1, "wrong"]
+end

@@ -1,0 +1,5 @@
+[pack]
+id = "checker-final-edges"
+
+[minecraft]
+versions = "1.21"

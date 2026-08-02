@@ -1,0 +1,7 @@
+fun rangeValue -> string
+   $_value = 1
+   loop numbers from 1 to 1
+      $_value = "ok"
+   end
+   return $_value
+end

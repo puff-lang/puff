@@ -1,0 +1,5 @@
+require "z_typed"
+
+fun importedTypeMismatch -> string
+   return z_typed.$count
+end

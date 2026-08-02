@@ -1,0 +1,4 @@
+require "c_index_public_last" as public_last
+
+$public_coins = public_last.$stats["coins"]
+$private_secret = public_last.$stats["secret"]

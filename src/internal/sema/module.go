@@ -14,9 +14,13 @@ type Import struct {
 }
 
 type Module struct {
-	Source  source.File
-	Syntax  *ast.File
-	Imports map[string]*Import
+	Source            source.File
+	Syntax            *ast.File
+	Imports           map[string]*Import
+	Symbols           *SymbolTable
+	ExpressionTypes   map[ast.Expression]Type
+	ResolvedCalls     map[*ast.CallExpr]*FunctionSymbol
+	ResolvedVariables map[*ast.VariableExpr]*VariableSymbol
 }
 
 func (module *Module) Import(prefix string) (*Import, bool) {

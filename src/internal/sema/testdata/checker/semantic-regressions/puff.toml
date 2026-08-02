@@ -1,0 +1,5 @@
+[pack]
+id = "checker-semantic-regressions"
+
+[minecraft]
+versions = "1.21"

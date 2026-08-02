@@ -1,0 +1,7 @@
+require "b_cycle_no_seed" as cycle_b
+
+pub $x = cycle_b.$y
+
+fun cycleValue -> int
+   return $x
+end

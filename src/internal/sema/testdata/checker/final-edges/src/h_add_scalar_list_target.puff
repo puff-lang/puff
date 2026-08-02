@@ -1,0 +1,4 @@
+fun appendToScalar
+   $_values = 1
+   add 2 to $_values[]
+end

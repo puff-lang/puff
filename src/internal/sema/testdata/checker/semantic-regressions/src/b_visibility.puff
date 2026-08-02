@@ -1,0 +1,4 @@
+require "z_visibility" as visibility
+
+$public_name = visibility.$config.name
+$private_secret = visibility.$config.secret

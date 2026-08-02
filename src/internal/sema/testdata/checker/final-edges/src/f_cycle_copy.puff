@@ -1,0 +1,7 @@
+require "e_cycle_seed" as cycle_seed
+
+pub $copy = cycle_seed.$seed
+
+fun cycleValue -> string
+   return $copy
+end

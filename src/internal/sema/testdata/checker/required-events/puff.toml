@@ -1,0 +1,5 @@
+[pack]
+id = "checker-required-events"
+
+[minecraft]
+versions = "1.21"

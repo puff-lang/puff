@@ -1,0 +1,5 @@
+require "lib/shop"
+
+on load
+   shop.$tax = 0.2
+end

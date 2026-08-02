@@ -1,0 +1,2 @@
+pub $stats["coins"] = 1
+$stats["secret"] = 2
