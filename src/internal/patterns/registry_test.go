@@ -189,6 +189,8 @@ func TestRegistryRejectsDuplicateIDsAndInvalidDefinitions(t *testing.T) {
 		{name: "empty ID", id: "", syntax: "valid", message: "pattern ID cannot be empty"},
 		{name: "empty syntax", id: "bad.empty", syntax: "", message: `compile pattern "bad.empty": pattern syntax cannot be empty`},
 		{name: "unclosed placeholder", id: "bad.placeholder", syntax: "send %target", message: `compile pattern "bad.placeholder": invalid placeholder "%target"`},
+		{name: "duplicate placeholder", id: "bad.duplicate", syntax: "pair %value% and %value%", message: `compile pattern "bad.duplicate": duplicate placeholder "value"`},
+		{name: "adjacent placeholders", id: "bad.adjacent", syntax: "%left% %right%", message: `compile pattern "bad.adjacent": adjacent placeholders "left" and "right" require a literal delimiter`},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -204,6 +206,56 @@ func TestRegistryRejectsDuplicateIDsAndInvalidDefinitions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRegistryReportsAmbiguityWithinDefinition(t *testing.T) {
+	registry := NewRegistry()
+	if err := registry.RegisterEffect("test.send", "send %text% to %target%"); err != nil {
+		t.Fatalf("register effect: %v", err)
+	}
+	node := effectNode(positionedTokens(11, 3, 50,
+		tokenSpec{token.Ident, "send"},
+		tokenSpec{token.Ident, "a"},
+		tokenSpec{token.To, "to"},
+		tokenSpec{token.Ident, "b"},
+		tokenSpec{token.To, "to"},
+		tokenSpec{token.Ident, "c"},
+	))
+
+	resolved, issue := registry.ResolveEffect("internal-ambiguity.puff", node)
+	if resolved != nil {
+		t.Fatalf("ambiguous input resolved to %#v", resolved.Definition)
+	}
+	assertDiagnostic(t, issue, diagnostic.Diagnostic{
+		Code:     diagnostic.CodeAmbiguousPattern,
+		Phase:    diagnostic.PhasePattern,
+		Severity: diagnostic.SeverityError,
+		Message:  "Ambiguous pattern.",
+		Hint:     "Make the statement more explicit or adjust pattern priorities.",
+		File:     "internal-ambiguity.puff",
+		Span:     node.Span(),
+	})
+}
+
+func TestRegistryStillResolvesUnambiguousDefinition(t *testing.T) {
+	registry := NewRegistry()
+	if err := registry.RegisterEffect("test.send", "send %text% to %target%"); err != nil {
+		t.Fatalf("register effect: %v", err)
+	}
+	tokens := testTokens("send", "a", "to", "b")
+
+	resolved, issue := registry.ResolveEffect("unambiguous.puff", effectNode(tokens))
+	if issue != nil {
+		t.Fatalf("resolve effect: %+v", *issue)
+	}
+	if resolved == nil {
+		t.Fatal("resolve effect returned nil without diagnostic")
+	}
+	if resolved.Definition.ID != "test.send" {
+		t.Fatalf("definition ID = %q, want test.send", resolved.Definition.ID)
+	}
+	assertCapture(t, resolved.Captures, "text", tokens[1:2], tokenSpan(tokens[1]))
+	assertCapture(t, resolved.Captures, "target", tokens[3:4], tokenSpan(tokens[3]))
 }
 
 func TestRegistryReportsAmbiguityIndependentOfRegistrationOrder(t *testing.T) {
