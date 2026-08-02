@@ -119,30 +119,29 @@ func (registry *Builder) resolve(kind Kind, tokens []token.Token, file string, s
 		captures   Captures
 	}
 
-	var matches []match
+	var matched *match
 	for _, candidate := range registry.definitions[kind] {
-		captures, ok := matchTemplate(candidate.template, tokens)
-		if ok {
-			matches = append(matches, match{definition: candidate.definition, captures: captures})
+		for _, captures := range matchTemplate(candidate.template, tokens) {
+			if matched != nil {
+				issue := patternDiagnostic(
+					diagnostic.CodeAmbiguousPattern,
+					"Ambiguous pattern.",
+					"Make the statement more explicit or adjust pattern priorities.",
+					file,
+					span,
+				)
+				return Definition{}, nil, &issue
+			}
+			current := match{definition: candidate.definition, captures: captures}
+			matched = &current
 		}
 	}
 
-	switch len(matches) {
-	case 0:
+	if matched == nil {
 		issue := unknownDiagnostic(kind, file, span, eventText)
 		return Definition{}, nil, &issue
-	case 1:
-		return matches[0].definition, matches[0].captures, nil
-	default:
-		issue := patternDiagnostic(
-			diagnostic.CodeAmbiguousPattern,
-			"Ambiguous pattern.",
-			"Make the statement more explicit or adjust pattern priorities.",
-			file,
-			span,
-		)
-		return Definition{}, nil, &issue
 	}
+	return matched.definition, matched.captures, nil
 }
 
 func unknownDiagnostic(kind Kind, file string, span diagnostic.Span, eventText string) diagnostic.Diagnostic {

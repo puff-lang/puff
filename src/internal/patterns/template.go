@@ -20,6 +20,7 @@ func compileTemplate(syntax string) ([]templatePart, error) {
 	}
 
 	parts := make([]templatePart, 0, len(words))
+	placeholders := make(map[string]struct{})
 	for _, word := range words {
 		if !strings.Contains(word, "%") {
 			parts = append(parts, templatePart{literal: word})
@@ -29,29 +30,46 @@ func compileTemplate(syntax string) ([]templatePart, error) {
 		if len(word) < 3 || word[0] != '%' || word[len(word)-1] != '%' || strings.Count(word, "%") != 2 {
 			return nil, fmt.Errorf("invalid placeholder %q", word)
 		}
-		parts = append(parts, templatePart{placeholder: word[1 : len(word)-1]})
+		name := word[1 : len(word)-1]
+		if _, exists := placeholders[name]; exists {
+			return nil, fmt.Errorf("duplicate placeholder %q", name)
+		}
+		if len(parts) > 0 && parts[len(parts)-1].placeholder != "" {
+			return nil, fmt.Errorf("adjacent placeholders %q and %q require a literal delimiter", parts[len(parts)-1].placeholder, name)
+		}
+		placeholders[name] = struct{}{}
+		parts = append(parts, templatePart{placeholder: name})
 	}
 	return parts, nil
 }
 
-func matchTemplate(parts []templatePart, tokens []token.Token) (Captures, bool) {
-	return matchFrom(parts, tokens, structuralTokens(tokens), 0, 0, Captures{})
+func matchTemplate(parts []templatePart, tokens []token.Token) []Captures {
+	matches := make([]Captures, 0, 2)
+	matchFrom(parts, tokens, structuralTokens(tokens), 0, 0, Captures{}, &matches)
+	return matches
 }
 
-func matchFrom(parts []templatePart, tokens []token.Token, structural []bool, partIndex, tokenIndex int, captures Captures) (Captures, bool) {
+func matchFrom(parts []templatePart, tokens []token.Token, structural []bool, partIndex, tokenIndex int, captures Captures, matches *[]Captures) {
+	if len(*matches) == 2 {
+		return
+	}
 	if partIndex == len(parts) {
-		return captures, tokenIndex == len(tokens)
+		if tokenIndex == len(tokens) {
+			*matches = append(*matches, captures)
+		}
+		return
 	}
 	if tokenIndex == len(tokens) {
-		return nil, false
+		return
 	}
 
 	part := parts[partIndex]
 	if part.placeholder == "" {
 		if !structural[tokenIndex] || tokens[tokenIndex].Lexeme != part.literal {
-			return nil, false
+			return
 		}
-		return matchFrom(parts, tokens, structural, partIndex+1, tokenIndex+1, captures)
+		matchFrom(parts, tokens, structural, partIndex+1, tokenIndex+1, captures, matches)
+		return
 	}
 
 	remainingParts := len(parts) - partIndex - 1
@@ -63,11 +81,8 @@ func matchFrom(parts []templatePart, tokens []token.Token, structural []bool, pa
 			Tokens: captured,
 			Span:   captureSpan(captured),
 		}
-		if matched, ok := matchFrom(parts, tokens, structural, partIndex+1, captureEnd, nextCaptures); ok {
-			return matched, true
-		}
+		matchFrom(parts, tokens, structural, partIndex+1, captureEnd, nextCaptures, matches)
 	}
-	return nil, false
 }
 
 func cloneCaptures(captures Captures) Captures {
