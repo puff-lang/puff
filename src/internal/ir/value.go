@@ -65,6 +65,7 @@ type Call struct {
 func (*Call) valueNode() {}
 
 type Reference struct {
+	Symbol SymbolID
 	Name   string
 	Type   Type
 	Source SourceRef

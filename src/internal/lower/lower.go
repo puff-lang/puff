@@ -78,16 +78,16 @@ func (current *lowerer) lowerGlobal(module *sema.Module, node *ast.GlobalAssignm
 		return
 	}
 
-	typ := module.ExpressionTypes[node.Value]
-	if module.Symbols != nil {
-		if symbol := module.Symbols.Globals[node.Target.Name.Name]; symbol != nil {
-			typ = symbol.Type
-		}
+	symbol := module.ResolvedVariables[node.Target]
+	id, ok := globalSymbolID(symbol)
+	if !ok {
+		current.invalid(module, node.Target, "unresolved global variable identity")
+		return
 	}
 	current.project.Globals = append(current.project.Globals, ir.Global{
-		ID:          symbolID(module, node.Target.Name.Name),
+		ID:          id,
 		Public:      node.Public,
-		Type:        lowerType(typ),
+		Type:        lowerType(symbol.Type),
 		Initializer: value,
 		Source:      sourceRef(module, node.Span()),
 	})
@@ -169,7 +169,11 @@ func (current *lowerer) lowerBlock(module *sema.Module, block ast.Block) []ir.Co
 	for _, statement := range block.Statements {
 		switch node := statement.(type) {
 		case *ast.ReturnStmt:
-			value, ok := current.lowerExpression(module, node.Value)
+			var value ir.Value = &ir.Nil{Source: sourceRef(module, node.Span())}
+			ok := true
+			if node.Value != nil {
+				value, ok = current.lowerExpression(module, node.Value)
+			}
 			if ok {
 				commands = append(commands, &ir.Return{Value: value, Source: sourceRef(module, node.Span())})
 			}
@@ -311,9 +315,11 @@ func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.T
 	}
 
 	var function *sema.FunctionSymbol
+	imported := false
 	if len(parts) == 1 && module.Symbols != nil {
 		function = module.Symbols.Functions[parts[0]]
 	} else if len(parts) == 2 {
+		imported = true
 		if imported := module.Imports[parts[0]]; imported != nil && imported.Target != nil && imported.Target.Symbols != nil {
 			function = imported.Target.Symbols.Functions[parts[1]]
 		}
@@ -321,6 +327,14 @@ func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.T
 	span := joinTokenSpans(module, tokens[0], tokens[len(tokens)-1])
 	if function == nil || function.Module == nil {
 		current.invalidSpan(module, span, "unresolved function in text interpolation")
+		return nil, false
+	}
+	if imported && !function.Public {
+		current.invalidSpan(module, span, "private imported function in text interpolation")
+		return nil, false
+	}
+	if len(function.Parameters) != 0 {
+		current.invalidSpan(module, span, "function with parameters in text interpolation")
 		return nil, false
 	}
 	return &ir.Call{
@@ -383,7 +397,16 @@ func (current *lowerer) lowerExpression(module *sema.Module, expression ast.Expr
 			current.invalid(module, node, "unresolved variable reference")
 			return nil, false
 		}
-		return &ir.Reference{Name: symbol.Name, Type: lowerType(symbol.Type), Source: ref}, true
+		reference := &ir.Reference{Name: symbol.Name, Type: lowerType(symbol.Type), Source: ref}
+		if !symbol.Local {
+			id, ok := globalSymbolID(symbol)
+			if !ok {
+				current.invalid(module, node, "unresolved global variable identity")
+				return nil, false
+			}
+			reference.Symbol = id
+		}
+		return reference, true
 	case *ast.GroupExpr:
 		return current.lowerExpression(module, node.Expression)
 	default:
@@ -449,6 +472,24 @@ func (current *lowerer) invalidSpan(module *sema.Module, span diagnostic.Span, m
 
 func symbolID(module *sema.Module, name string) ir.SymbolID {
 	return ir.SymbolID{Module: module.Source.RelPath, Name: name}
+}
+
+func globalSymbolID(symbol *sema.VariableSymbol) (ir.SymbolID, bool) {
+	if symbol == nil || symbol.Module == nil || symbol.Module.Symbols == nil {
+		return ir.SymbolID{}, false
+	}
+
+	paths := make([]string, 0, 1)
+	for path, candidate := range symbol.Module.Symbols.Globals {
+		if candidate == symbol {
+			paths = append(paths, path)
+		}
+	}
+	if len(paths) == 0 {
+		return ir.SymbolID{}, false
+	}
+	sort.Strings(paths)
+	return ir.SymbolID{Module: symbol.Module.Source.RelPath, Name: paths[0]}, true
 }
 
 func sourceRef(module *sema.Module, span diagnostic.Span) ir.SourceRef {
