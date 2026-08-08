@@ -24,6 +24,8 @@ type lowerer struct {
 	tags        map[string]int
 }
 
+type scope map[string]ir.Type
+
 func Lower(validated *sema.Project) Result {
 	current := &lowerer{
 		registry: patterns.NewCoreRegistry(),
@@ -51,6 +53,11 @@ func (current *lowerer) lowerProject(validated *sema.Project) {
 	})
 	for _, module := range modules {
 		if module != nil && module.Syntax != nil {
+			current.project.Modules = append(current.project.Modules, ir.Module{
+				Path:      module.Source.RelPath,
+				Namespace: moduleNamespace(module),
+				Source:    sourceRef(module, module.Syntax.Span()),
+			})
 			current.lowerModule(module)
 		}
 	}
@@ -121,7 +128,11 @@ func (current *lowerer) lowerFunction(module *sema.Module, node *ast.FunctionDec
 			Source: sourceRef(module, parameter.Span()),
 		})
 	}
-	function.Commands = current.lowerBlock(module, node.Body)
+	parameters := make(scope, len(function.Parameters))
+	for _, parameter := range function.Parameters {
+		parameters[parameter.Name] = parameter.Type
+	}
+	function.Commands = current.lowerBlock(module, node.Body, parameters)
 	current.project.Functions = append(current.project.Functions, function)
 }
 
@@ -149,7 +160,7 @@ func (current *lowerer) lowerEvent(module *sema.Module, node *ast.EventDecl, occ
 		ID:       id,
 		Kind:     ir.FunctionEvent,
 		Result:   ir.Type{Kind: ir.TypeNil},
-		Commands: current.lowerBlock(module, node.Body),
+		Commands: current.lowerBlock(module, node.Body, nil),
 		Source:   sourceRef(module, node.Span()),
 	})
 	current.addTag(name, id)
@@ -164,7 +175,7 @@ func (current *lowerer) addTag(name string, function ir.SymbolID) {
 	current.project.Tags = append(current.project.Tags, ir.Tag{Name: name, Functions: []ir.SymbolID{function}})
 }
 
-func (current *lowerer) lowerBlock(module *sema.Module, block ast.Block) []ir.Command {
+func (current *lowerer) lowerBlock(module *sema.Module, block ast.Block, scope scope) []ir.Command {
 	commands := make([]ir.Command, 0, len(block.Statements))
 	for _, statement := range block.Statements {
 		switch node := statement.(type) {
@@ -178,7 +189,7 @@ func (current *lowerer) lowerBlock(module *sema.Module, block ast.Block) []ir.Co
 				commands = append(commands, &ir.Return{Value: value, Source: sourceRef(module, node.Span())})
 			}
 		case *ast.EffectStmt:
-			if effect, ok := current.lowerEffect(module, node); ok {
+			if effect, ok := current.lowerEffect(module, node, scope); ok {
 				commands = append(commands, effect)
 			}
 		default:
@@ -188,7 +199,7 @@ func (current *lowerer) lowerBlock(module *sema.Module, block ast.Block) []ir.Co
 	return commands
 }
 
-func (current *lowerer) lowerEffect(module *sema.Module, node *ast.EffectStmt) (*ir.Effect, bool) {
+func (current *lowerer) lowerEffect(module *sema.Module, node *ast.EffectStmt, scope scope) (*ir.Effect, bool) {
 	resolved, issue := current.registry.ResolveEffect(module.Source.RelPath, node)
 	if issue != nil {
 		current.diagnostics = append(current.diagnostics, *issue)
@@ -213,7 +224,7 @@ func (current *lowerer) lowerEffect(module *sema.Module, node *ast.EffectStmt) (
 
 	effect := &ir.Effect{PatternID: resolved.Definition.ID, Source: sourceRef(module, node.Span())}
 	for _, captured := range captures {
-		value, ok := current.lowerCapture(module, captured.name, captured.value)
+		value, ok := current.lowerCapture(module, captured.name, captured.value, scope)
 		if !ok {
 			return nil, false
 		}
@@ -222,10 +233,10 @@ func (current *lowerer) lowerEffect(module *sema.Module, node *ast.EffectStmt) (
 	return effect, true
 }
 
-func (current *lowerer) lowerCapture(module *sema.Module, name string, captured patterns.Capture) (ir.Value, bool) {
+func (current *lowerer) lowerCapture(module *sema.Module, name string, captured patterns.Capture, scope scope) (ir.Value, bool) {
 	switch name {
 	case "text":
-		return current.lowerCapturedText(module, captured)
+		return current.lowerCapturedText(module, captured, scope)
 	case "target":
 		if len(captured.Tokens) == 1 && captured.Tokens[0].Type == token.Ident {
 			name, _ := captured.Tokens[0].Value.(string)
@@ -253,7 +264,7 @@ func (current *lowerer) lowerCapture(module *sema.Module, name string, captured 
 	return nil, false
 }
 
-func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns.Capture) (ir.Value, bool) {
+func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns.Capture, scope scope) (ir.Value, bool) {
 	tokens := captured.Tokens
 	if len(tokens) < 2 || tokens[0].Type != token.StringStart || tokens[len(tokens)-1].Type != token.StringEnd {
 		current.invalidSpan(module, captured.Span, "send text is not a string")
@@ -280,7 +291,7 @@ func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns
 				return nil, false
 			}
 			span := joinTokenSpans(module, currentToken, tokens[end])
-			value, ok := current.lowerInterpolation(module, tokens[index+1:end], span)
+			value, ok := current.lowerInterpolation(module, tokens[index+1:end], span, scope)
 			if !ok {
 				return nil, false
 			}
@@ -294,7 +305,7 @@ func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns
 	return text, true
 }
 
-func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.Token, span diagnostic.Span) (ir.Value, bool) {
+func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.Token, span diagnostic.Span, scope scope) (ir.Value, bool) {
 	if len(tokens) == 0 || tokens[0].Type != token.Ident {
 		current.invalidSpan(module, span, "unsupported text interpolation")
 		return nil, false
@@ -310,16 +321,27 @@ func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.T
 		parts = append(parts, tokens[index+1].Lexeme)
 		index += 2
 	}
+	explicitCall := false
 	if index < len(tokens) {
 		if len(tokens)-index != 2 || tokens[index].Type != token.LParen || tokens[index+1].Type != token.RParen {
 			current.invalidSpan(module, span, "unsupported text interpolation")
 			return nil, false
 		}
+		explicitCall = true
 		index += 2
 	}
 	if index != len(tokens) {
 		current.invalidSpan(module, span, "unsupported text interpolation")
 		return nil, false
+	}
+	if len(parts) == 1 && !explicitCall {
+		if typ, ok := scope[parts[0]]; ok {
+			return &ir.Reference{
+				Name:   parts[0],
+				Type:   typ,
+				Source: sourceRef(module, span),
+			}, true
+		}
 	}
 
 	var function *sema.FunctionSymbol
@@ -466,6 +488,15 @@ func lowerType(typ sema.Type) ir.Type {
 		lowered.Arguments = append(lowered.Arguments, lowerType(argument))
 	}
 	return lowered
+}
+
+func moduleNamespace(module *sema.Module) string {
+	for _, entry := range module.Syntax.Metadata {
+		if entry.Key == "namespace" {
+			return entry.Value
+		}
+	}
+	return ""
 }
 
 func (current *lowerer) unsupported(module *sema.Module, node ast.Node) {

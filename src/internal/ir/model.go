@@ -3,9 +3,16 @@ package ir
 import "github.com/puff-lang/puff/internal/diagnostic"
 
 type Project struct {
+	Modules   []Module
 	Globals   []Global
 	Functions []Function
 	Tags      []Tag
+}
+
+type Module struct {
+	Path      string
+	Namespace string
+	Source    SourceRef
 }
 
 type SourceRef struct {
