@@ -57,6 +57,8 @@ const (
 	CodeInvalidNamespace             Code = "INVALID_NAMESPACE"
 	CodeInvalidMinecraftResource     Code = "INVALID_MINECRAFT_RESOURCE"
 	CodeUnsupportedMinecraftVersion  Code = "UNSUPPORTED_MINECRAFT_VERSION"
+	CodeInvalidIRNode                Code = "INVALID_IR_NODE"
+	CodeUnsupportedASTNode           Code = "UNSUPPORTED_AST_NODE"
 	CodeCodegenError                 Code = "CODEGEN_ERROR"
 	CodeLibraryError                 Code = "LIBRARY_ERROR"
 	CodeValidatorError               Code = "VALIDATOR_ERROR"

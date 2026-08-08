@@ -1,0 +1,12 @@
+# namespace: example
+# tags: load
+
+$coins = 100
+
+fun serverName -> string
+   return "Lobby"
+end
+
+on load
+   send "Loaded: {serverName}" to player
+end

@@ -1,0 +1,8 @@
+file main.puff
+metadata namespace=example
+metadata tags=load
+global $coins = int(100)
+function serverName() -> string
+  return text[literal("Lobby")]
+event load
+  effect IDENT("send") STRING_START("\"") STRING_TEXT("Loaded: ") INTERP_START("{") IDENT("serverName") INTERP_END("}") STRING_END("\"") TO("to") IDENT("player")
