@@ -279,11 +279,11 @@ func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns
 				current.invalidSpan(module, captured.Span, "unterminated text interpolation")
 				return nil, false
 			}
-			value, ok := current.lowerInterpolation(module, tokens[index+1:end])
+			span := joinTokenSpans(module, currentToken, tokens[end])
+			value, ok := current.lowerInterpolation(module, tokens[index+1:end], span)
 			if !ok {
 				return nil, false
 			}
-			span := joinTokenSpans(module, currentToken, tokens[end])
 			text.Parts = append(text.Parts, &ir.TextInterpolation{Value: value, Source: sourceRef(module, span)})
 			index = end
 		default:
@@ -294,24 +294,32 @@ func (current *lowerer) lowerCapturedText(module *sema.Module, captured patterns
 	return text, true
 }
 
-func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.Token) (ir.Value, bool) {
-	if len(tokens) == 0 {
+func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.Token, span diagnostic.Span) (ir.Value, bool) {
+	if len(tokens) == 0 || tokens[0].Type != token.Ident {
+		current.invalidSpan(module, span, "unsupported text interpolation")
 		return nil, false
 	}
 
-	parts := make([]string, 0, len(tokens))
-	for index := 0; index < len(tokens); index++ {
-		if tokens[index].Type != token.Ident {
-			if tokens[index].Type == token.LParen && index+1 == len(tokens)-1 && tokens[index+1].Type == token.RParen {
-				break
-			}
-			current.invalidSpan(module, joinTokenSpans(module, tokens[0], tokens[len(tokens)-1]), "unsupported text interpolation")
+	parts := []string{tokens[0].Lexeme}
+	index := 1
+	if index < len(tokens) && tokens[index].Type == token.Dot {
+		if index+1 >= len(tokens) || tokens[index+1].Type != token.Ident {
+			current.invalidSpan(module, span, "unsupported text interpolation")
 			return nil, false
 		}
-		parts = append(parts, tokens[index].Lexeme)
-		if index+1 < len(tokens) && tokens[index+1].Type == token.Dot {
-			index++
+		parts = append(parts, tokens[index+1].Lexeme)
+		index += 2
+	}
+	if index < len(tokens) {
+		if len(tokens)-index != 2 || tokens[index].Type != token.LParen || tokens[index+1].Type != token.RParen {
+			current.invalidSpan(module, span, "unsupported text interpolation")
+			return nil, false
 		}
+		index += 2
+	}
+	if index != len(tokens) {
+		current.invalidSpan(module, span, "unsupported text interpolation")
+		return nil, false
 	}
 
 	var function *sema.FunctionSymbol
@@ -324,7 +332,6 @@ func (current *lowerer) lowerInterpolation(module *sema.Module, tokens []token.T
 			function = imported.Target.Symbols.Functions[parts[1]]
 		}
 	}
-	span := joinTokenSpans(module, tokens[0], tokens[len(tokens)-1])
 	if function == nil || function.Module == nil {
 		current.invalidSpan(module, span, "unresolved function in text interpolation")
 		return nil, false
@@ -378,7 +385,20 @@ func (current *lowerer) lowerExpression(module *sema.Module, expression ast.Expr
 		return text, true
 	case *ast.CallExpr:
 		symbol := module.ResolvedCalls[node]
-		if symbol == nil || symbol.Module == nil {
+		if symbol == nil {
+			typ, typed := module.ExpressionTypes[node]
+			if typed && len(node.Callee.Parts) == 1 && len(node.Arguments) == 0 &&
+				!node.ExplicitParens && typ.Kind != sema.TypeUnknown {
+				return &ir.Reference{
+					Name:   node.Callee.Parts[0].Name,
+					Type:   lowerType(typ),
+					Source: ref,
+				}, true
+			}
+			current.invalid(module, node, "unresolved function call")
+			return nil, false
+		}
+		if symbol.Module == nil {
 			current.invalid(module, node, "unresolved function call")
 			return nil, false
 		}
@@ -397,7 +417,11 @@ func (current *lowerer) lowerExpression(module *sema.Module, expression ast.Expr
 			current.invalid(module, node, "unresolved variable reference")
 			return nil, false
 		}
-		reference := &ir.Reference{Name: symbol.Name, Type: lowerType(symbol.Type), Source: ref}
+		if len(node.Accesses) > symbol.AccessDepth {
+			current.unsupported(module, node)
+			return nil, false
+		}
+		reference := &ir.Reference{Name: symbol.Name, Type: lowerType(module.ExpressionTypes[node]), Source: ref}
 		if !symbol.Local {
 			id, ok := globalSymbolID(symbol)
 			if !ok {
