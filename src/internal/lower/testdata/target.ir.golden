@@ -1,0 +1,12 @@
+project
+globals 1
+  global main.puff::coins public=false type=int = int(100)
+functions 2
+  function user main.puff::serverName public=false () -> string
+    return text[literal("Lobby")]
+  function event main.puff::event/load/1 public=false () -> nil
+    effect core.send
+      text = text[literal("Loaded: "), interpolation(call(main.puff::serverName))]
+      target = reference(player:named(Player))
+tags 1
+  tag load -> main.puff::event/load/1
