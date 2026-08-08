@@ -1,4 +1,6 @@
 project
+modules 1
+  module main.puff namespace=example source=main.puff
 globals 1
   global main.puff::coins public=false type=int = int(100)
 functions 2

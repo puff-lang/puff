@@ -164,6 +164,10 @@ func renderIR(project *ir.Project) string {
 
 	var out strings.Builder
 	out.WriteString("project\n")
+	fmt.Fprintf(&out, "modules %d\n", len(project.Modules))
+	for _, module := range project.Modules {
+		fmt.Fprintf(&out, "  module %s namespace=%s source=%s\n", module.Path, module.Namespace, module.Source.File)
+	}
 	fmt.Fprintf(&out, "globals %d\n", len(project.Globals))
 	for _, global := range project.Globals {
 		fmt.Fprintf(&out, "  global %s public=%t type=%s = %s\n",
