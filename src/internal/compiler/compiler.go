@@ -89,8 +89,12 @@ func Bundle(ctx context.Context, opts BundleOptions) BundleResult {
 		result.diagnostics = append(result.diagnostics, codegenFailure(err))
 		return bundleFailure(result.diagnostics)
 	}
-	if err := minecraft.Write(generated.Output, destination); err != nil {
-		result.diagnostics = append(result.diagnostics, codegenFailure(err))
+	if err := minecraft.WriteContext(ctx, generated.Output, destination); err != nil {
+		if issue := contextIssue(ctx); issue != nil {
+			result.diagnostics = append(result.diagnostics, *issue)
+		} else {
+			result.diagnostics = append(result.diagnostics, codegenFailure(err))
+		}
 		return bundleFailure(result.diagnostics)
 	}
 
@@ -211,8 +215,12 @@ func outputDir(root string, config project.Config, override string) (string, err
 	if !filepath.IsAbs(output) {
 		output = filepath.Join(root, output)
 	}
+	destination, err := filepath.Abs(output)
+	if err != nil {
+		return "", fmt.Errorf("resolve output directory: %w", err)
+	}
 
-	destination, err := canonicalPath(output)
+	canonicalDestination, err := canonicalPath(destination)
 	if err != nil {
 		return "", fmt.Errorf("resolve output directory: %w", err)
 	}
@@ -220,19 +228,16 @@ func outputDir(root string, config project.Config, override string) (string, err
 	if err != nil {
 		return "", fmt.Errorf("resolve project root: %w", err)
 	}
-	sourceDir := config.Build.Source
-	if !filepath.IsAbs(sourceDir) {
-		sourceDir = filepath.Join(root, sourceDir)
-	}
+	sourceDir := filepath.Join(root, config.Build.Source)
 	sourceDir, err = canonicalPath(sourceDir)
 	if err != nil {
 		return "", fmt.Errorf("resolve source directory: %w", err)
 	}
 
-	if containsPath(destination, projectRoot) {
+	if containsPath(canonicalDestination, projectRoot) {
 		return "", errors.New("output directory cannot contain the project root")
 	}
-	if containsPath(destination, sourceDir) || containsPath(sourceDir, destination) {
+	if containsPath(canonicalDestination, sourceDir) || containsPath(sourceDir, canonicalDestination) {
 		return "", errors.New("output directory cannot overlap the source directory")
 	}
 

@@ -1,6 +1,7 @@
 package minecraft
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,14 @@ import (
 
 // Write stages a complete datapack and replaces the previous output tree.
 func Write(output Output, outputDir string) error {
+	return WriteContext(context.Background(), output, outputDir)
+}
+
+// WriteContext stages a complete datapack and stops before publication when canceled.
+func WriteContext(ctx context.Context, output Output, outputDir string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if outputDir == "" {
 		return fmt.Errorf("output directory is empty")
 	}
@@ -48,6 +57,9 @@ func Write(output Output, outputDir string) error {
 	}
 	sort.Slice(files, func(left, right int) bool { return files[left].Path < files[right].Path })
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(parent, 0o755); err != nil {
 		return fmt.Errorf("create output parent %q: %w", parent, err)
 	}
@@ -75,6 +87,9 @@ func Write(output Output, outputDir string) error {
 	}()
 
 	for _, file := range files {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		destination := filepath.Join(stage, filepath.FromSlash(file.Path))
 		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 			return fmt.Errorf("create staged directory for %q: %w", file.Path, err)
@@ -85,6 +100,9 @@ func Write(output Output, outputDir string) error {
 	}
 
 	if _, err := os.Lstat(root); os.IsNotExist(err) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := os.Rename(stage, root); err != nil {
 			return fmt.Errorf("publish output: %w", err)
 		}
@@ -98,8 +116,17 @@ func Write(output Output, outputDir string) error {
 	if err != nil {
 		return fmt.Errorf("reserve previous output: %w", err)
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := os.Rename(root, backup); err != nil {
 		return fmt.Errorf("move previous output: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		if restoreErr := os.Rename(backup, root); restoreErr != nil {
+			return fmt.Errorf("cancel output publication: %v; restore previous output from %q: %w", err, backup, restoreErr)
+		}
+		return err
 	}
 	if err := os.Rename(stage, root); err != nil {
 		if restoreErr := os.Rename(backup, root); restoreErr != nil {
