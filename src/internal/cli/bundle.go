@@ -1,15 +1,19 @@
 package cli
 
 import (
-	"fmt"
+	"errors"
+	"io"
 
+	"github.com/puff-lang/puff/internal/compiler"
+	"github.com/puff-lang/puff/internal/diagnostic"
 	"github.com/spf13/cobra"
 )
 
+var errBundleFailed = errors.New("bundle failed")
+
 type BundleOptions struct {
-	Target     string
-	AllTargets bool
-	Output     string
+	Target string
+	Output string
 }
 
 func NewBundleCommand() *cobra.Command {
@@ -18,31 +22,30 @@ func NewBundleCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Compile a Puff project into a Minecraft datapack",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			out := cmd.OutOrStdout()
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			result := compiler.Bundle(cmd.Context(), compiler.BundleOptions{
+				StartDir: ".",
+				Target:   bundleOpts.Target,
+				Output:   bundleOpts.Output,
+			})
 
-			fmt.Fprint(out, "bundle")
-
-			if bundleOpts.Target != "" {
-				fmt.Fprintf(out, " --target %s", bundleOpts.Target)
+			for _, issues := range [][]diagnostic.Diagnostic{result.Diagnostics.Errors, result.Diagnostics.Warnings} {
+				for _, issue := range issues {
+					if _, err := io.WriteString(cmd.ErrOrStderr(), diagnostic.FormatDiagnostic(issue, "")); err != nil {
+						return err
+					}
+				}
 			}
 
-			if bundleOpts.AllTargets {
-				fmt.Fprint(out, " --all-targets")
+			if !result.Diagnostics.OK {
+				return errBundleFailed
 			}
-
-			if bundleOpts.Output != "" {
-				fmt.Fprintf(out, " --output %s", bundleOpts.Output)
-			}
-
-			fmt.Fprintln(out)
-
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&bundleOpts.Target, "target", "", "Minecraft target version")
-	cmd.Flags().BoolVar(&bundleOpts.AllTargets, "all-targets", false, "Compile all supported Minecraft targets")
 	cmd.Flags().StringVarP(&bundleOpts.Output, "output", "o", "", "Output directory")
 
 	return cmd
