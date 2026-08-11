@@ -2,6 +2,7 @@ package compiler_test
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -42,9 +43,13 @@ end
 		t.Fatalf("create nested start directory: %v", err)
 	}
 
+	before := checkTestTree(t, root)
 	result := compiler.Check(context.Background(), compiler.CheckOptions{StartDir: nested})
 	if !result.Diagnostics.OK {
 		t.Fatalf("Check() diagnostics = %#v, want success", result.Diagnostics)
+	}
+	if after := checkTestTree(t, root); !reflect.DeepEqual(after, before) {
+		t.Fatalf("project tree after Check() = %#v, want unchanged %#v", after, before)
 	}
 
 	wantPaths := []string{"lib/shop.puff", "main.puff"}
@@ -93,6 +98,7 @@ func TestCheckReportsDiagnosticsAcrossAnalysisPhases(t *testing.T) {
 		source     string
 		errorCount int
 		want       diagnostic.Diagnostic
+		additional []diagnostic.Diagnostic
 	}{
 		{
 			name:       "lexer",
@@ -105,6 +111,13 @@ func TestCheckReportsDiagnosticsAcrossAnalysisPhases(t *testing.T) {
 				"Remove the character or replace it with valid Puff syntax.",
 				diagnostic.Span{StartLine: 1, StartColumn: 14, EndLine: 1, EndColumn: 15, StartOffset: 13, EndOffset: 14},
 			),
+			additional: []diagnostic.Diagnostic{checkTestDiagnostic(
+				diagnostic.CodeExpectedNewline,
+				diagnostic.PhaseParser,
+				"Expected newline.",
+				"",
+				diagnostic.Span{StartLine: 1, StartColumn: 16, EndLine: 1, EndColumn: 18, StartOffset: 15, EndOffset: 17},
+			)},
 		},
 		{
 			name:       "invalid UTF-8",
@@ -188,7 +201,7 @@ end
 			if result.Diagnostics.OK {
 				t.Fatalf("Check() succeeded, want %s diagnostic", test.want.Code)
 			}
-			checkTestRequireDiagnostic(t, result.Diagnostics.Errors, test.errorCount, test.want)
+			checkTestRequireDiagnostics(t, result.Diagnostics, test.errorCount, test.want, test.additional)
 
 			output := filepath.Join(root, "build", "datapack")
 			if _, err := os.Stat(output); !os.IsNotExist(err) {
@@ -268,18 +281,47 @@ func checkTestRelPaths(result compiler.CheckResult) []string {
 	return paths
 }
 
-func checkTestRequireDiagnostic(t *testing.T, diagnostics []diagnostic.Diagnostic, count int, want diagnostic.Diagnostic) {
+func checkTestTree(t *testing.T, root string) map[string]string {
 	t.Helper()
 
-	if len(diagnostics) != count {
-		t.Fatalf("diagnostics = %#v, want %d errors", diagnostics, count)
-	}
-	for _, issue := range diagnostics {
-		if reflect.DeepEqual(issue, want) {
-			return
+	files := make(map[string]string)
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
 		}
+		if entry.IsDir() {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		files[filepath.ToSlash(relative)] = string(data)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("read project tree: %v", err)
 	}
-	t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+	return files
+}
+
+func checkTestRequireDiagnostics(t *testing.T, result diagnostic.Result, count int, want diagnostic.Diagnostic, additional []diagnostic.Diagnostic) {
+	t.Helper()
+
+	wantErrors := append([]diagnostic.Diagnostic{want}, additional...)
+	if len(wantErrors) != count {
+		t.Fatalf("invalid test expectation: %d diagnostics, want count %d", len(wantErrors), count)
+	}
+	if !reflect.DeepEqual(result.Errors, wantErrors) {
+		t.Fatalf("diagnostic errors = %#v, want %#v", result.Errors, wantErrors)
+	}
+	if len(result.Warnings) != 0 {
+		t.Fatalf("diagnostic warnings = %#v, want none", result.Warnings)
+	}
 }
 
 func checkTestDiagnostic(code diagnostic.Code, phase diagnostic.Phase, message string, hint string, span diagnostic.Span) diagnostic.Diagnostic {

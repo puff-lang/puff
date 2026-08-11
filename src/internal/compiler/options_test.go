@@ -221,6 +221,32 @@ func TestBundleRejectsSymlinkOutputWithoutTouchingTarget(t *testing.T) {
 	}
 }
 
+func TestBundleRejectsFilesystemAliasOfSourceDirectory(t *testing.T) {
+	root := optionsTestProject(t, true)
+	source := filepath.Join(root, "src")
+	alias := filepath.Join(root, "SRC")
+	sourceInfo, err := os.Stat(source)
+	if err != nil {
+		t.Fatalf("stat source directory: %v", err)
+	}
+	aliasInfo, err := os.Stat(alias)
+	if err != nil || !os.SameFile(sourceInfo, aliasInfo) {
+		t.Skip("filesystem does not expose a distinct case alias")
+	}
+	sourcePath := filepath.Join(source, "main.puff")
+	sourceBefore := optionsTestReadFile(t, sourcePath)
+
+	result := compiler.Bundle(context.Background(), compiler.BundleOptions{
+		StartDir: root,
+		Output:   alias,
+	})
+
+	optionsTestAssertErrorCode(t, result.Diagnostics, diagnostic.CodeCodegenError)
+	if got := optionsTestReadFile(t, sourcePath); !bytes.Equal(got, sourceBefore) {
+		t.Fatalf("project source = %q, want unchanged %q", got, sourceBefore)
+	}
+}
+
 func TestBundleReportsPublicationFailureWithoutReplacingFile(t *testing.T) {
 	root := optionsTestProject(t, true)
 	output := filepath.Join(root, "occupied")
