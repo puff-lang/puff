@@ -90,7 +90,7 @@ func Bundle(ctx context.Context, opts BundleOptions) BundleResult {
 		return bundleFailure(result.diagnostics)
 	}
 	if err := minecraft.WriteContext(ctx, generated.Output, destination); err != nil {
-		if issue := contextIssue(ctx); issue != nil {
+		if issue := contextIssue(ctx); issue != nil && errors.Is(err, ctx.Err()) {
 			result.diagnostics = append(result.diagnostics, *issue)
 		} else {
 			result.diagnostics = append(result.diagnostics, codegenFailure(err))
@@ -275,11 +275,23 @@ func canonicalPath(name string) (string, error) {
 
 func containsPath(parent string, child string) bool {
 	relative, err := filepath.Rel(parent, child)
+	if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return true
+	}
+
+	parentInfo, err := os.Stat(parent)
 	if err != nil {
 		return false
 	}
-
-	return relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))
+	for current := child; ; current = filepath.Dir(current) {
+		if info, err := os.Stat(current); err == nil && os.SameFile(parentInfo, info) {
+			return true
+		}
+		next := filepath.Dir(current)
+		if next == current {
+			return false
+		}
+	}
 }
 
 func projectFailure(err error) diagnostic.Diagnostic {
