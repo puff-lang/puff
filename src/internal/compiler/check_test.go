@@ -89,30 +89,48 @@ func TestCheckReportsMissingProjectConfig(t *testing.T) {
 
 func TestCheckReportsDiagnosticsAcrossAnalysisPhases(t *testing.T) {
 	tests := []struct {
-		name   string
-		source string
-		code   diagnostic.Code
-		phase  diagnostic.Phase
+		name       string
+		source     string
+		errorCount int
+		want       diagnostic.Diagnostic
 	}{
 		{
-			name:   "lexer",
-			source: "$coins = 100 @ 20\n",
-			code:   diagnostic.CodeInvalidCharacter,
-			phase:  diagnostic.PhaseLexer,
+			name:       "lexer",
+			source:     "$coins = 100 @ 20\n",
+			errorCount: 2,
+			want: checkTestDiagnostic(
+				diagnostic.CodeInvalidCharacter,
+				diagnostic.PhaseLexer,
+				"Invalid character: @",
+				"Remove the character or replace it with valid Puff syntax.",
+				diagnostic.Span{StartLine: 1, StartColumn: 14, EndLine: 1, EndColumn: 15, StartOffset: 13, EndOffset: 14},
+			),
 		},
 		{
-			name:   "invalid UTF-8",
-			source: string([]byte{0xff}),
-			code:   diagnostic.CodeInvalidUTF8,
-			phase:  diagnostic.PhaseLexer,
+			name:       "invalid UTF-8",
+			source:     string([]byte{0xff}),
+			errorCount: 1,
+			want: checkTestDiagnostic(
+				diagnostic.CodeInvalidUTF8,
+				diagnostic.PhaseLexer,
+				"File is not valid UTF-8.",
+				"Save the file as UTF-8.",
+				diagnostic.Span{StartLine: 1, StartColumn: 1, EndLine: 1, EndColumn: 2, StartOffset: 0, EndOffset: 1},
+			),
 		},
 		{
 			name: "parser",
 			source: `on load
    send "Loaded" to player
 `,
-			code:  diagnostic.CodeExpectedEnd,
-			phase: diagnostic.PhaseParser,
+			errorCount: 1,
+			want: checkTestDiagnostic(
+				diagnostic.CodeExpectedEnd,
+				diagnostic.PhaseParser,
+				`Expected "end" before end of file.`,
+				"Add end to close the block.",
+				diagnostic.Span{StartLine: 3, StartColumn: 1, EndLine: 3, EndColumn: 1, StartOffset: 35, EndOffset: 35},
+			),
 		},
 		{
 			name: "semantics",
@@ -121,8 +139,14 @@ func TestCheckReportsDiagnosticsAcrossAnalysisPhases(t *testing.T) {
 on tick
 end
 `,
-			code:  diagnostic.CodeMissingLoadEvent,
-			phase: diagnostic.PhaseSemantics,
+			errorCount: 1,
+			want: checkTestDiagnostic(
+				diagnostic.CodeMissingLoadEvent,
+				diagnostic.PhaseSemantics,
+				"Missing required event: on load",
+				"Add an on load block or remove the load tag.",
+				diagnostic.Span{StartLine: 1, StartColumn: 1, EndLine: 1, EndColumn: 13, StartOffset: 0, EndOffset: 12},
+			),
 		},
 		{
 			name: "pattern",
@@ -130,8 +154,30 @@ end
    explode player
 end
 `,
-			code:  diagnostic.CodeUnknownEffectPattern,
-			phase: diagnostic.PhasePattern,
+			errorCount: 1,
+			want: checkTestDiagnostic(
+				diagnostic.CodeUnknownEffectPattern,
+				diagnostic.PhasePattern,
+				"Unknown effect pattern.",
+				"Check the syntax or require a library that registers this effect.",
+				diagnostic.Span{StartLine: 2, StartColumn: 4, EndLine: 2, EndColumn: 18, StartOffset: 11, EndOffset: 25},
+			),
+		},
+		{
+			name: "resolver",
+			source: `require "missing"
+
+on load
+end
+`,
+			errorCount: 1,
+			want: checkTestDiagnostic(
+				diagnostic.CodeImportNotFound,
+				diagnostic.PhaseSemantics,
+				"Import not found: missing",
+				"Check the path or install the dependency.",
+				diagnostic.Span{StartLine: 1, StartColumn: 9, EndLine: 1, EndColumn: 18, StartOffset: 8, EndOffset: 17},
+			),
 		},
 	}
 
@@ -140,15 +186,38 @@ end
 			root := checkTestWriteProject(t, map[string]string{"src/main.puff": test.source})
 			result := compiler.Check(context.Background(), compiler.CheckOptions{StartDir: root})
 			if result.Diagnostics.OK {
-				t.Fatalf("Check() succeeded, want %s diagnostic", test.code)
+				t.Fatalf("Check() succeeded, want %s diagnostic", test.want.Code)
 			}
-			checkTestRequireDiagnostic(t, result.Diagnostics.Errors, test.code, test.phase)
+			checkTestRequireDiagnostic(t, result.Diagnostics.Errors, test.errorCount, test.want)
 
 			output := filepath.Join(root, "build", "datapack")
 			if _, err := os.Stat(output); !os.IsNotExist(err) {
 				t.Fatalf("Check() created output at %q; stat error = %v", output, err)
 			}
 		})
+	}
+}
+
+func TestCheckDefaultsStartDirToWorkingDirectory(t *testing.T) {
+	root := checkTestWriteProject(t, map[string]string{
+		"src/main.puff": "on load\nend\n",
+	})
+	previous, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory: %v", err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatalf("change working directory: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(previous); err != nil {
+			t.Errorf("restore working directory: %v", err)
+		}
+	})
+
+	result := compiler.Check(context.Background(), compiler.CheckOptions{})
+	if !result.Diagnostics.OK {
+		t.Fatalf("Check() diagnostics = %#v, want success", result.Diagnostics)
 	}
 }
 
@@ -199,18 +268,28 @@ func checkTestRelPaths(result compiler.CheckResult) []string {
 	return paths
 }
 
-func checkTestRequireDiagnostic(
-	t *testing.T,
-	diagnostics []diagnostic.Diagnostic,
-	code diagnostic.Code,
-	phase diagnostic.Phase,
-) {
+func checkTestRequireDiagnostic(t *testing.T, diagnostics []diagnostic.Diagnostic, count int, want diagnostic.Diagnostic) {
 	t.Helper()
 
+	if len(diagnostics) != count {
+		t.Fatalf("diagnostics = %#v, want %d errors", diagnostics, count)
+	}
 	for _, issue := range diagnostics {
-		if issue.Code == code && issue.Phase == phase {
+		if reflect.DeepEqual(issue, want) {
 			return
 		}
 	}
-	t.Fatalf("diagnostics = %#v, want code %q in phase %q", diagnostics, code, phase)
+	t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+}
+
+func checkTestDiagnostic(code diagnostic.Code, phase diagnostic.Phase, message string, hint string, span diagnostic.Span) diagnostic.Diagnostic {
+	return diagnostic.Diagnostic{
+		Code:     code,
+		Phase:    phase,
+		Severity: diagnostic.SeverityError,
+		Message:  message,
+		Hint:     hint,
+		File:     "main.puff",
+		Span:     span,
+	}
 }

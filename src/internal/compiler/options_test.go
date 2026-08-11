@@ -1,6 +1,7 @@
 package compiler_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -145,6 +146,7 @@ func TestBundleRejectsOutputOverlappingProjectFiles(t *testing.T) {
 	}{
 		{name: "project root", override: "."},
 		{name: "source directory", override: "src"},
+		{name: "source descendant", override: filepath.Join("src", "generated")},
 	}
 
 	for _, test := range tests {
@@ -152,6 +154,8 @@ func TestBundleRejectsOutputOverlappingProjectFiles(t *testing.T) {
 			root := optionsTestProject(t, true)
 			configPath := filepath.Join(root, "puff.toml")
 			sourcePath := filepath.Join(root, "src", "main.puff")
+			configBefore := optionsTestReadFile(t, configPath)
+			sourceBefore := optionsTestReadFile(t, sourcePath)
 
 			result := compiler.Bundle(context.Background(), compiler.BundleOptions{
 				StartDir: root,
@@ -162,13 +166,77 @@ func TestBundleRejectsOutputOverlappingProjectFiles(t *testing.T) {
 			if len(result.Output.Files) != 0 {
 				t.Fatalf("Bundle() output = %#v, want empty output", result.Output.Files)
 			}
-			if _, err := os.Stat(configPath); err != nil {
-				t.Fatalf("project config was modified: %v", err)
+			if got := optionsTestReadFile(t, configPath); !bytes.Equal(got, configBefore) {
+				t.Fatalf("project config = %q, want unchanged %q", got, configBefore)
 			}
-			if _, err := os.Stat(sourcePath); err != nil {
-				t.Fatalf("project source was modified: %v", err)
+			if got := optionsTestReadFile(t, sourcePath); !bytes.Equal(got, sourceBefore) {
+				t.Fatalf("project source = %q, want unchanged %q", got, sourceBefore)
 			}
 		})
+	}
+}
+
+func TestBundleRejectsOutputContainingProjectRoot(t *testing.T) {
+	sandbox := t.TempDir()
+	root := filepath.Join(sandbox, "project")
+	optionsTestPopulateProject(t, root, true)
+	markerPath := filepath.Join(sandbox, "marker.txt")
+	optionsTestWriteFile(t, markerPath, "keep me\n")
+	markerBefore := optionsTestReadFile(t, markerPath)
+	sourcePath := filepath.Join(root, "src", "main.puff")
+	sourceBefore := optionsTestReadFile(t, sourcePath)
+
+	result := compiler.Bundle(context.Background(), compiler.BundleOptions{
+		StartDir: root,
+		Output:   "..",
+	})
+
+	optionsTestAssertErrorCode(t, result.Diagnostics, diagnostic.CodeCodegenError)
+	if got := optionsTestReadFile(t, markerPath); !bytes.Equal(got, markerBefore) {
+		t.Fatalf("ancestor marker = %q, want unchanged %q", got, markerBefore)
+	}
+	if got := optionsTestReadFile(t, sourcePath); !bytes.Equal(got, sourceBefore) {
+		t.Fatalf("project source = %q, want unchanged %q", got, sourceBefore)
+	}
+}
+
+func TestBundleRejectsSymlinkOutputWithoutTouchingTarget(t *testing.T) {
+	root := optionsTestProject(t, true)
+	target := t.TempDir()
+	markerPath := filepath.Join(target, "marker.txt")
+	optionsTestWriteFile(t, markerPath, "keep me\n")
+	link := filepath.Join(root, "linked-output")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("create output symlink: %v", err)
+	}
+
+	result := compiler.Bundle(context.Background(), compiler.BundleOptions{
+		StartDir: root,
+		Output:   link,
+	})
+
+	optionsTestAssertErrorCode(t, result.Diagnostics, diagnostic.CodeCodegenError)
+	if got := string(optionsTestReadFile(t, markerPath)); got != "keep me\n" {
+		t.Fatalf("symlink target marker = %q, want unchanged", got)
+	}
+}
+
+func TestBundleReportsPublicationFailureWithoutReplacingFile(t *testing.T) {
+	root := optionsTestProject(t, true)
+	output := filepath.Join(root, "occupied")
+	optionsTestWriteFile(t, output, "keep me\n")
+
+	result := compiler.Bundle(context.Background(), compiler.BundleOptions{
+		StartDir: root,
+		Output:   output,
+	})
+
+	optionsTestAssertErrorCode(t, result.Diagnostics, diagnostic.CodeCodegenError)
+	if len(result.Output.Files) != 0 {
+		t.Fatalf("Bundle() output = %#v, want empty output", result.Output.Files)
+	}
+	if got := string(optionsTestReadFile(t, output)); got != "keep me\n" {
+		t.Fatalf("occupied output = %q, want unchanged", got)
 	}
 }
 
@@ -176,6 +244,13 @@ func optionsTestProject(t *testing.T, withSource bool) string {
 	t.Helper()
 
 	root := t.TempDir()
+	optionsTestPopulateProject(t, root, withSource)
+	return root
+}
+
+func optionsTestPopulateProject(t *testing.T, root string, withSource bool) {
+	t.Helper()
+
 	optionsTestWriteFile(t, filepath.Join(root, "puff.toml"), `[pack]
 id = "example"
 name = "Example Pack"
@@ -191,8 +266,6 @@ output = "configured-dist"
 	if withSource {
 		optionsTestWriteFile(t, filepath.Join(root, "src", "main.puff"), "# tags: load\n\non load\nend\n")
 	}
-
-	return root
 }
 
 func optionsTestWriteFile(t *testing.T, path string, contents string) {
@@ -204,6 +277,16 @@ func optionsTestWriteFile(t *testing.T, path string, contents string) {
 	if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
+}
+
+func optionsTestReadFile(t *testing.T, path string) []byte {
+	t.Helper()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return data
 }
 
 func optionsTestAssertErrorCode(t *testing.T, result diagnostic.Result, want diagnostic.Code) {
